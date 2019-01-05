@@ -50,13 +50,13 @@ function plot_hist(hist)
 end
 
 """
-    change_α(series_alpha, idxs, α=0.005)
+    change_α(series_alpha, idxs, α=0.05)
 Given a vector of `Observable`s that represent the αs for some series, change
 the elements with indices given by `idxs` to the value `α`.
 This can be used to hide some series by using a low α value (default).
 To restore the initial color, use `α = 1`.
 """
-function change_α(series_alpha, idxs, α=0.005)
+function change_α(series_alpha, idxs, α=0.05)
     foreach(i-> series_alpha[i][] = α, idxs)
 end
 
@@ -121,14 +121,14 @@ function select_series(scene, selected_plot, scatter_α, hist_α, data, hist)
     series_idx = map(get_series_idx, selected_plot, scene)
     on(series_idx) do i
         if !isa(i, Nothing)
-            scatter_α[i - 1][] = 1.
+            scatter_α[i - 1][] = 1.0
             change_α(scatter_α, setdiff(axes(scatter_α, 1), i - 1))
             selected_bin = bin_with_val(data[i-1], hist)
-            hist_α[selected_bin][] = 1.
+            hist_α[selected_bin][] = 1.0
             change_α(hist_α, setdiff(axes(hist_α, 1), selected_bin))
         else
-            change_α(scatter_α, axes(scatter_α, 1), 1.)
-            change_α(hist_α, axes(hist_α, 1), 1.)
+            change_α(scatter_α, axes(scatter_α, 1), 1.0)
+            change_α(hist_α, axes(hist_α, 1), 1.0)
         end
         return nothing
     end
@@ -142,13 +142,15 @@ scatter plot. See also [`select_series`](@ref).
 function select_bin(hist_idx, hist, hist_α, scatter_α, data; closed=:left)
     on(hist_idx) do i
         if i ≠ 0
-            hist_α[i][] = 1.
+            hist_α[i][] = 1.0
             change_α(hist_α, setdiff(axes(hist.weights, 1), i))
-            change_α(scatter_α, idxs_in_bin(i, hist, data, closed=closed), 1.)
-            change_α(scatter_α, setdiff(axes(scatter_α, 1), idxs_in_bin(i, hist, data, closed=closed)))
+            change_α(scatter_α, idxs_in_bin(i, hist, data, closed=closed), 1.0)
+            change_α(scatter_α, setdiff(
+                axes(scatter_α, 1), idxs_in_bin(i, hist, data, closed=closed)
+            ))
         else
-            change_α(scatter_α, axes(scatter_α, 1), 1.)
-            change_α(hist_α, axes(hist_α, 1), 1.)
+            change_α(scatter_α, axes(scatter_α, 1), 1.0)
+            change_α(hist_α, axes(hist_α, 1), 1.0)
         end
         return nothing
     end
