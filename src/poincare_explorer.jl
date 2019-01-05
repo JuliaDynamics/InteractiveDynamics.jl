@@ -12,7 +12,6 @@ Each series has an individual plot and an entry in the `series_alpha` vector.
 The function also adds a slider to the scatter plot, which controls the size of
 the points. The function returns the `scene` and `series_alpha`.
 """
-
 function plot_sim(sim; colors=axes(sim, 1), idxs=[1,2])
     ui, ms = AbstractPlotting.textslider(range(0.001, stop=1., length=1000), "scale", start=0.05)
     data = Scene(resolution=(1000, 1000))
@@ -165,12 +164,6 @@ function poincare_explorer(sim, vals; nbins=50, closed=:left)
 
     hist_sc, hist_α = plot_hist(hist)
 
-    # set axis names
-    # if axis == 3
-    #     scatter_sc[Axis][:names, :axisnames][] = ("q₂","p₂")
-    # else
-    #     scatter_sc[Axis][:names, :axisnames][] = ("q₁","p₁")
-    # end
     sc = AbstractPlotting.vbox(scatter_sc_with_ui, hist_sc)
 
     selected_plot = setup_click(scatter_sc, 1)
@@ -182,7 +175,8 @@ function poincare_explorer(sim, vals; nbins=50, closed=:left)
     return sc
 end
 
-sim = [rand(50,50) for i=1:10]
-vals = rand(10)
+N = 100
+sim = [rand(50,50) for i=1:N]
+vals = rand(N)
 
 poincare_explorer(sim, vals)
