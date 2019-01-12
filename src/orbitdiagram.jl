@@ -1,13 +1,5 @@
 using DynamicalSystemsBase, Makie
-
-# add @inbounds when this is done.
-
 textslider = AbstractPlotting.textslider
-function onlyleftclick(scplot)
-    ispressed(scplot, Mouse.left) &&
-    !ispressed(scplot, Keyboard.space) &&
-    AbstractPlotting.is_mouseinside(scplot)
-end
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
@@ -16,7 +8,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     # Initialization
     integ = integrator(ds)
-    scene = Scene(resolution = (1000, 600))
+    scene = Scene()
     pmin, pmax = p_min, p_max
 
     ui_n, n = textslider(
@@ -32,19 +24,15 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     scplot = scatter(od_node, markersize = 0.01)
 
-    on(scplot.events.mousebuttons) do buttons
-        if onlyleftclick(scplot)
-            pmin, xmin = mouseposition(scplot)
-            # Get xmax, pmax with un-click
-            pmax = pmin + 0.2; xmax = xmin + 0.4
-            od_node[] = minimal_od(
-                integ, i[],  p_index, pmin, pmax,
-                density[], n[], Ttr[], u0, xmin, xmax
-            )
-
-            limits = FRect(pmin,xmin,pmax-pmin,xmax-xmin)
-            # AbstractPlotting.update_limits!(scplot, limits)
-        end
+    # Interactively update the o.d.
+    rect = select_rectangle(scplot)
+    on(rect) do r
+        pmin, xmin = r.origin
+        pmax, xmax = r.origin + r.widths
+        od_node[] = minimal_od(
+            integ, i[],  p_index, pmin, pmax,
+            density[], n[], Ttr[], u0, xmin, xmax
+        )
     end
     hbox(vbox(ui_n, ui_T, ui_d, ui_i), scplot, parent=scene)
     display(scene)
@@ -56,7 +44,7 @@ function minimal_od(integ, i, p_index, pmin, pmax,
 
     pvalues = range(pmin, stop = pmax, length = density)
     od = Vector{Point2f0}()
-    for p in pvalues
+    @inbounds for p in pvalues
         DynamicalSystemsBase.reinit!(integ, u0)
         integ.p[p_index] = p
         DynamicalSystemsBase.step!(integ, Ttr)
