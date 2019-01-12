@@ -1,5 +1,5 @@
 using DynamicalSystemsBase, Makie
-textslider = AbstractPlotting.textslider
+using AbstractPlotting: textslider, modelmatrix
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
@@ -21,18 +21,31 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     od = minimal_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
     od_node = Node(od)
+    # Scales for x and p:
+    pdif = abs(pmax - pmin)
+    xdif = begin
+        xmin, xmax = extrema(o[2] for o in od)
+        abs(xmax - xmin)
+    end
+    xdif = 1.0
 
-    scplot = scatter(od_node, markersize = 0.01)
+    msize = Node(min(pdif, xdif) / 100.0) # replace 100.0 with slider
 
-    # Interactively update the o.d.
+    scplot = scatter(od_node, markersize = msize)
+    display(scplot)
     rect = select_rectangle(scplot)
+
     on(rect) do r
         pmin, xmin = r.origin
         pmax, xmax = r.origin + r.widths
+        msize[] = min(abs(pmax - pmin), abs(xmax - xmin)) / 100.0 # replace 100.0 with slider
         od_node[] = minimal_od(
             integ, i[],  p_index, pmin, pmax,
             density[], n[], Ttr[], u0, xmin, xmax
         )
+
+        AbstractPlotting.update_limits!(scplot, rect[])
+        AbstractPlotting.update_cam!(scplot, (modelmatrix(scplot)) * boundingbox(scplot[Axis]))
     end
     hbox(vbox(ui_n, ui_T, ui_d, ui_i), scplot, parent=scene)
     display(scene)
@@ -65,8 +78,9 @@ p_index = 1
 p_min = 0.8
 p_max = 1.4
 
-od_node = interactive_orbitdiagram(ds, i, p_index, p_min, p_max)
+od_node = interactive_orbitdiagram(ds, i, p_index, p_min, p_max);
 
 # TODO:
 # add reset button that goes to the initial x0,p0
 # add button to select which variable of the system is plotted
+# make recomputation trigger each time one of the sliders is adjusted
