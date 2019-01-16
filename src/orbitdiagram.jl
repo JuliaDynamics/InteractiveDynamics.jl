@@ -1,5 +1,33 @@
-using DynamicalSystemsBase, Makie
+using DynamicalSystemsBase, Makie, Interact, Blink
 using AbstractPlotting: textslider, modelmatrix
+
+"""
+    controlwindow(D, n, Ttr, density, i)
+Create an Electron control window for the orbit diagram interactive application.
+
+Return `n, Ttr, density, i, ▢update, ▢back, ▢reset`, all of which are `Observable`s.
+Their value corresponds to the one chosen in the Electron window
+(items with `▢` are buttons).
+"""
+function controlwindow(D, n, Ttr, density, i)
+    n = Interact.textbox(string(n); value = n, label = "n")
+    Ttr = Interact.textbox(string(Ttr); value = Ttr, label = "Ttr")
+    density = Interact.textbox(string(density); value = density, label = "density")
+
+    i = Interact.dropdown(OrderedDict(string(j) => j for j in 1:D); label = "variable")
+    ▢update = Interact.button("update")
+    ▢back = Interact.button("← back")
+    ▢reset = Interact.button("reset")
+
+    w = Window()
+    body!(w, Interact.hbox(
+        Interact.vbox(n, Ttr, density),
+        Interact.vbox(i, ▢update, ▢back, ▢reset)
+        )
+    )
+
+    return n, Ttr, density, i, ▢update, ▢back, ▢reset
+end
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
@@ -11,14 +39,11 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     scene = Scene()
     pmin, pmax = p_min, p_max
 
-    ui_n, n = textslider(
-        round.(Int, range(10, stop=10000, length=1000)),"n", start=n)
-    ui_T, Ttr = textslider(
-        round.(Int, range(10, stop=10000, length=1000)),"Ttr", start=Ttr)
-    ui_d, density = textslider(
-        round.(Int, range(10, stop=10000, length=1000)),"density", start=density)
-    ui_i, i = textslider(1:dimension(ds), "variable", start=i)
+    # UI elements
+    n, Ttr, density, i, ▢update, ▢back, ▢reset =
+    controlwindow(dimension(ds), n, Ttr, density, i)
 
+    # Orbit diagram data
     od = minimal_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
     od_node = Node(od)
     # Scales for x and p:
@@ -28,9 +53,8 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         abs(xmax - xmin)
     end
 
-    # History stores the variable index and limit rectangle
-    # history = Vector{Tuple{Int, FRect2D{2, Float32}}}[]
-    # push!(history, (i[], FRect(Point2f0(pmin, xmin), Point2f0(pmax, xmax))))
+    # History stores the variable index and diagram limits
+    history = [(i[], pmin, pmax, xmin, xmax)]
 
     rval = 50.0 # replace rval
 
@@ -63,8 +87,8 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     #     # deleteat!(history)
     #     pmin, pmax = ()
     # end
-    hbox(vbox(ui_n, ui_T, ui_d, ui_i), scplot, parent=scene)
-    display(scene)
+
+    display(scplot)
     return od_node
 end
 
