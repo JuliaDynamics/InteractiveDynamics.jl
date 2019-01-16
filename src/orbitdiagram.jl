@@ -1,5 +1,4 @@
 using DynamicalSystemsBase, Makie, Interact, Blink
-using AbstractPlotting: textslider, modelmatrix
 
 """
     controlwindow(D, n, Ttr, density, i)
@@ -29,6 +28,13 @@ function controlwindow(D, n, Ttr, density, i)
     return n, Ttr, density, i, ▢update, ▢back, ▢reset
 end
 
+function set_limits!(scplot, r)
+    AbstractPlotting.update_limits!(scplot, r)
+    AbstractPlotting.scale_scene!(scplot)
+    AbstractPlotting.center!(scplot)
+    AbstractPlotting.update!(scplot)
+end
+
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
     density = 1000, u0 = get_state(ds), Ttr = 200, n = 1000
@@ -56,8 +62,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     # History stores the variable index and diagram limits
     history = [(i[], pmin, pmax, xmin, xmax)]
 
-    rval = 50.0 # replace rval
-
+    rval = 50.0 # to be sure points have reasonable size
     msize = Node(min(pdif, xdif) / rval)
 
     scplot = scatter(od_node, markersize = msize)
@@ -73,20 +78,21 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             density[], n[], Ttr[], u0, xmin, xmax
         )
 
-        # push!(history, r) # update history
-
-        AbstractPlotting.update_limits!(scplot, r)
-        AbstractPlotting.scale_scene!(scplot)
-        AbstractPlotting.center!(scplot)
-        AbstractPlotting.update!(scplot)
-
+        push!(history, (i[], pmin, pmax, xmin, xmax)) # update history
+        set_limits!(scplot, r)
     end
-    #
-    # on(i) do j
-    #     # when changing variable delete history
-    #     # deleteat!(history)
-    #     pmin, pmax = ()
-    # end
+
+    # Upon selecting new variable
+    on(i) do j
+        previ, pmin, pmax, xmin, xmax = history[end]
+        od_node[] = minimal_od(integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0)
+        xmin, xmax = extrema(o[2] for o in od_node[])
+
+        msize[] = min(abs(pmax - pmin), abs(xmax - xmin)) / rval
+
+        set_limits!(scplot, FRect(Point2f0(pmin, xmin), Point2f0(pmax-pmin,xmax-xmin)))
+        push!(history, (j, pmin, pmax, xmin, xmax)) # update history
+    end
 
     display(scplot)
     return od_node
