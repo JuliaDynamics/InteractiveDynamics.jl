@@ -3,7 +3,7 @@ using AbstractPlotting: textslider, modelmatrix
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
-    density = 1000, u0 = get_state(ds), Ttr = 100, n = 100
+    density = 1000, u0 = get_state(ds), Ttr = 200, n = 1000
     )
 
     # Initialization
@@ -27,9 +27,14 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         xmin, xmax = extrema(o[2] for o in od)
         abs(xmax - xmin)
     end
-    xdif = 1.0
 
-    msize = Node(min(pdif, xdif) / 100.0) # replace 100.0 with slider
+    # History stores the variable index and limit rectangle
+    # history = Vector{Tuple{Int, FRect2D{2, Float32}}}[]
+    # push!(history, (i[], FRect(Point2f0(pmin, xmin), Point2f0(pmax, xmax))))
+
+    rval = 50.0 # replace rval
+
+    msize = Node(min(pdif, xdif) / rval)
 
     scplot = scatter(od_node, markersize = msize)
     display(scplot)
@@ -38,15 +43,26 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     on(rect) do r
         pmin, xmin = r.origin
         pmax, xmax = r.origin + r.widths
-        msize[] = min(abs(pmax - pmin), abs(xmax - xmin)) / 100.0 # replace 100.0 with slider
+        msize[] = min(abs(pmax - pmin), abs(xmax - xmin)) / rval
         od_node[] = minimal_od(
             integ, i[],  p_index, pmin, pmax,
             density[], n[], Ttr[], u0, xmin, xmax
         )
 
-        AbstractPlotting.update_limits!(scplot, rect[])
-        AbstractPlotting.update_cam!(scplot, (modelmatrix(scplot)) * boundingbox(scplot[Axis]))
+        # push!(history, r) # update history
+
+        AbstractPlotting.update_limits!(scplot, r)
+        AbstractPlotting.scale_scene!(scplot)
+        AbstractPlotting.center!(scplot)
+        AbstractPlotting.update!(scplot)
+
     end
+    #
+    # on(i) do j
+    #     # when changing variable delete history
+    #     # deleteat!(history)
+    #     pmin, pmax = ()
+    # end
     hbox(vbox(ui_n, ui_T, ui_d, ui_i), scplot, parent=scene)
     display(scene)
     return od_node
