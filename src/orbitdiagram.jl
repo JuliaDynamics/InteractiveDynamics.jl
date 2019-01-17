@@ -49,7 +49,18 @@ function set_limits!(scplot, r)
     AbstractPlotting.update!(scplot)
 end
 
-const varidx = Dict(1 => "₁", 2 => "₂", 3 => "₃")
+function varidx(i::Int)
+    if i == 1
+        "₁"
+    elseif i == 2
+        "₂"
+    elseif i == 3
+        "₃"
+        # TODO: Add until 9
+    else
+        string(i)
+    end
+end
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
@@ -66,27 +77,26 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     controlwindow(dimension(ds), n, Ttr, density, i)
 
     # Orbit diagram data
-    od, xmin, xmax = minimal_normaized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
-    od_node = Observable(od)
+    odinit, xmin, xmax = minimal_normaized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
+    od_node = Observable(odinit)
 
     # History stores the variable index and true diagram limits
     history = [(i[], pmin, pmax, xmin, xmax)]
     ⬜pmin[] = pmin; ⬜pmax[] = pmax
     ⬜umin[] = xmin; ⬜umax[] = xmax
 
-
     color = lift(a -> RGBA(0,0,0,a), α)
-
     scplot = scatter(od_node, markersize = 0.01, color = color)
+
     scplot[Axis][:ticks][:ranges] = ([0, 1], [0, 1])
     scplot[Axis][:ticks][:labels] = (["pmin", "pmax"], ["umin", "umax"])
-    scplot[Axis][:names][:axisnames] = ("p", "u"*varidx[i[]])
-
+    scplot[Axis][:names][:axisnames] = ("p"*varidx(p_index), "u"*varidx(i[]))
 
     display(scplot)
     rect = select_rectangle(scplot)
 
-        on(rect) do r
+    # Uppon interactively selecting a rectangle, with value `r` (in [0,1]²)
+    on(rect) do r
         spmin, sxmin = r.origin
         spmax, sxmax = r.origin + r.widths
         # Convert p,x to true values
@@ -105,28 +115,28 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         push!(history, (j, pmin, pmax, xmin, xmax)) # update history
         ⬜pmin[] = pmin; ⬜pmax[] = pmax
         ⬜umin[] = xmin; ⬜umax[] = xmax
-        # set_limits!(scplot, r)
     end
 
     # Upon selecting new variable
     on(i) do j
-        println("selected var $j")
-
         previ, pmin, pmax, xmin, xmax = history[end]
+
+        # Compute diagram for other variable, withing current p-limits
         od, xmin, xmax = minimal_normaized_od(
             integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0
         )
 
-        scplot[Axis][:names][:axisnames] = ("p", "u"*varidx[j])
+        scplot[Axis][:names][:axisnames] = ("p", "u"*varidx(j))
 
         od_node[] = od
+        # Update limits
         ⬜pmin[] = pmin; ⬜pmax[] = pmax
         ⬜umin[] = xmin; ⬜umax[] = xmax
         push!(history, (j, pmin, pmax, xmin, xmax)) # update history
     end
 
     # Upon hitting the update button (just recomputes the OD)
-    # TODO: Properly state limits in control
+    # Update can't possibly result in limit change nor variable change
     on(▢update) do clicks
         j, pmin, pmax, xmin, xmax = history[end]
         od_node[] = minimal_normaized_od(
@@ -134,8 +144,17 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         )
     end
 
-    # TODO: Upon hitting the "reset" button
-    # on(▢reset) do clicks
+    # Upon hitting the "reset" button
+    on(▢reset) do clicks
+        if length(history) > 1
+            deleteat!(history, 2:length(history))
+            j, pmin, pmax, xmin, xmax = history[end]
+            od_node[] = odinit
+            # Update limits
+            ⬜pmin[] = pmin; ⬜pmax[] = pmax
+            ⬜umin[] = xmin; ⬜umax[] = xmax
+        end
+    end
 
 
     display(scplot)
@@ -200,14 +219,10 @@ end
 i = 1
 p_index = 1
 
-systems = [(Systems.henon(), 0.8, 1.4), (Systems.logistic(), 3.0, 4.0),
+systems = [(Systems.logistic(), 3.0, 4.0),
+           (Systems.henon(), 0.8, 1.4),
            (Systems.standardmap(), 0.6, 1.2)]
 
-ds, p_min, p_max = systems[2]
+ds, p_min, p_max = systems[3]
 
 od_node = interactive_orbitdiagram(ds, i, p_index, p_min, p_max);
-
-# TODO:
-# add reset button that goes to the initial x0,p0
-# add button to select which variable of the system is plotted
-# make recomputation trigger each time one of the sliders is adjusted
