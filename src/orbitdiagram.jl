@@ -1,4 +1,4 @@
-using DynamicalSystemsBase, Makie, Interact, Blink
+using DynamicalSystemsBase, Makie, Interact, Blink, Colors
 
 """
     controlwindow(D, n, Ttr, density, i)
@@ -18,14 +18,18 @@ function controlwindow(D, n, Ttr, density, i)
     ▢back = Interact.button("← back")
     ▢reset = Interact.button("reset")
 
+    α = Interact.slider(0:0.001:1; value = 0.1, label = "α (transparency)")
+
     w = Window()
-    body!(w, Interact.hbox(
-        Interact.vbox(n, Ttr, density),
-        Interact.vbox(i, ▢update, ▢back, ▢reset)
+    s = 5em
+    body!(w, Interact.vbox(
+        α,
+        Interact.hbox(n, Ttr, density),
+        Interact.hbox(i, hskip(s), ▢update, hskip(s), ▢back, hskip(s), ▢reset)
         )
     )
 
-    return n, Ttr, density, i, ▢update, ▢back, ▢reset
+    return n, Ttr, density, i, ▢update, ▢back, ▢reset, observe(α)
 end
 
 function set_limits!(scplot, r)
@@ -46,26 +50,27 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     pmin, pmax = p_min, p_max
 
     # UI elements
-    n, Ttr, density, i, ▢update, ▢back, ▢reset =
+    n, Ttr, density, i, ▢update, ▢back, ▢reset, α =
     controlwindow(dimension(ds), n, Ttr, density, i)
 
     # Orbit diagram data
-    od = minimal_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
-    od_node = Node(od)
+    od_node = Observable(
+        minimal_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
+    )
     # Scales for x and p:
     pdif = abs(pmax - pmin)
-    xdif = begin
-        xmin, xmax = extrema(o[2] for o in od)
-        abs(xmax - xmin)
-    end
+    xmin, xmax = extrema(o[2] for o in od_node[])
+    xdif = abs(xmax - xmin)
 
     # History stores the variable index and diagram limits
     history = [(i[], pmin, pmax, xmin, xmax)]
 
     rval = 50.0 # to be sure points have reasonable size
-    msize = Node(min(pdif, xdif) / rval)
+    msize = Observable(min(pdif, xdif) / rval)
 
-    scplot = scatter(od_node, markersize = msize)
+    color = lift(a -> RGBA(0,0,0,a), α)
+
+    scplot = scatter(od_node, markersize = msize, color = color)
     display(scplot)
     rect = select_rectangle(scplot)
 
@@ -92,6 +97,12 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
         set_limits!(scplot, FRect(Point2f0(pmin, xmin), Point2f0(pmax-pmin,xmax-xmin)))
         push!(history, (j, pmin, pmax, xmin, xmax)) # update history
+    end
+
+    # Upon hitting the update button (no limits can change with update)
+    on(▢update) do clicks
+        j, pmin, pmax, xmin, xmax = history[end]
+        od_node[] = minimal_od(integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0)
     end
 
     display(scplot)
