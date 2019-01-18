@@ -64,11 +64,12 @@ end
 
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
-    density = 500, u0 = get_state(ds), Ttr = 200, n = 500
+    density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
+    parname = "p"
     )
 
     # Initialization
-    integ = integrator(ds)
+    integ = integrator(ds, u0)
     scene = Scene()
     pmin, pmax = p_min, p_max
 
@@ -90,7 +91,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     scplot[Axis][:ticks][:ranges] = ([0, 1], [0, 1])
     scplot[Axis][:ticks][:labels] = (["pmin", "pmax"], ["umin", "umax"])
-    scplot[Axis][:names][:axisnames] = ("p"*varidx(p_index), "u"*varidx(i[]))
+    scplot[Axis][:names][:axisnames] = (parname*varidx(p_index), "u"*varidx(i[]))
 
     display(scplot)
     rect = select_rectangle(scplot)
@@ -119,29 +120,41 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     # Upon selecting new variable
     on(i) do j
-        previ, pmin, pmax, xmin, xmax = history[end]
+        if j != history[end][1] # only trigger if there is an actual change of i
+            previ, pmin, pmax, xmin, xmax = history[end]
 
-        # Compute diagram for other variable, withing current p-limits
-        od, xmin, xmax = minimal_normaized_od(
-            integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0
-        )
+            # Compute diagram for other variable, withing current p-limits
+            od_node[], xmin, xmax = minimal_normaized_od(
+                integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0
+            )
 
-        scplot[Axis][:names][:axisnames] = ("p", "u"*varidx(j))
+            scplot[Axis][:names][:axisnames] = (parname, "u"*varidx(j))
 
-        od_node[] = od
-        # Update limits
-        ⬜pmin[] = pmin; ⬜pmax[] = pmax
-        ⬜umin[] = xmin; ⬜umax[] = xmax
-        push!(history, (j, pmin, pmax, xmin, xmax)) # update history
+            # Update limits
+            ⬜pmin[] = pmin; ⬜pmax[] = pmax
+            ⬜umin[] = xmin; ⬜umax[] = xmax
+            push!(history, (j, pmin, pmax, xmin, xmax)) # update history
+        end
     end
 
     # Upon hitting the update button (just recomputes the OD)
-    # Update can't possibly result in limit change nor variable change
+    # Update always has the same var as before (due to the above event)
     on(▢update) do clicks
         j, pmin, pmax, xmin, xmax = history[end]
-        od_node[] = minimal_normaized_od(
+        # Check if there was any axis change:
+        if ⬜pmin[] == pmin && ⬜pmax[] == pmax && ⬜umin[] == xmin && ⬜umax[] == xmax
+            # No limit update necessary, just recompute OD with new density, etc.
+            od_node[] = minimal_normaized_od(
             integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0, xmin, xmax
-        )
+            )
+        else # user has typed new limits in textboxes
+            pmin, pmax, xmin, xmax =  ⬜pmin[], ⬜pmax[], ⬜umin[], ⬜umax[]
+            od_node[] = minimal_normaized_od(
+            integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0, xmin, xmax
+            )
+            # Update history!
+            push!(history, (j, pmin, pmax, xmin, xmax))
+        end
     end
 
     # Upon hitting the "reset" button
@@ -150,12 +163,28 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             deleteat!(history, 2:length(history))
             j, pmin, pmax, xmin, xmax = history[end]
             od_node[] = odinit
-            # Update limits
+            # Update limits in textboxes
             ⬜pmin[] = pmin; ⬜pmax[] = pmax
             ⬜umin[] = xmin; ⬜umax[] = xmax
         end
     end
 
+    # Upon hitting the "back" button
+    on(▢back) do clicks
+        if length(history) > 1
+            pop!(history)
+            j, pmin, pmax, xmin, xmax = history[end]
+            i[] = j
+            od_node[] = minimal_normaized_od(
+                integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0, xmin, xmax
+            )
+            # Update limits in textboxes
+            ⬜pmin[] = pmin; ⬜pmax[] = pmax
+            ⬜umin[] = xmin; ⬜umax[] = xmax
+            # Update labels
+            scplot[Axis][:names][:axisnames] = (parname, "u"*varidx(j))
+        end
+    end
 
     display(scplot)
     return od_node
