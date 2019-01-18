@@ -84,22 +84,24 @@ WIP
 """
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
-    density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
+    density = 1000, u0 = get_state(ds), Ttr = 200, n = 500,
     parname = "p"
     )
 
+
     # Initialization
     integ = integrator(ds, u0)
-    scene = Scene()
     pmin, pmax = p_min, p_max
 
     # UI elements
     n, Ttr, density, i, ▢update, ▢back, ▢reset, α, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax =
     controlwindow(dimension(ds), n, Ttr, density, i)
 
-    # Orbit diagram data
+
+    # Initial Orbit diagram data
     odinit, xmin, xmax = minimal_normaized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
     od_node = Observable(odinit)
+    densityinit = density[]; ninit = n[]; Ttrinit = Ttr[]
 
     # History stores the variable index and true diagram limits
     history = [(i[], pmin, pmax, xmin, xmax)]
@@ -107,7 +109,8 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     ⬜umin[] = xmin; ⬜umax[] = xmax
 
     color = lift(a -> RGBA(0,0,0,a), α)
-    scplot = scatter(od_node, markersize = 0.01, color = color)
+    scplot = Scene(resolution = (1200, 800))
+    scatter!(scplot, od_node, markersize = 0.008, color = color)
 
     scplot[Axis][:ticks][:ranges] = ([0, 1], [0, 1])
     scplot[Axis][:ticks][:labels] = (["pmin", "pmax"], ["umin", "umax"])
@@ -142,6 +145,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     on(i) do j
         if j != history[end][1] # only trigger if there is an actual change of i
             previ, pmin, pmax, xmin, xmax = history[end]
+            pmin = ⬜pmin[]; pmax = ⬜pmax[] # ensure correct parameter limit
 
             # Compute diagram for other variable, withing current p-limits
             od_node[], xmin, xmax = minimal_normaized_od(
@@ -186,6 +190,12 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             # Update limits in textboxes
             ⬜pmin[] = pmin; ⬜pmax[] = pmax
             ⬜umin[] = xmin; ⬜umax[] = xmax
+            # Update variable
+            i[] = j
+            # Update label
+            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(j))
+            # Update text of parameters
+            density[] = densityinit; n[] = ninit; Ttr[] = Ttrinit
         end
     end
 
@@ -281,7 +291,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     return od
 end
 
-# TODO: fix when typing new axis and then changing variable,
-# always use the value of the boxes
-# TODO: How to access the data?
+# TODO: How to access the data
 # TODO: Use `α` directly after Simon's fix, no need for observe(α)
+# TODO: Add exit button that closes both windows
+# TODO: Make history also remember n, Ttr, density
