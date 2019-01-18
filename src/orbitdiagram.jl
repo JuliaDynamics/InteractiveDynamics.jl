@@ -4,9 +4,14 @@ using DynamicalSystemsBase, Makie, Interact, Blink, Colors
     controlwindow(D, n, Ttr, density, i)
 Create an Electron control window for the orbit diagram interactive application.
 
-Return `n, Ttr, density, i, ▢update, ▢back, ▢reset`, all of which are `Observable`s.
-Their value corresponds to the one chosen in the Electron window
-(items with `▢` are buttons).
+```julia
+return n, Ttr, density, i, ▢update, ▢back, ▢reset, α,
+       ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
+```
+
+All returned values are `Observable`s.
+Their value corresponds to the one chosen in the Electron window.
+Items with `▢` are buttons and with `⬜` are the boxes with limits.
 """
 function controlwindow(D, n, Ttr, density, i)
     n = Interact.textbox(string(n); value = n, label = "n")
@@ -26,7 +31,7 @@ function controlwindow(D, n, Ttr, density, i)
     ⬜umin = Interact.textbox(; value = 0.0, label = "umin")
     ⬜umax = Interact.textbox(; value = 1.0, label = "umax")
 
-    w = Window()
+    w = Window(Dict(:height => 400, :title => "Orbit Diagram controls"))
     s = 5em
     body!(w, Interact.vbox(
         α,
@@ -42,26 +47,41 @@ function controlwindow(D, n, Ttr, density, i)
            ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
 end
 
-function set_limits!(scplot, r)
-    AbstractPlotting.update_limits!(scplot, r)
-    AbstractPlotting.scale_scene!(scplot)
-    AbstractPlotting.center!(scplot)
-    AbstractPlotting.update!(scplot)
-end
 
-function varidx(i::Int)
-    if i == 1
-        "₁"
-    elseif i == 2
-        "₂"
-    elseif i == 3
-        "₃"
-        # TODO: Add until 9
-    else
-        string(i)
-    end
-end
 
+"""
+    interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
+        i::Int, p_index, p_min, p_max;
+        density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
+        parname = "p"
+    )
+
+Open an interactive application for exploring orbit diagrams (ODs) of
+discrete systems. The functionality works for _any_ discrete system.
+
+Once initialized it opens a Makie plot window and an Electron control window.
+
+We stress that what is plotted is a _real_ orbit diagram with typically millions
+of points being plotted. This means that you can use the data you see
+
+## Interaction
+By using the Electron window you are able to update all parameters of the OD
+interactively (like e.g. `n` or `Ttr`). You have to press `update` after changing
+these parameters. **You you can even decide which variable to get the OD for**,
+by choosing one of the variables from the wheel (this automatically updates).
+
+In the Makie window you can interactively zoom into the OD. Click
+and drag with the left mouse button to select a region in the OD. This region is then
+**re-computed** at a higher resolution (i.e. we don't "just zoom").
+
+Back in the Electron window, you can press `reset` to bring the OD in the original
+state (and variable). Pressing `back` will go back through the history of your exploration
+History is stored when any change happens that affects either the limits of the
+OD or the plotted variable. We do not store history for changing `n` or the transparency.
+
+## Accessing the data
+WIP
+"""
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
     density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
@@ -91,7 +111,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
 
     scplot[Axis][:ticks][:ranges] = ([0, 1], [0, 1])
     scplot[Axis][:ticks][:labels] = (["pmin", "pmax"], ["umin", "umax"])
-    scplot[Axis][:names][:axisnames] = (parname*varidx(p_index), "u"*varidx(i[]))
+    scplot[Axis][:names][:axisnames] = (parname*subscript(p_index), "u"*subscript(i[]))
 
     display(scplot)
     rect = select_rectangle(scplot)
@@ -128,7 +148,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
                 integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0
             )
 
-            scplot[Axis][:names][:axisnames] = (parname, "u"*varidx(j))
+            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(j))
 
             # Update limits
             ⬜pmin[] = pmin; ⬜pmax[] = pmax
@@ -182,7 +202,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             ⬜pmin[] = pmin; ⬜pmax[] = pmax
             ⬜umin[] = xmin; ⬜umax[] = xmax
             # Update labels
-            scplot[Axis][:names][:axisnames] = (parname, "u"*varidx(j))
+            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(j))
         end
     end
 
@@ -190,6 +210,22 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     return od_node
 end
 
+
+"""
+    minimal_normaized_od(integ, i, p_index, pmin, pmax,
+                         density, n, Ttr, u0)
+    minimal_normaized_od(integ, i, p_index, pmin, pmax,
+                         density, n, Ttr, u0, xmin, xmax)
+
+Compute and return a minimal and normalized orbit diagram (OD).
+
+All points are stored in a single vector of `Point2f0` to ensure fastest possible
+plotting. In addition all numbers are scaled to [0, 1]. This allows us to have
+64-bit precision while display is only 32-bit!
+
+The version with `xmin, xmax` only keeps points with limits between the
+real `xmin, xmax` (in the normal units of the dynamical system).
+"""
 function minimal_normaized_od(integ, i, p_index, pmin, pmax,
                               density::Int, n::Int, Ttr::Int, u0)
 
@@ -214,7 +250,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
             end
         end
     end
-    # normalize x values
+    # normalize x values to [0, 1]
     xdif = xmax - xmin
     @inbounds for j in eachindex(od)
         x = od[j][2]; p = od[j][1]
@@ -245,13 +281,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     return od
 end
 
-i = 1
-p_index = 1
-
-systems = [(Systems.logistic(), 3.0, 4.0),
-           (Systems.henon(), 0.8, 1.4),
-           (Systems.standardmap(), 0.6, 1.2)]
-
-ds, p_min, p_max = systems[3]
-
-od_node = interactive_orbitdiagram(ds, i, p_index, p_min, p_max);
+# TODO: fix when typing new axis and then changing variable,
+# always use the value of the boxes
+# TODO: How to access the data?
+# TODO: Use `α` directly after Simon's fix, no need for observe(α)
