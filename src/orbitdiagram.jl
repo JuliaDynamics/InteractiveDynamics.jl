@@ -1,4 +1,4 @@
-using DynamicalSystemsBase, Makie, Interact, Blink, Colors
+using DynamicalSystems, Makie, Interact, Blink, Colors
 
 """
     controlwindow(D, n, Ttr, density, i)
@@ -243,7 +243,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     pdif = pmax - pmin
     od = Vector{Point2f0}() # make this pre-allocated
     xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
-    @inbounds for (j, p) in enumerate(pvalues)
+    #= @inbounds =# for (j, p) in enumerate(pvalues)
         pp = (p - pmin)/pdif # p to plot, in [0, 1]
         DynamicalSystemsBase.reinit!(integ, u0)
         integ.p[p_index] = p
@@ -262,7 +262,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     end
     # normalize x values to [0, 1]
     xdif = xmax - xmin
-    @inbounds for j in eachindex(od)
+    #= @inbounds =# for j in eachindex(od)
         x = od[j][2]; p = od[j][1]
         od[j] = Point2f0(p, (x - xmin)/xdif)
     end
@@ -275,7 +275,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     pvalues = range(pmin, stop = pmax, length = density)
     pdif = pmax - pmin; xdif = xmax - xmin
     od = Vector{Point2f0}()
-    @inbounds for p in pvalues
+    #= @inbounds =# for p in pvalues
         pp = (p - pmin)/pdif # p to plot, in [0, 1]
         DynamicalSystemsBase.reinit!(integ, u0)
         integ.p[p_index] = p

@@ -1,6 +1,8 @@
 module InteractiveChaos
 
-using DynamicalSystems, AbstractPlotting, Makie
+using Reexport
+@reexport using DynamicalSystems
+using AbstractPlotting, Makie
 
 """
     subscript(i::Int)
@@ -20,6 +22,7 @@ function subscript(i::Int)
 end
 
 include("orbitdiagram.jl")
+include("poincareclick.jl")
 
 export interactive_orbitdiagram
 
