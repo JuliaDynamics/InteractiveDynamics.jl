@@ -9,4 +9,4 @@ systems = [(Systems.logistic(), 3.0, 4.0),
 
 ds, p_min, p_max = systems[1]
 
-od_node = interactive_orbitdiagram(ds, i, p_index, p_min, p_max);
+od, pmin, pmax, umin, umax = interactive_orbitdiagram(ds, i, p_index, p_min, p_max);

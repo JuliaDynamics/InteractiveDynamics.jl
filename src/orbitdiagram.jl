@@ -1,4 +1,5 @@
 using DynamicalSystems, Makie, Interact, Blink, Colors
+export interactive_orbitdiagram, scaleod
 
 """
     controlwindow(D, n, Ttr, density, i)
@@ -61,9 +62,6 @@ discrete systems. The functionality works for _any_ discrete system.
 
 Once initialized it opens a Makie plot window and an Electron control window.
 
-We stress that what is plotted is a _real_ orbit diagram with typically millions
-of points being plotted. This means that you can use the data you see
-
 ## Interaction
 By using the Electron window you are able to update all parameters of the OD
 interactively (like e.g. `n` or `Ttr`). You have to press `update` after changing
@@ -80,7 +78,18 @@ History is stored when any change happens that affects either the limits of the
 OD or the plotted variable. We do not store history for changing `n` or the transparency.
 
 ## Accessing the data
-WIP
+What is plotted on the application window is a _true_ orbit diagram, not a plotting
+shorthand. This means that all data are obtainable and usable directly.
+Internally we always scale the orbit diagram to [0,1]² (to allow `Float64` precision
+even though plotting is `Float32`-based. This however means that it is
+necessary to transform the data in real scale. This is done through the function
+[`scaleod`](@ref) which accepts the 5 arguments returned from the current function:
+```
+od, pmin, pmax, umin, umax = interactive_orbitdiagram(...)
+ps, us = scaleod(od, pmin, pmax, umin, umax)
+```
+Notice that the return arguments are `Observable`s but `realdata` isn't. You
+have to recompute it if you make a change but want the new data.
 """
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     i::Int, p_index, p_min, p_max;
@@ -88,17 +97,13 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     parname = "p"
     )
 
-
-    # Initialization
-    integ = integrator(ds, u0)
-    pmin, pmax = p_min, p_max
-
     # UI elements
     n, Ttr, density, i, ▢update, ▢back, ▢reset, α, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax =
     controlwindow(dimension(ds), n, Ttr, density, i)
 
-
     # Initial Orbit diagram data
+    integ = integrator(ds, u0)
+    pmin, pmax = p_min, p_max
     odinit, xmin, xmax = minimal_normaized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
     od_node = Observable(odinit)
     densityinit = density[]; ninit = n[]; Ttrinit = Ttr[]
@@ -217,7 +222,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     end
 
     display(scplot)
-    return od_node
+    return od_node, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
 end
 
 
@@ -291,7 +296,26 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     return od
 end
 
-# TODO: How to access the data
+"""
+    scaleod(od, pmin, pmax, umin, umax) -> ps, us
+Given the return values of [`interactive_orbitdiagram`](@ref), produce
+data scaled correctly in data units. Return the data as a vector of
+parameter values and a vector of corresponding variable values.
+"""
+function scaleod(od, pmin, pmax, umin, umax)
+    oddata = od[]; L = length(oddata);
+    T = promote_type(typeof(umin[]), Float32)
+    ps = zeros(T, L); us = copy(ps)
+    udif = umax[] - umin[]; um = umin[]
+    pdif = pmax[] - pmin[]; pm = pmin[]
+    @inbounds for i ∈ 1:length(oddata)
+        p, u = oddata[i]
+        ps[i] = pm + pdif*p; us[i] = um + udif*u
+    end
+    return ps, us
+end
+
 # TODO: Use `α` directly after Simon's fix, no need for observe(α)
 # TODO: Add exit button that closes both windows
 # TODO: Make history also remember n, Ttr, density
+# TODO: Make marker GLMakie.FastPixel()
