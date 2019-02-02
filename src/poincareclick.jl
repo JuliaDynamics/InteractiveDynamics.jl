@@ -80,12 +80,15 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     ui_ms, ms = AbstractPlotting.textslider(10 .^ range(-6, stop=1, length=1000),
     "markersize", start=0.01)
     scene = Scene(resolution = (1500, 1000))
-    positions_node = Node(data)
+    positions_node = Observable(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
-    colors_node = Node(colors)
+    colors_node = Observable(colors)
     scplot = scatter(positions_node, color = colors_node, markersize = ms)
 
-    # Interactive part:
+    laststate = Observable((u0, color(u0)))
+    # statebutton = AbstractPlotting.button(t, "print state")
+
+    # Interactive clicking on the psos:
     on(events(scplot).mousebuttons) do buttons
         if (ispressed(scplot, Mouse.left) && !ispressed(scplot, Keyboard.space) &&
             AbstractPlotting.is_mouseinside(scplot))
@@ -111,22 +114,34 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
 
             positions = positions_node[]; colors = colors_node[]
             append!(positions, data)
-            append!(colors, (c = color(newstate); [c for i in 1:length(data)]))
+            c = color(newstate)
+            append!(colors, [c for i in 1:length(data)])
 
             # Notify the signals
             positions_node[] = positions; colors_node[] = colors
 
+            # Update last state
+            laststate[] = (newstate, c)
+
             # AbstractPlotting.scatter!(scplot, data; makiekwargs..., color = color(newstate))
+            # display(scene)
         end
-        # display(scene)
-        # return scene
     end
-    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf), scplot, parent=scene)
+
+    # Button to print current state:
+    statebutton = AbstractPlotting.button(Theme(raw = true, camera = campixel!), "latest state")
+    on(statebutton[end][:clicks]) do c
+        u0, col = laststate[]
+        println("Latest state: ")
+        println(u0)
+        println("with color: $(col)")
+    end
+
+    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, statebutton), scplot, parent=scene)
     display(scene)
     return scene
 end
 
 _randomcolor(args...) = RGBf0(rand(Float32), rand(Float32), rand(Float32))
 
-# TODO :
-# Button that prints current initial condition and its color
+# TODO: Better estimate of marker size and last Tfinal

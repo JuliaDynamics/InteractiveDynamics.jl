@@ -3,6 +3,9 @@ Interactive applications for the exploration of chaos. Currently in beta.
 
 [![](https://img.shields.io/badge/docs-latest-blue.svg)](https://JuliaDynamics.github.io/DynamicalSystems.jl/dev)
 
+## Installation
+You have to `add InteractiveChaos`. **Important**: `InteractiveChaos` does not install a plotting backend for you. You have to also install e.g. `Makie, GLMakie, etc.` for it to _actually_ plot!
+
 ## Usage
 The package `InteractiveChaos` is hooked up to the **DynamicalSystems.jl** ecosystem. For usage and documentation please visit the [official documentation page](https://JuliaDynamics.github.io/DynamicalSystems.jl/dev). In this README we only offer a very basic rundown.
 

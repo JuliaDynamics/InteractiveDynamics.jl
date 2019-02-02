@@ -1,4 +1,4 @@
-using InteractiveChaos
+using InteractiveChaos, Makie
 
 ds = Systems.henonheiles()
 

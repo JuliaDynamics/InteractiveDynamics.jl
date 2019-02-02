@@ -19,7 +19,7 @@ function plot_sim(sim; colors=axes(sim, 1), idxs=[1,2])
     get_color(i) = AbstractPlotting.interpolated_getindex(colormap, colors[i], extrema(colors))
     series_alpha = map(eachindex(sim)) do i
         simᵢ = sim[i]
-        alpha = Node(1.0)
+        alpha = Observable(1.0)
         if length(sim[i]) ≠ 0
             cmap = lift(α-> RGBAf0.(color.(fill(get_color(i), size(simᵢ, 1))), α), alpha)
             scatter!(data, [Point2f0(simᵢ[i, idxs[1]], simᵢ[i, idxs[2]]) for i in axes(simᵢ, 1)],
@@ -41,7 +41,7 @@ and return the scene together with the αs.
 """
 function plot_hist(hist)
     cmap = to_colormap(:viridis, length(hist.weights))
-    hist_α = [Node(1.) for i in cmap]
+    hist_α = [Observable(1.) for i in cmap]
     bincolor(αs...) = RGBAf0.(color.(cmap), αs)
     colors = lift(bincolor, hist_α...)
     hist_sc = plot(hist, color=colors)
@@ -74,12 +74,12 @@ end
 
 """
     setup_click(scene, idx=1)
-Give a `scene` return a `Node` that listens to left clicks inside the scene.
+Give a `scene` return a `Observable` that listens to left clicks inside the scene.
 The `idx` argument is used to index the tuple `(plt, click_idx)` which gives
 the selected plot and the index of the selected element in the plot.
 """
 function setup_click(scene, idx=1)
-    selection = Node{Any}(0)
+    selection = Observable{Any}(0)
     on(scene.events.mousebuttons) do buttons
         if ispressed(scene, Mouse.left) && AbstractPlotting.is_mouseinside(scene)
             plt, click_idx = AbstractPlotting.mouse_selection(scene)
