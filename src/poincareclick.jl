@@ -1,4 +1,3 @@
-const CDS = DynamicalSystemsBase.CDS
 export interactivepsos
 
 """
@@ -45,7 +44,7 @@ This will be properly handled instead of breaking the application.
 This `newstate` is also given to the function `color` that
 gets a new color for the new points.
 """
-function interactivepsos(ds::CDS{IIP, S, D}, plane, idxs, complete;
+function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
                          # PSOS kwargs:
                          direction = -1, Ttr::Real = 0.0,
                          tfinal = 10 .^ range(3, stop = 6, length = 100),
@@ -67,25 +66,23 @@ function interactivepsos(ds::CDS{IIP, S, D}, plane, idxs, complete;
     integ = integrator(ds, u0; diffeq...)
     planecrossing = ChaosTools.PlaneCrossing{D}(plane, direction > 0 )
     f = (t) -> planecrossing(integ(t))
-
     i = SVector{2, Int}(idxs)
     data = ChaosTools._initialize_output(get_state(ds), i)
 
     # Integration time slider:
     ui_tf, tf = AbstractPlotting.textslider(tfinal, "tfinal", start=tfinal[1])
 
-
+    # Initial Section
     ChaosTools.poincare_cross!(data, integ, f, planecrossing, tf[], Ttr, i, rootkw)
     length(data) == 0 && @warn ChaosTools.PSOS_ERROR
 
-    # Create the first trajectory on the section:
+    # Plot the first trajectory on the section:
     ui_ms, ms = AbstractPlotting.textslider(10 .^ range(-6, stop=1, length=1000),
     "markersize", start=0.01)
     scene = Makie.Scene(resolution = (1500, 1000))
     positions_node = Makie.Node(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
     colors_node = Makie.Node(colors)
-
     scplot = Makie.scatter(positions_node, color = colors_node, markersize = ms)
 
     # Interactive part:
@@ -132,4 +129,4 @@ end
 _randomcolor(args...) = RGBf0(rand(Float32), rand(Float32), rand(Float32))
 
 # TODO :
-# Button that prints current initial condition
+# Button that prints current initial condition and its color

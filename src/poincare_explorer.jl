@@ -1,4 +1,4 @@
-using AbstractPlotting, GLMakie
+using AbstractPlotting, Makie
 using StatsBase
 using StatsMakie
 using Colors: color
