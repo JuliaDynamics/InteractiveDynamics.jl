@@ -19,11 +19,11 @@ during interactive use, see below.
 * `tfinal` : A range of values for the total integration time (chosen interactively).
 * `color` : A *function* of the system's initial condition, that returns a color to
   plot the new points with. A random color is chosen by default.
-* `makiekwargs` : A `NamedTuple` of keyword arguments passed to `Makie.scatter`.
+* `makiekwargs` : A `NamedTuple` of keyword arguments passed to `AbstractPlotting.scatter`.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
 ## Interaction
-The application is a standard Makie scatterplot, which shows the PSOS of the system,
+The application is a standard AbstractPlotting scatterplot, which shows the PSOS of the system,
 initially using the system's `u0`. Two sliders control the final evolution time and
 the size of the marker points.
 
@@ -49,7 +49,7 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
                          direction = -1, Ttr::Real = 0.0,
                          tfinal = 10 .^ range(3, stop = 6, length = 100),
                          rootkw = (xrtol = 1e-6, atol = 1e-6),
-                         # Makie kwargs:
+                         # AbstractPlotting kwargs:
                          color = _randomcolor, resolution = (750, 750),
                          makiekwargs = (markersize = 0.005,),
                          # DiffEq kwargs:
@@ -79,11 +79,11 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     # Plot the first trajectory on the section:
     ui_ms, ms = AbstractPlotting.textslider(10 .^ range(-6, stop=1, length=1000),
     "markersize", start=0.01)
-    scene = Makie.Scene(resolution = (1500, 1000))
-    positions_node = Makie.Node(data)
+    scene = Scene(resolution = (1500, 1000))
+    positions_node = Node(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
-    colors_node = Makie.Node(colors)
-    scplot = Makie.scatter(positions_node, color = colors_node, markersize = ms)
+    colors_node = Node(colors)
+    scplot = scatter(positions_node, color = colors_node, markersize = ms)
 
     # Interactive part:
     on(events(scplot).mousebuttons) do buttons
@@ -116,12 +116,12 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
             # Notify the signals
             positions_node[] = positions; colors_node[] = colors
 
-            # Makie.scatter!(scplot, data; makiekwargs..., color = color(newstate))
+            # AbstractPlotting.scatter!(scplot, data; makiekwargs..., color = color(newstate))
         end
         # display(scene)
         # return scene
     end
-    Makie.hbox(Makie.vbox(ui_ms, ui_tf), scplot, parent=scene)
+    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf), scplot, parent=scene)
     display(scene)
     return scene
 end

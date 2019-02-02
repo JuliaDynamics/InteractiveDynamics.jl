@@ -2,7 +2,7 @@ module InteractiveChaos
 
 using Reexport
 @reexport using DynamicalSystems
-using AbstractPlotting, Makie
+using AbstractPlotting, Observables
 
 """
     subscript(i::Int)
@@ -10,7 +10,7 @@ Transform `i` to a string that has `i` as a subscript.
 """
 function subscript(i::Int)
     if i < 0
-        subscript(-i)
+        "₋"*subscript(-i)
     elseif i == 1
         "₁"
     elseif i == 2

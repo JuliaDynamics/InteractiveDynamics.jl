@@ -1,4 +1,4 @@
-using DynamicalSystems, Makie, Interact, Blink, Colors
+using Interact, Blink, Colors
 export interactive_orbitdiagram, scaleod
 
 """
