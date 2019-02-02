@@ -15,8 +15,11 @@ that `plane[1] ∉ idxs` must be true.
 during interactive use, see below.
 
 ## Keyword Arguments
-* `direction, Ttr, rootkw` : Same use as in [`poincaresos`](@ref).
-* `tfinal` : A range of values for the total integration time (chosen interactively).
+* `direction, rootkw` : Same use as in [`poincaresos`](@ref).
+* `tfinal` : A 2-element tuple for the range of values for the total integration time
+  (chosen interactively).
+* `Ttr` : A 2-element tuple for the range of values for the transient integration time
+  (chosen interactively).
 * `color` : A *function* of the system's initial condition, that returns a color to
   plot the new points with. A random color is chosen by default.
 * `makiekwargs` : A `NamedTuple` of keyword arguments passed to `AbstractPlotting.scatter`.
@@ -46,8 +49,9 @@ gets a new color for the new points.
 """
 function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
                          # PSOS kwargs:
-                         direction = -1, Ttr::Real = 0.0,
-                         tfinal = 10 .^ range(3, stop = 6, length = 100),
+                         direction = -1,
+                         Ttr = (0.0, 1000.0),
+                         tfinal = (1000.0, 10.0^4),
                          rootkw = (xrtol = 1e-6, atol = 1e-6),
                          # AbstractPlotting kwargs:
                          color = _randomcolor, resolution = (750, 750),
@@ -69,11 +73,16 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     i = SVector{2, Int}(idxs)
     data = ChaosTools._initialize_output(get_state(ds), i)
 
-    # Integration time slider:
-    ui_tf, tf = AbstractPlotting.textslider(tfinal, "tfinal", start=tfinal[1])
+    # Time sliders:
+    ui_tf, tf = AbstractPlotting.textslider(
+        range(tfinal[1], tfinal[2], length = 1000), "tfinal", start=tfinal[1]
+    )
+    ui_ttr, Ttr = AbstractPlotting.textslider(
+        range(Ttr[1], Ttr[2], length = 100), "Ttr", start=Ttr[1]
+    )
 
     # Initial Section
-    ChaosTools.poincare_cross!(data, integ, f, planecrossing, tf[], Ttr, i, rootkw)
+    ChaosTools.poincare_cross!(data, integ, f, planecrossing, tf[], Ttr[], i, rootkw)
     length(data) == 0 && @warn ChaosTools.PSOS_ERROR
 
     # Plot the first trajectory on the section:
@@ -109,7 +118,7 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
 
             data = ChaosTools._initialize_output(integ.u, i)
             ChaosTools.poincare_cross!(
-                data, integ, f, planecrossing, tf[], Ttr, i, rootkw
+                data, integ, f, planecrossing, tf[], Ttr[], i, rootkw
             )
 
             positions = positions_node[]; colors = colors_node[]
@@ -137,7 +146,7 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
         println("with color: $(col)")
     end
 
-    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, statebutton), scplot, parent=scene)
+    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, ui_ttr, statebutton), scplot, parent=scene)
     display(scene)
     return scene
 end
