@@ -3,12 +3,13 @@ export interactivepsos
 """
     interactivepsos(cds, plane, idxs, complete; kwargs...)
 Open an interactive application for exploring a Poincaré surface of section (PSOS)
-of the continuous dynamical system `cds`.
+of the continuous dynamical system `cds`. Return an observable containing the
+latest initial state created by `complete`, as well as its color.
 
 The `plane` can only be the `Tuple` type accepted by [`poincaresos`](@ref),
 i.e. `(i, r)` for the `i`th variable crossing the value `r`. `idxs` gives the two
 indices of the variables to be displayed, since the PSOS plot is always a 2D scatterplot.
-I.e. `idxs = (1, 2)` will plot the 1st versus second variable of the PSOS. It follows
+I.e. `idxs = (1, 2)` will plot the 1st versus 2nd variable of the PSOS. It follows
 that `plane[1] ∉ idxs` must be true.
 
 `complete` is a three-argument **function** that completes the new initial state
@@ -55,7 +56,8 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
                          rootkw = (xrtol = 1e-6, atol = 1e-6),
                          # AbstractPlotting kwargs:
                          color = _randomcolor, resolution = (750, 750),
-                         makiekwargs = (markersize = 0.005,),
+                         makiekwargs = (),
+                         markersizes = (-4, -1),
                          # DiffEq kwargs:
                          diffeq...) where {IIP, S, D}
 
@@ -86,8 +88,8 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     length(data) == 0 && @warn ChaosTools.PSOS_ERROR
 
     # Plot the first trajectory on the section:
-    ui_ms, ms = AbstractPlotting.textslider(10 .^ range(-6, stop=1, length=1000),
-    "markersize", start=0.01)
+    ui_ms, ms = AbstractPlotting.textslider(range(10.0^markersizes[1], 10.0^markersizes[2];
+    length = 1000), "size", start=10.0^(markersizes[2]-1))
     scene = Scene(resolution = (1500, 1000))
     positions_node = Observable(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
@@ -109,10 +111,9 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
             newstate = try
                complete(x, y, z)
             catch err
-               @error "Could not get state, got error:" exception=err
+               @error "Could not get state, got error: " exception=err
                return
             end
-            @assert length(newstate) == D
 
             reinit!(integ, newstate)
 
@@ -148,7 +149,7 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
 
     AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, ui_ttr, statebutton), scplot, parent=scene)
     display(scene)
-    return scene
+    return laststate
 end
 
 _randomcolor(args...) = RGBf0(rand(Float32), rand(Float32), rand(Float32))
