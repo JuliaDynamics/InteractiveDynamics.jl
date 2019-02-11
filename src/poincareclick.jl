@@ -67,13 +67,11 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     @assert plane[1] ∉ idxs
     u0 = get_state(ds)
 
-    # This is the internal code of poincaresos. We use the integrator directly!
+    # This is the low-level call of poincaresos:
     ChaosTools._check_plane(plane, D)
     integ = integrator(ds, u0; diffeq...)
-    planecrossing = ChaosTools.PlaneCrossing{D}(plane, direction > 0 )
-    f = (t) -> planecrossing(integ(t))
+    planecrossing = PlaneCrossing(plane, direction > 0)
     i = SVector{2, Int}(idxs)
-    data = ChaosTools._initialize_output(get_state(ds), i)
 
     # Time sliders:
     ui_tf, tf = AbstractPlotting.textslider(
@@ -84,8 +82,8 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     )
 
     # Initial Section
-    ChaosTools.poincare_cross!(data, integ, f, planecrossing, tf[], Ttr[], i, rootkw)
-    length(data) == 0 && @warn ChaosTools.PSOS_ERROR
+    data = poincaresos(integ, planecrossing, tf[], Ttr[], i, rootkw)
+    length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 
     # Plot the first trajectory on the section:
     ui_ms, ms = AbstractPlotting.textslider(range(10.0^markersizes[1], 10.0^markersizes[2];
@@ -97,7 +95,6 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
     scplot = scatter(positions_node, color = colors_node, markersize = ms)
 
     laststate = Observable((u0, color(u0)))
-    # statebutton = AbstractPlotting.button(t, "print state")
 
     # Interactive clicking on the psos:
     on(events(scplot).mousebuttons) do buttons
@@ -117,10 +114,7 @@ function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, 
 
             reinit!(integ, newstate)
 
-            data = ChaosTools._initialize_output(integ.u, i)
-            ChaosTools.poincare_cross!(
-                data, integ, f, planecrossing, tf[], Ttr[], i, rootkw
-            )
+            data = poincaresos(integ, planecrossing, tf[], Ttr[], i, rootkw)
 
             positions = positions_node[]; colors = colors_node[]
             append!(positions, data)
