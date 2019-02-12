@@ -5,6 +5,7 @@ ds = Systems.henonheiles()
 potential(x, y) = 0.5(x^2 + y^2) + (x^2*y - (y^3)/3)
 energy(x,y,px,py) = 0.5(px^2 + py^2) + potential(x,y)
 const E = energy(get_state(ds)...)
+
 function complete(y, py, x)
     V = potential(x, y)
     Ky = 0.5*(py^2)
@@ -19,5 +20,4 @@ stable = [0., 0.1, 0.5, 0.]
 
 plane = (1, 0.0)
 
-psos = interactivepsos(ds, plane, (2, 4), complete;
-markersizes = (-5, -1))
+psos = interactivepsos(ds, plane, (2, 4), complete; markersizes = (-5, -1))

@@ -23,7 +23,6 @@ during interactive use, see below.
   (chosen interactively).
 * `color` : A *function* of the system's initial condition, that returns a color to
   plot the new points with. A random color is chosen by default.
-* `makiekwargs` : A `NamedTuple` of keyword arguments passed to `AbstractPlotting.scatter`.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
 ## Interaction
