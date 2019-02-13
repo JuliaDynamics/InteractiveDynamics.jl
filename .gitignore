@@ -4,4 +4,3 @@
 docs/build
 update*
 Manifest.toml
-examples/interactive_od.jl

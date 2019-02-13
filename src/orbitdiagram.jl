@@ -157,6 +157,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             # Update history and controls
             push!(history, (j, pmin, pmax, xmin, xmax, m, T, d))
             update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
+            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(i[]))
         end
     end
 
