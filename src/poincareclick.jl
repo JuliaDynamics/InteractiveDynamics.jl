@@ -1,7 +1,7 @@
-export interactivepsos
+export interactive_poincaresos
 
 """
-    interactivepsos(cds, plane, idxs, complete; kwargs...)
+    interactive_poincaresos(cds, plane, idxs, complete; kwargs...)
 Open an interactive application for exploring a Poincaré surface of section (PSOS)
 of the continuous dynamical system `cds`. Return an observable containing the
 latest initial state created by `complete`, as well as its color.
@@ -47,7 +47,7 @@ This will be properly handled instead of breaking the application.
 This `newstate` is also given to the function `color` that
 gets a new color for the new points.
 """
-function interactivepsos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
+function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
                          # PSOS kwargs:
                          direction = -1,
                          Ttr = (0.0, 1000.0),

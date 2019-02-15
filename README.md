@@ -13,5 +13,5 @@ The functionality of `InteractiveChaos` is contained in individual functions all
 
 For example, some of the functions that you can use are:
 
-* `interactivepsos(cds, plane, idxs, complete; kwargs...)` : interactive Poincare surface of section.
+* `interactive_poincaresos(cds, plane, idxs, complete; kwargs...)` : interactive Poincare surface of section.
 * `interactive_orbitdiagram(dds, i, p_index, p_min, p_max; kwargs...)` : interactive orbit diagram.
