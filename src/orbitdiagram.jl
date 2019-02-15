@@ -65,7 +65,7 @@ Once initialized it opens a Makie plot window and an Electron control window.
 ## Interaction
 By using the Electron window you are able to update all parameters of the OD
 interactively (like e.g. `n` or `Ttr`). You have to press `update` after changing
-these parameters. You you can even decide which variable to get the OD for,
+these parameters. You can even decide which variable to get the OD for,
 by choosing one of the variables from the wheel (again, press `update` afterwards).
 
 In the Makie window you can interactively zoom into the OD. Click
