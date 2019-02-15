@@ -42,7 +42,7 @@ is defined on. To be more exact, this is how the function is called:
 x, y = mouseclick; z = plane[2]
 newstate = complete(x, y, z)
 ```
-The `complete` function can throw an error for ill-condition `x, y, z`.
+The `complete` function can throw an error for ill-conditioned `x, y, z`.
 This will be properly handled instead of breaking the application.
 This `newstate` is also given to the function `color` that
 gets a new color for the new points.
