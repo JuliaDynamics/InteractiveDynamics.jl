@@ -21,6 +21,8 @@ during interactive use, see below.
   (chosen interactively).
 * `Ttr` : A 2-element tuple for the range of values for the transient integration time
   (chosen interactively).
+* `markersizes = (-4, -1)` : A 2-element tuple for the range of the marker sizes
+  (which scale exponentially: the actual size is `10.0^markersize`).
 * `color` : A *function* of the system's initial condition, that returns a color to
   plot the new points with. A random color is chosen by default.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
@@ -85,8 +87,10 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
     length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 
     # Plot the first trajectory on the section:
-    ui_ms, ms = AbstractPlotting.textslider(range(10.0^markersizes[1], 10.0^markersizes[2];
-    length = 1000), "size", start=10.0^(markersizes[2]-1))
+    ui_ms, mss = AbstractPlotting.textslider(range(markersizes[1], markersizes[2];
+    length = 100), "size", start = markersizes[2])
+    ms = lift(a -> 10.0^a, mss)
+
     scene = Scene(resolution = (1500, 1000))
     positions_node = Observable(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
