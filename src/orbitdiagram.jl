@@ -101,7 +101,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     # Initial Orbit diagram data
     integ = integrator(ds, u0)
     pmin, pmax = p_min, p_max
-    odinit, xmin, xmax = minimal_normaized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
+    odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
     od_node = Observable(odinit)
     densityinit = density[]; ninit = n[]; Ttrinit = Ttr[]
 
@@ -132,7 +132,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         xmin = sxmin*xdif + pxmin
         xmax = sxmax*xdif + pxmin
 
-        od_node[] = minimal_normaized_od(
+        od_node[] = minimal_normalized_od(
             integ, j,  p_index, pmin, pmax,
             density[], n[], Ttr[], u0, xmin, xmax
         )
@@ -151,7 +151,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
             pmin, pmax, xmin, xmax = ⬜pmin[], ⬜pmax[], ⬜umin[], ⬜umax[]
             j, m, T, d = i[], n[], Ttr[], density[]
 
-            od_node[] = minimal_normaized_od(
+            od_node[] = minimal_normalized_od(
             integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0, xmin, xmax
             )
             # Update history and controls
@@ -178,7 +178,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         if length(history) > 1
             pop!(history)
             j, pmin, pmax, xmin, xmax, m, T, d = history[end]
-            od_node[] = minimal_normaized_od(
+            od_node[] = minimal_normalized_od(
                 integ, j, p_index, pmin, pmax, d, m, T, u0, xmin, xmax
             )
             # Update limits in textboxes
@@ -193,9 +193,9 @@ end
 
 
 """
-    minimal_normaized_od(integ, i, p_index, pmin, pmax,
+    minimal_normalized_od(integ, i, p_index, pmin, pmax,
                          density, n, Ttr, u0)
-    minimal_normaized_od(integ, i, p_index, pmin, pmax,
+    minimal_normalized_od(integ, i, p_index, pmin, pmax,
                          density, n, Ttr, u0, xmin, xmax)
 
 Compute and return a minimal and normalized orbit diagram (OD).
@@ -207,7 +207,7 @@ plotting. In addition all numbers are scaled to [0, 1]. This allows us to have
 The version with `xmin, xmax` only keeps points with limits between the
 real `xmin, xmax` (in the normal units of the dynamical system).
 """
-function minimal_normaized_od(integ, i, p_index, pmin, pmax,
+function minimal_normalized_od(integ, i, p_index, pmin, pmax,
                               density::Int, n::Int, Ttr::Int, u0)
 
     pvalues = range(pmin, stop = pmax, length = density)
@@ -240,7 +240,7 @@ function minimal_normaized_od(integ, i, p_index, pmin, pmax,
     return od, xmin, xmax
 end
 
-function minimal_normaized_od(integ, i, p_index, pmin, pmax,
+function minimal_normalized_od(integ, i, p_index, pmin, pmax,
                               density::Int, n::Int, Ttr::Int, u0, xmin, xmax)
 
     pvalues = range(pmin, stop = pmax, length = density)

@@ -6,14 +6,14 @@ ds, pmin, pmax = Systems.standardmap(), 0.6, 1.2
 integ = integrator(ds)
 
 for i in 1:2
-od, xmin, xmax = InteractiveChaos.minimal_normaized_od(integ, i, p_index, pmin, pmax,
+od, xmin, xmax = InteractiveChaos.minimal_normalized_od(integ, i, p_index, pmin, pmax,
                  100, 100, 100, get_state(ds))
 
 @test xmin ≥ 0
 @test xmax ≤ 2π
 end
 
-od, xmin, xmax = InteractiveChaos.minimal_normaized_od(integ, 1, p_index, pmin, pmax,
+od, xmin, xmax = InteractiveChaos.minimal_normalized_od(integ, 1, p_index, pmin, pmax,
                  100, 100, 100, get_state(ds))
 
 # Now to simulate selecting a rectangle:
@@ -25,7 +25,7 @@ on(rect) do r
     pmin, xmin = r.origin
     pmax, xmax = r.origin + r.widths
 
-    OD[] = InteractiveChaos.minimal_normaized_od(
+    OD[] = InteractiveChaos.minimal_normalized_od(
         integ, 1,  p_index, pmin, pmax,
         100, 100, 100, get_state(ds), xmin, xmax
     )
