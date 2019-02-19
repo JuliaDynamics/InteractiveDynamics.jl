@@ -38,7 +38,7 @@ trs = Dataset{3, Float64}[]
     reinit!(tinteg, u, orthonormal(4,4))
     push!(regularity, gali(tinteg, tgali, 1, 1e-12)[2][end]/tgali)
     push!(psos, poincaresos(ds, (1, 0.0), 2000.0; u0 = u, idxs = [2, 4]))
-    tr = trajectory(ds, 100.0, u)[:, [1, 2, 4]]
+    tr = trajectory(ds, 200.0, u)[:, [1, 2, 4]]
     push!(trs, tr)
 end
 
@@ -46,7 +46,7 @@ end
 
 # poincare_explorer(psos, regularity; nbins = 10, α = 0.01)
 
-poincare_explorer(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.1, linewidth = 2.0, transparency = true)
+poincare_explorer(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.01, linewidth = 2.0)
 
 
 # %%

@@ -30,9 +30,9 @@ as well as the histogram bin that contains its value. Clicking on empty
 space will reset the highlighting.
 
 ## Keyword Arguments
-* `nbins=50, closed=:left` : used in histogram.
+* `nbins = 10, closed = :left` : used in producing the histogram.
 * `α = 0.05` : the alpha value of the hidden data.
-* `hα = 0.4` : the alpha value of the hidden histogram bins. (WIP)
+* `hα = 0.4` : the alpha value of the hidden histogram bins.
 * `cmap = :viridis` : the colormap used.
 * `kwargs...` : Anything else is propagated to `plot_dataset(data)`.
 """
@@ -62,8 +62,8 @@ function poincare_explorer(datasets, vals;
     selected_plot = setup_click(scatter_sc, 1)
     hist_idx = setup_click(hist_sc, 2)
 
-    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist, α)
-    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed, α = α)
+    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist, α, hα)
+    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed, α = α, hα = hα)
 
     return sc
 end
@@ -152,7 +152,7 @@ set back to 1.
 """
 function select_series(scene, selected_plot, scatter_α,
                        hist_α, data, hist,
-                       α = DEFAULT_α
+                       α = DEFAULT_α, hα = 0.2
                        )
     series_idx = map(get_series_idx, selected_plot, scene)
     on(series_idx) do i
@@ -161,7 +161,7 @@ function select_series(scene, selected_plot, scatter_α,
             change_α(scatter_α, setdiff(axes(scatter_α, 1), i - 1), α)
             selected_bin = bin_with_val(data[i-1], hist)
             hist_α[selected_bin][] = 1.0
-            change_α(hist_α, setdiff(axes(hist_α, 1), selected_bin), α)
+            change_α(hist_α, setdiff(axes(hist_α, 1), selected_bin), hα)
         else
             change_α(scatter_α, axes(scatter_α, 1), 1.0)
             change_α(hist_α, axes(hist_α, 1), 1.0)
@@ -176,12 +176,12 @@ Setup a selection of a histogram bin and the corresponding series in the
 scatter plot. See also [`select_series`](@ref).
 """
 function select_bin(hist_idx, hist, hist_α, scatter_α, data;
-    closed=:left, α = DEFAULT_α)
+    closed=:left, α = DEFAULT_α, hα = 0.2)
 
     on(hist_idx) do i
         if i ≠ 0
             hist_α[i][] = 1.0
-            change_α(hist_α, setdiff(axes(hist.weights, 1), i), α)
+            change_α(hist_α, setdiff(axes(hist.weights, 1), i), hα)
             change_α(scatter_α, idxs_in_bin(i, hist, data, closed=closed), 1.0)
             change_α(scatter_α, setdiff(
                 axes(scatter_α, 1), idxs_in_bin(i, hist, data, closed=closed)
