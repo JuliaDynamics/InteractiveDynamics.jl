@@ -20,13 +20,17 @@ on the histogram plot will reset highlighting. Clicking
 ## Keyword Arguments
 * `nbins=50, closed=:left` used in histogram.
 * `α = 0.05` : the alpha value when hidden.
+* `cmap = :viridis` : the colormap.
 """
-function poincare_explorer(sim, vals; nbins=50, closed=:left)
+function poincare_explorer(sim, vals;
+    nbins=50, closed=:left, α = 0.05,
+    cmap = :viridis)
+
     hist = fit(StatsBase.Histogram, vals, nbins=nbins, closed=closed)
 
     colors = Float32.(axes(hist.weights, 1))
 
-    scatter_sc_with_ui, scatter_α = plot_datasets(sim, colors=vals)
+    scatter_sc_with_ui, scatter_α = plot_datasets(sim, values=vals)
     scatter_sc = scatter_sc_with_ui.children[2]
 
     hist_sc, hist_α = plot_histogram(hist)
@@ -44,26 +48,27 @@ end
 
 
 """
-    plot_datasets(sim; colors=axes(sim, 1), idxs=[1,2])
-This function considers the `sim` variable as a vector of arrays and creates
-a 2D scatter plot where each element of `sim` is considered as a separate series.
+    plot_datasets(datasets; values=axes(datasets, 1), idxs=[1,2])
+This function considers the `datasets` variable as a vector of arrays and creates
+a 2D scatter plot where each element of `datasets` is considered as a separate series.
 In order to change the transparency(α) of a given plot a vector of `Observable`s is used.
 Each series has an individual plot and an entry in the `series_alpha` vector.
 The function also adds a slider to the scatter plot, which controls the size of
 the points. The function returns the `scene` and `series_alpha`.
 """
-function plot_datasets(sim; colors=axes(sim, 1), idxs=[1,2])
+function plot_datasets(datasets; values=axes(datasets, 1), idxs=[1,2])
     ui, ms = AbstractPlotting.textslider(range(0.001, stop=1., length=1000), "scale", start=0.05)
     data = Scene()
-    colormap = to_colormap(:viridis, size(sim, 1))
-    get_color(i) = AbstractPlotting.interpolated_getindex(colormap, colors[i], extrema(colors))
-    series_alpha = map(eachindex(sim)) do i
-        simᵢ = sim[i]
+    colormap = to_colormap(:viridis, size(datasets, 1))
+    get_color(i) = AbstractPlotting.interpolated_getindex(colormap, values[i], extrema(values))
+
+    series_alpha = map(eachindex(datasets)) do i
+        dataset = datasets[i]
         alpha = Observable(1.0)
-        if length(sim[i]) ≠ 0
-            cmap = lift(α-> RGBAf0.(color.(fill(get_color(i), size(simᵢ, 1))), α), alpha)
-            scatter!(data, [Point2f0(simᵢ[i, idxs[1]], simᵢ[i, idxs[2]]) for i in axes(simᵢ, 1)],
-            colormap=cmap, color=fill(colors[i], size(simᵢ, 1)), markersize=ms)
+        if length(datasets[i]) ≠ 0
+            cmap = lift(α-> RGBAf0.(color.(fill(get_color(i), size(dataset, 1))), α), alpha)
+            scatter!(data, [Point2f0(dataset[i, idxs[1]], dataset[i, idxs[2]]) for i in axes(dataset, 1)],
+            colormap=cmap, color=fill(values[i], size(dataset, 1)), markersize=ms)
         end
         alpha
     end
