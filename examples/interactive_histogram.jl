@@ -32,22 +32,27 @@ ics = generate_ics(E, density)
 tinteg = tangent_integrator(ds, 4)
 
 regularity = Float64[]; psos = Dataset{2, Float64}[]
+trs = Dataset{3, Float64}[]
 @time for u in ics
     # compute gali (using advanced usage)
     reinit!(tinteg, u, orthonormal(4,4))
     push!(regularity, gali(tinteg, tgali, 1, 1e-12)[2][end]/tgali)
     push!(psos, poincaresos(ds, (1, 0.0), 2000.0; u0 = u, idxs = [2, 4]))
+    tr = trajectory(ds, 30.0, u)[:, [1, 2, 4]]
+    push!(trs, tr)
 end
 
 # %%
 
-poincare_explorer(psos, regularity; nbins = 10, α = 0.01)
+# poincare_explorer(psos, regularity; nbins = 10, α = 0.01)
+
+poincare_explorer(trs, regularity; nbins = 10, α = 0.2, linewidth = 4.0)
 
 
 # %%
-using InteractiveChaos, Makie
-N = 100
-sim = [rand(50,2) for i=1:N]
-vals = rand(N)
-
-poincare_explorer(sim, vals; nbins = 10)
+# using InteractiveChaos, Makie
+# N = 100
+# sim = [rand(50,2) for i=1:N]
+# vals = rand(N)
+#
+# poincare_explorer(sim, vals; nbins = 10)

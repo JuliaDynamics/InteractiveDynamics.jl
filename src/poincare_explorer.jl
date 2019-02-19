@@ -8,21 +8,32 @@ const DEFAULT_α = 0.01
 
 """
     data_highlighter(datasets, vals; kwargs...)
-Open an interactive application for exploring average properties of
-trajectories.
+Open an interactive application for highlighting specific datasets
+and properties of these datasets. `datasets` is a vector of _anything_ from
+**DynamicalSystems.jl** that supports `plot_dataset` (currently `Dataset`
+or `Matrix`). Each dataset corresponds to a specific value from `vals`
+(a `Vector{<:Real}`). The value of `vals` gives each dataset
+a specific color based on a colormap.
 
-The left window plots the datasets, while the right window plots
-the histogram of the `vals`.
+The application is composed of two windows: the left window plots the datasets,
+while the right window plots the histogram of the `vals`.
 
 ## Interaction
 Clicking on a bin of the histogram plot will "highlight" all data
-whose `value` belongs in that bin. Clicking on empty space
-on the histogram plot will reset highlighting. Clicking
+whose value belongs in that bin. Here highlighting actually means "hidding"
+(i.e. reducing their alpha plot value) all other data besides the ones you want
+to highlight. Clicking on empty space on the histogram plot will reset
+highlighting.
+
+Clicking on a plot series in the left window will highlight this series
+as well as the histogram bin that contains its value. Clicking on empty
+space will reset the highlighting.
 
 ## Keyword Arguments
-* `nbins=50, closed=:left` used in histogram.
-* `α = 0.05` : the alpha value when hidden.
-* `cmap = :viridis` : the colormap.
+* `nbins=50, closed=:left` : used in histogram.
+* `α = 0.05` : the alpha value of the hidden data.
+* `cmap = :viridis` : the colormap used.
+* `kwargs...` : Anything else is propagated to `plot_dataset(data)`.
 """
 function poincare_explorer(datasets, vals;
     nbins=50, closed=:left, α = 0.05,
@@ -39,7 +50,7 @@ function poincare_explorer(datasets, vals;
     # The colors are observables; the transparency can be changed
     scatter_α = [Observable(1.0) for i in 1:N]
     colors = [lift(α -> RGBAf0(get_color(i), α), scatter_α[i]) for i ∈ 1:N]
-    scatter_sc = plot_datasets(datasets, colors)
+    scatter_sc = plot_datasets(datasets, colors; kwargs...)
 
     # now time for the histogram:
     hist = fit(StatsBase.Histogram, vals, nbins=nbins, closed=closed)
