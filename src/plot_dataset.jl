@@ -12,7 +12,7 @@ function plot_dataset!(scene, data::Matrix, color = :black; kwargs...)
 end
 function plot_dataset!(scene, data::Dataset{3}, color = :black; kwargs...)
     makiedata = [Point3f0(d) for d in data]
-    lines!(scene, makiedata; color = color, linewidth = 2.5, kwargs...)
+    lines!(scene, makiedata; color = color, transparency = true, linewidth = 2.0, kwargs...)
     return scene
 end
 

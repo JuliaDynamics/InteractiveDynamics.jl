@@ -32,12 +32,13 @@ space will reset the highlighting.
 ## Keyword Arguments
 * `nbins=50, closed=:left` : used in histogram.
 * `α = 0.05` : the alpha value of the hidden data.
+* `hα = 0.4` : the alpha value of the hidden histogram bins. (WIP)
 * `cmap = :viridis` : the colormap used.
 * `kwargs...` : Anything else is propagated to `plot_dataset(data)`.
 """
 function poincare_explorer(datasets, vals;
     nbins=50, closed=:left, α = 0.05,
-    cmap = :viridis)
+    cmap = :viridis, hα = 0.2, kwargs...)
 
     N = length(datasets)
     N == length(vals) || error("data and value must have equal length")
