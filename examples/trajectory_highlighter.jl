@@ -23,7 +23,7 @@ function generate_ics(E, n)
     return ics
 end
 
-density = 10
+density = 15
 tfinal = 2000.0
 tgali = 1000.0
 E = energy(ds.u0...)
@@ -44,9 +44,10 @@ end
 
 # %%
 
-# trajectory_highlighter(psos, regularity; nbins = 10, α = 0.01)
+trajectory_highlighter(psos, regularity; nbins = 10, α = 0.01, hname = "regularity")
 
-trajectory_highlighter(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.01, linewidth = 2.0)
+# trajectory_highlighter(trs[1:10:end], regularity[1:10:end];
+# nbins = 10, α = 0.01, linewidth = 2.0, hname = "regularity")
 
 
 # %%
