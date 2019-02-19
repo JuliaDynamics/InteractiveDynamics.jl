@@ -40,6 +40,7 @@ end
 
 include("orbitdiagram.jl")
 include("poincareclick.jl")
+include("poincare_explorer.jl")
 
 export interactive_orbitdiagram
 

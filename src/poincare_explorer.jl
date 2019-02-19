@@ -1,10 +1,50 @@
-using AbstractPlotting, Makie
+using AbstractPlotting, Observables
 using StatsBase
 using StatsMakie
 using Colors: color
+export poincare_explorer
 
 """
-    plot_sim(sim; colors=axes(sim, 1), idxs=[1,2])
+    data_highlighter(datasets, values; kwargs...)
+Open an interactive application for exploring average properties of
+trajectories.
+
+The left window plots the datasets, while the right window plots
+the histogram of the `values`.
+
+## Interaction
+Clicking on a bin of the histogram plot will "highlight" all data
+whose `value` belongs in that bin. Clicking on empty space
+on the histogram plot will reset highlighting. Clicking
+
+## Keyword Arguments
+* `nbins=50, closed=:left` used in histogram.
+* `α = 0.05` : the alpha value when hidden.
+"""
+function poincare_explorer(sim, vals; nbins=50, closed=:left)
+    hist = fit(StatsBase.Histogram, vals, nbins=nbins, closed=closed)
+
+    colors = Float32.(axes(hist.weights, 1))
+
+    scatter_sc_with_ui, scatter_α = plot_datasets(sim, colors=vals)
+    scatter_sc = scatter_sc_with_ui.children[2]
+
+    hist_sc, hist_α = plot_histogram(hist)
+
+    sc = AbstractPlotting.vbox(scatter_sc_with_ui, hist_sc)
+
+    selected_plot = setup_click(scatter_sc, 1)
+    hist_idx = setup_click(hist_sc, 2)
+
+    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist)
+    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed)
+
+    return sc
+end
+
+
+"""
+    plot_datasets(sim; colors=axes(sim, 1), idxs=[1,2])
 This function considers the `sim` variable as a vector of arrays and creates
 a 2D scatter plot where each element of `sim` is considered as a separate series.
 In order to change the transparency(α) of a given plot a vector of `Observable`s is used.
@@ -12,9 +52,9 @@ Each series has an individual plot and an entry in the `series_alpha` vector.
 The function also adds a slider to the scatter plot, which controls the size of
 the points. The function returns the `scene` and `series_alpha`.
 """
-function plot_sim(sim; colors=axes(sim, 1), idxs=[1,2])
+function plot_datasets(sim; colors=axes(sim, 1), idxs=[1,2])
     ui, ms = AbstractPlotting.textslider(range(0.001, stop=1., length=1000), "scale", start=0.05)
-    data = Scene(resolution=(1000, 1000))
+    data = Scene()
     colormap = to_colormap(:viridis, size(sim, 1))
     get_color(i) = AbstractPlotting.interpolated_getindex(colormap, colors[i], extrema(colors))
     series_alpha = map(eachindex(sim)) do i
@@ -30,16 +70,16 @@ function plot_sim(sim; colors=axes(sim, 1), idxs=[1,2])
 
     scene = Scene()
 
-    hbox(ui, data, parent=scene)
+    AbstractPlotting.hbox(ui, data, parent=scene)
     return scene, series_alpha
 end
 
 """
-    plot_hist(hist)
-Plot a histogram where the transparency(α) of each bin can be changed
+    plot_histogram(hist)
+Plot a histogram where the transparency (α) of each bin can be changed
 and return the scene together with the αs.
 """
-function plot_hist(hist)
+function plot_histogram(hist)
     cmap = to_colormap(:viridis, length(hist.weights))
     hist_α = [Observable(1.) for i in cmap]
     bincolor(αs...) = RGBAf0.(color.(cmap), αs)
@@ -57,7 +97,7 @@ This can be used to hide some series by using a low α value (default).
 To restore the initial color, use `α = 1`.
 """
 function change_α(series_alpha, idxs, α=0.05)
-    foreach(i-> series_alpha[i][] = α, idxs)
+    foreach(i -> series_alpha[i][] = α, idxs)
 end
 
 """
@@ -155,30 +195,3 @@ function select_bin(hist_idx, hist, hist_α, scatter_α, data; closed=:left)
         return nothing
     end
 end
-
-function poincare_explorer(sim, vals; nbins=50, closed=:left)
-    hist = fit(StatsBase.Histogram, vals, nbins=nbins, closed=closed)
-
-    colors = Float32.(axes(hist.weights, 1))
-
-    scatter_sc_with_ui, scatter_α = plot_sim(sim, colors=vals)
-    scatter_sc = scatter_sc_with_ui.children[2]
-
-    hist_sc, hist_α = plot_hist(hist)
-
-    sc = AbstractPlotting.vbox(scatter_sc_with_ui, hist_sc)
-
-    selected_plot = setup_click(scatter_sc, 1)
-    hist_idx = setup_click(hist_sc, 2)
-
-    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist)
-    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed)
-
-    return sc
-end
-
-N = 100
-sim = [rand(50,50) for i=1:N]
-vals = rand(N)
-
-poincare_explorer(sim, vals)
