@@ -44,9 +44,9 @@ end
 
 # %%
 
-# poincare_explorer(psos, regularity; nbins = 10, α = 0.01)
+# trajectory_highlighter(psos, regularity; nbins = 10, α = 0.01)
 
-poincare_explorer(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.01, linewidth = 2.0)
+trajectory_highlighter(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.01, linewidth = 2.0)
 
 
 # %%
@@ -55,4 +55,4 @@ poincare_explorer(trs[1:10:end], regularity[1:10:end]; nbins = 10, α = 0.01, li
 # sim = [rand(50,2) for i=1:N]
 # vals = rand(N)
 #
-# poincare_explorer(sim, vals; nbins = 10)
+# trajectory_highlighter(sim, vals; nbins = 10)

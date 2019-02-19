@@ -2,12 +2,12 @@ using AbstractPlotting, Observables
 using StatsBase
 using StatsMakie
 import Colors
-export poincare_explorer
+export trajectory_highlighter
 
 const DEFAULT_α = 0.01
 
 """
-    data_highlighter(datasets, vals; kwargs...)
+    trajectory_highlighter(datasets, vals; kwargs...)
 Open an interactive application for highlighting specific datasets
 and properties of these datasets. `datasets` is a vector of _anything_ from
 **DynamicalSystems.jl** that supports `plot_dataset` (currently `Dataset`
@@ -32,11 +32,11 @@ space will reset the highlighting.
 ## Keyword Arguments
 * `nbins = 10, closed = :left` : used in producing the histogram.
 * `α = 0.05` : the alpha value of the hidden data.
-* `hα = 0.4` : the alpha value of the hidden histogram bins.
+* `hα = 0.2` : the alpha value of the hidden histogram bins.
 * `cmap = :viridis` : the colormap used.
 * `kwargs...` : Anything else is propagated to `plot_dataset(data)`.
 """
-function poincare_explorer(datasets, vals;
+function trajectory_highlighter(datasets, vals;
     nbins=50, closed=:left, α = 0.05,
     cmap = :viridis, hα = 0.2, kwargs...)
 
