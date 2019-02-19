@@ -68,7 +68,7 @@ function trajectory_highlighter(datasets, vals;
 
     select_series(data_scene, selected_plot, data_αs, hist_αs, vals, hist, α, hα)
     select_bin(hist_idx, hist, hist_αs, data_αs, vals, closed=closed, α = α, hα = hα)
-
+    display(sc)
     return data_scene, hist_scene
 end
 

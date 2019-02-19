@@ -53,7 +53,9 @@ trajectory_highlighter(psos, regularity; nbins = 10, α = 0.01, hname = "regular
 # %%
 # using InteractiveChaos, Makie
 # N = 100
-# sim = [rand(50,2) for i=1:N]
+# t = 0:0.01:4π
+# sim = [
+    # rand(50,2) for i=1:N]
 # vals = rand(N)
 #
 # trajectory_highlighter(sim, vals; nbins = 10)
