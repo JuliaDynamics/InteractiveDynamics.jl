@@ -1,16 +1,18 @@
 using AbstractPlotting, Observables
 using StatsBase
 using StatsMakie
-using Colors: color
+import Colors
 export poincare_explorer
 
+const DEFAULT_α = 0.01
+
 """
-    data_highlighter(datasets, values; kwargs...)
+    data_highlighter(datasets, vals; kwargs...)
 Open an interactive application for exploring average properties of
 trajectories.
 
 The left window plots the datasets, while the right window plots
-the histogram of the `values`.
+the histogram of the `vals`.
 
 ## Interaction
 Clicking on a bin of the histogram plot will "highlight" all data
@@ -22,86 +24,62 @@ on the histogram plot will reset highlighting. Clicking
 * `α = 0.05` : the alpha value when hidden.
 * `cmap = :viridis` : the colormap.
 """
-function poincare_explorer(sim, vals;
+function poincare_explorer(datasets, vals;
     nbins=50, closed=:left, α = 0.05,
     cmap = :viridis)
 
+    N = length(datasets)
+    N == length(vals) || error("data and value must have equal length")
+
+    # First prepare the colors of the datasets:
+    colormap = to_colormap(cmap, length(datasets))
+    get_color(i) = Colors.color(AbstractPlotting.interpolated_getindex(
+        colormap, vals[i], extrema(vals)
+    ))
+    # The colors are observables; the transparency can be changed
+    scatter_α = [Observable(1.0) for i in 1:N]
+    colors = [lift(α -> RGBAf0(get_color(i), α), scatter_α[i]) for i ∈ 1:N]
+    scatter_sc = plot_datasets(datasets, colors)
+
+    # now time for the histogram:
     hist = fit(StatsBase.Histogram, vals, nbins=nbins, closed=closed)
+    hist_sc, hist_α = plot_histogram(hist, cmap)
 
-    colors = Float32.(axes(hist.weights, 1))
-
-    scatter_sc_with_ui, scatter_α = plot_datasets(sim, values=vals)
-    scatter_sc = scatter_sc_with_ui.children[2]
-
-    hist_sc, hist_α = plot_histogram(hist)
-
-    sc = AbstractPlotting.vbox(scatter_sc_with_ui, hist_sc)
+    sc = AbstractPlotting.vbox(scatter_sc, hist_sc)
 
     selected_plot = setup_click(scatter_sc, 1)
     hist_idx = setup_click(hist_sc, 2)
 
-    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist)
-    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed)
+    select_series(scatter_sc, selected_plot, scatter_α, hist_α, vals, hist, α)
+    select_bin(hist_idx, hist, hist_α, scatter_α, vals, closed=closed, α = α)
 
     return sc
 end
 
 
 """
-    plot_datasets(datasets; values=axes(datasets, 1), idxs=[1,2])
-This function considers the `datasets` variable as a vector of arrays and creates
-a 2D scatter plot where each element of `datasets` is considered as a separate series.
-In order to change the transparency(α) of a given plot a vector of `Observable`s is used.
-Each series has an individual plot and an entry in the `series_alpha` vector.
-The function also adds a slider to the scatter plot, which controls the size of
-the points. The function returns the `scene` and `series_alpha`.
-"""
-function plot_datasets(datasets; values=axes(datasets, 1), idxs=[1,2])
-    ui, ms = AbstractPlotting.textslider(range(0.001, stop=1., length=1000), "scale", start=0.05)
-    data = Scene()
-    colormap = to_colormap(:viridis, size(datasets, 1))
-    get_color(i) = AbstractPlotting.interpolated_getindex(colormap, values[i], extrema(values))
-
-    series_alpha = map(eachindex(datasets)) do i
-        dataset = datasets[i]
-        alpha = Observable(1.0)
-        if length(datasets[i]) ≠ 0
-            cmap = lift(α-> RGBAf0.(color.(fill(get_color(i), size(dataset, 1))), α), alpha)
-            scatter!(data, [Point2f0(dataset[i, idxs[1]], dataset[i, idxs[2]]) for i in axes(dataset, 1)],
-            colormap=cmap, color=fill(values[i], size(dataset, 1)), markersize=ms)
-        end
-        alpha
-    end
-
-    scene = Scene()
-
-    AbstractPlotting.hbox(ui, data, parent=scene)
-    return scene, series_alpha
-end
-
-"""
-    plot_histogram(hist)
+    plot_histogram(hist, cmap) -> hist_sc, hist_α
 Plot a histogram where the transparency (α) of each bin can be changed
-and return the scene together with the αs.
+and return the scene together with the αs. The bins are colored
+according to a colormap.
 """
-function plot_histogram(hist)
-    cmap = to_colormap(:viridis, length(hist.weights))
-    hist_α = [Observable(1.) for i in cmap]
-    bincolor(αs...) = RGBAf0.(color.(cmap), αs)
+function plot_histogram(hist::StatsBase.Histogram, cmap)
+    c = to_colormap(cmap, length(hist.weights))
+    hist_α = [Observable(1.) for i in c]
+    bincolor(αs...) = RGBAf0.(color.(c), αs)
     colors = lift(bincolor, hist_α...)
     hist_sc = plot(hist, color=colors)
-
     return hist_sc, hist_α
 end
 
 """
-    change_α(series_alpha, idxs, α=0.05)
+    change_α(series_alpha, idxs, α = DEFAULT_α)
 Given a vector of `Observable`s that represent the αs for some series, change
 the elements with indices given by `idxs` to the value `α`.
 This can be used to hide some series by using a low α value (default).
 To restore the initial color, use `α = 1`.
 """
-function change_α(series_alpha, idxs, α=0.05)
+function change_α(series_alpha, idxs, α = DEFAULT_α)
     foreach(i -> series_alpha[i][] = α, idxs)
 end
 
@@ -112,14 +90,12 @@ Get the index of the `selected_plot` in `scene`.
 function get_series_idx(selected_plot, scene)
     # TODO: There is probably a better or more efficient way of doing this.
     plot_idx = findfirst(map(p->selected_plot === p, scene.plots))
-    # println("scatter ", plot_idx)
-
     plot_idx
 end
 
 """
     setup_click(scene, idx=1)
-Give a `scene` return a `Observable` that listens to left clicks inside the scene.
+Given a `scene` return a `Observable` that listens to left clicks inside the scene.
 The `idx` argument is used to index the tuple `(plt, click_idx)` which gives
 the selected plot and the index of the selected element in the plot.
 """
@@ -142,7 +118,7 @@ bin_with_val(val, hist) = searchsortedfirst(hist.edges[1], val) - 1
 
 """
     idxs_in_bin(i, hist, val; closed=:left)
-Given the values(`val`) which are histogramed in `hist`, find all the indices
+Given the values (`val`) which are histogramed in `hist`, find all the indices
 which correspond to the values in the `i`-th bin.
 """
 function idxs_in_bin(i, hist, val; closed=:left)
@@ -156,21 +132,24 @@ end
 """
     select_series(scene, selected_plot, scatter_α, hist_α, data, hist)
 Setup selection of a series in a scatter plot and the corresponding histogram.
-When a point of the scatter plot is cliked, the corresponding series is
+When a point of the scatter plot is clicked, the corresponding series is
 highlighted (or selected) by changing the transparency of all the other series
 (and corresponding histogram bins) to a very low value.
 When the click is outside, the series is deselected, that is all the αs are
 set back to 1.
 """
-function select_series(scene, selected_plot, scatter_α, hist_α, data, hist)
+function select_series(scene, selected_plot, scatter_α,
+                       hist_α, data, hist,
+                       α = DEFAULT_α
+                       )
     series_idx = map(get_series_idx, selected_plot, scene)
     on(series_idx) do i
         if !isa(i, Nothing)
             scatter_α[i - 1][] = 1.0
-            change_α(scatter_α, setdiff(axes(scatter_α, 1), i - 1))
+            change_α(scatter_α, setdiff(axes(scatter_α, 1), i - 1), α)
             selected_bin = bin_with_val(data[i-1], hist)
             hist_α[selected_bin][] = 1.0
-            change_α(hist_α, setdiff(axes(hist_α, 1), selected_bin))
+            change_α(hist_α, setdiff(axes(hist_α, 1), selected_bin), α)
         else
             change_α(scatter_α, axes(scatter_α, 1), 1.0)
             change_α(hist_α, axes(hist_α, 1), 1.0)
@@ -180,19 +159,21 @@ function select_series(scene, selected_plot, scatter_α, hist_α, data, hist)
 end
 
 """
-    select_bin(hist_idx, hist, hist_α, scatter_α, data; closed=:left)
+    select_bin(hist_idx, hist, hist_α, scatter_α, data; closed=:left, α = DEFAULT_α)
 Setup a selection of a histogram bin and the corresponding series in the
 scatter plot. See also [`select_series`](@ref).
 """
-function select_bin(hist_idx, hist, hist_α, scatter_α, data; closed=:left)
+function select_bin(hist_idx, hist, hist_α, scatter_α, data;
+    closed=:left, α = DEFAULT_α)
+
     on(hist_idx) do i
         if i ≠ 0
             hist_α[i][] = 1.0
-            change_α(hist_α, setdiff(axes(hist.weights, 1), i))
+            change_α(hist_α, setdiff(axes(hist.weights, 1), i), α)
             change_α(scatter_α, idxs_in_bin(i, hist, data, closed=closed), 1.0)
             change_α(scatter_α, setdiff(
                 axes(scatter_α, 1), idxs_in_bin(i, hist, data, closed=closed)
-            ))
+            ), α)
         else
             change_α(scatter_α, axes(scatter_α, 1), 1.0)
             change_α(hist_α, axes(hist_α, 1), 1.0)

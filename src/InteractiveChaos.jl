@@ -38,6 +38,7 @@ function subscript(i::Int)
     end
 end
 
+include("plot_dataset.jl")
 include("orbitdiagram.jl")
 include("poincareclick.jl")
 include("poincare_explorer.jl")
