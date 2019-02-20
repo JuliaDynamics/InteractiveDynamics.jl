@@ -16,17 +16,17 @@ or `Matrix`). Each dataset corresponds to a specific value from `vals`
 a specific color based on a colormap.
 
 The application is composed of two scenes: the left scene plots the datasets,
-while the right window plots the histogram of the `vals`. The function
+while the right scene plots the histogram of the `vals`. The function
 returns the two scenes `data_scene, hist_scene`.
 
 ## Interaction
 Clicking on a bin of the histogram plot will "highlight" all data
 whose value belongs in that bin. Here highlighting actually means "hidding"
-(i.e. reducing their alpha plot value) all other data besides the ones you want
+(i.e. reducing their alpha value) all other data besides the ones you want
 to highlight. Clicking on empty space on the histogram plot will reset
 highlighting.
 
-Clicking on a plot series in the left window will highlight this series
+Clicking on a plotted series in the left window will highlight this series
 as well as the histogram bin that contains its value. Clicking on empty
 space will reset the highlighting.
 
@@ -36,7 +36,7 @@ space will reset the highlighting.
 * `hα = 0.2` : the alpha value of the hidden histogram bins.
 * `cmap = :viridis` : the colormap used.
 * `hname = "value"` : name for the histogram axis.
-* `kwargs...` : Anything else is propagated to `plot_dataset(data)`.
+* `kwargs...` : Anything else is propagated to `plot_dataset`.
 """
 function trajectory_highlighter(datasets, vals;
     nbins=50, closed=:left, α = 0.05,
