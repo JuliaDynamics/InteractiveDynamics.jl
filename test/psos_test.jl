@@ -1,4 +1,4 @@
-using InteractiveChaos, Observables
+using InteractiveChaos, Observables, Test
 
 ds = Systems.henonheiles()
 
@@ -27,7 +27,7 @@ integ = integrator(ds, u0)
 planecrossing = PlaneCrossing(plane, true)
 f = (t) -> planecrossing(integ(t))
 i = SVector{2, Int}(idxs)
-data = poincaresos(integ, planecrossing, tfinal, Ttr, i, rootkw)
+data = poincaresos(integ, planecrossing, tf, Ttr, i, rootkw)
 data0 = copy(data)
 
 # Emulate clicking on the psos
@@ -46,7 +46,7 @@ on(click) do pos
 
     reinit!(integ, newstate)
 
-    Data[] = poincaresos(integ, planecrossing, tfinal, Ttr, i, rootkw)
+    Data[] = poincaresos(integ, planecrossing, tf, Ttr, i, rootkw)
     return data
 end
 
