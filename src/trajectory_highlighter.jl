@@ -39,7 +39,7 @@ space will reset the highlighting.
 * `kwargs...` : Anything else is propagated to `plot_dataset`.
 """
 function trajectory_highlighter(datasets, vals;
-    nbins=50, closed=:left, α = 0.05,
+    nbins = 10, closed=:left, α = 0.05,
     cmap = :viridis, hα = 0.2, hname = "value", kwargs...)
 
     N = length(datasets)

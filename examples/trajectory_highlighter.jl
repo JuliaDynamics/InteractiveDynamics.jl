@@ -26,7 +26,7 @@ end
 density = 15
 tfinal = 2000.0
 tgali = 1000.0
-E = energy(ds.u0...)
+E = 0.13
 ics = generate_ics(E, density)
 
 tinteg = tangent_integrator(ds, 4)
@@ -44,18 +44,7 @@ end
 
 # %%
 
-trajectory_highlighter(psos, regularity; nbins = 10, α = 0.01, hname = "regularity")
+trajectory_highlighter(psos, regularity; α = 0.05, hname = "regularity")
 
-# trajectory_highlighter(trs[1:10:end], regularity[1:10:end];
-# nbins = 10, α = 0.01, linewidth = 2.0, hname = "regularity")
-
-
-# %%
-# using InteractiveChaos, Makie
-# N = 100
-# t = 0:0.01:4π
-# sim = [
-    # rand(50,2) for i=1:N]
-# vals = rand(N)
-#
-# trajectory_highlighter(sim, vals; nbins = 10)
+trajectory_highlighter(trs[1:10:end], regularity[1:10:end];
+nbins = 10, α = 0.05, linewidth = 4.0, hname = "regularity")
