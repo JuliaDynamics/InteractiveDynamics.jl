@@ -6,3 +6,5 @@ Blink
 Colors
 Reexport
 Observables
+StatsBase
+StatsMakie

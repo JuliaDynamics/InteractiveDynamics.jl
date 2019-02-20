@@ -113,8 +113,9 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     scplot = Scene(resolution = (1200, 800))
     scatter!(scplot, od_node, markersize = 0.008, color = color)
 
-    scplot[Axis][:ticks][:ranges] = ([0, 1], [0, 1])
-    scplot[Axis][:ticks][:labels] = (["pmin", "pmax"], ["umin", "umax"])
+    scplot[Axis][:ticks][:ranges] = (collect(0:0.25:1), collect(0:0.25:1))
+    scplot[Axis][:ticks][:labels] =
+    (["pmin", " ", " ", " ", "pmax"], ["umin", " ", " ", " ", "umax"])
     scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(i[]))
 
     display(scplot)

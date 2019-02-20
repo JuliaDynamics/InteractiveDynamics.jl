@@ -1,10 +1,10 @@
-using InteractiveChaos, Observables
+using InteractiveChaos, Observables, Test
 
 ds = Systems.henonheiles()
 
 potential(x, y) = 0.5(x^2 + y^2) + (x^2*y - (y^3)/3)
 energy(x,y,px,py) = 0.5(px^2 + py^2) + potential(x,y)
-const E = energy(get_state(ds)...)
+E = energy(get_state(ds)...)
 function complete(y, py, x)
     V = potential(x, y)
     Ky = 0.5*(py^2)
@@ -24,13 +24,11 @@ Ttr = 200.0
 rootkw = (xrtol = 1e-6, atol = 1e-6)
 
 integ = integrator(ds, u0)
-planecrossing = ChaosTools.PlaneCrossing{D}(plane, false)
+planecrossing = PlaneCrossing(plane, true)
 f = (t) -> planecrossing(integ(t))
 i = SVector{2, Int}(idxs)
-data = ChaosTools._initialize_output(get_state(ds), i)
+data = poincaresos(integ, planecrossing, tf, Ttr, i, rootkw)
 data0 = copy(data)
-
-ChaosTools.poincare_cross!(data, integ, f, planecrossing, tf, Ttr, i, rootkw)
 
 # Emulate clicking on the psos
 click = Observable([0.0, 0.0])
@@ -48,11 +46,7 @@ on(click) do pos
 
     reinit!(integ, newstate)
 
-    data = ChaosTools._initialize_output(integ.u, i)
-    ChaosTools.poincare_cross!(
-        data, integ, f, planecrossing, tf, Ttr, i, rootkw
-    )
-    Data[] = data
+    Data[] = poincaresos(integ, planecrossing, tf, Ttr, i, rootkw)
     return data
 end
 

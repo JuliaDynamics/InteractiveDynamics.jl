@@ -38,8 +38,10 @@ function subscript(i::Int)
     end
 end
 
+include("plot_dataset.jl")
 include("orbitdiagram.jl")
 include("poincareclick.jl")
+include("trajectory_highlighter.jl")
 
 export interactive_orbitdiagram
 
