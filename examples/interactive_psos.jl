@@ -1,4 +1,5 @@
-using InteractiveChaos, Makie
+using InteractiveChaos, Makie, OrdinaryDiffEq
+diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
 
 ds = Systems.henonheiles()
 
@@ -20,4 +21,9 @@ stable = [0., 0.1, 0.5, 0.]
 
 plane = (1, 0.0)
 
-psos = interactive_poincaresos(ds, plane, (2, 4), complete)
+state, scene = interactive_poincaresos(ds, plane, (2, 4), complete;
+markersizes = (-5, -1), diffeq...)
+
+lines!(scene.children[2], [Point2f0(0.06465084105730057, -0.4 + 0.2*i) for i in 0:4]);
+lines!(scene.children[2], [Point2f0(-0.3 + 0.15*i, -0.18481573462486267) for i in 0:6]);
+display(scene);

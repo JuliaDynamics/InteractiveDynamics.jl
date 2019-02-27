@@ -15,6 +15,9 @@ that `plane[1] ∉ idxs` must be true.
 `complete` is a three-argument **function** that completes the new initial state
 during interactive use, see below.
 
+The function returns: an observable containing the latest initial `state`
+and the `scene` that is plotted. The scatter plot is `scene.children[2]`.
+
 ## Keyword Arguments
 * `direction, rootkw` : Same use as in [`poincaresos`](@ref).
 * `tfinal` : A 2-element tuple for the range of values for the total integration time
@@ -146,7 +149,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
 
     AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, ui_ttr, statebutton), scplot, parent=scene)
     display(scene)
-    return laststate
+    return laststate, scene
 end
 
 _randomcolor(args...) = RGBf0(rand(Float32), rand(Float32), rand(Float32))
