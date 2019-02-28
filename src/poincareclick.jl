@@ -27,7 +27,10 @@ and the `scene` that is plotted. The scatter plot is `scene.children[2]`.
 * `markersizes = (-4, -1)` : A 2-element tuple for the range of the marker sizes
   (which scale exponentially: the actual size is `10.0^markersize`).
 * `color` : A *function* of the system's initial condition, that returns a color to
-  plot the new points with. A random color is chosen by default.
+  plot the new points with. A random color is chosen by default. Notice that for
+  type stability reasons this function must return an instance of
+  `RGBf0(red, green, blue)`.
+* `labels = ("u₁" , "u₂")` : Axis labels.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
 ## Interaction
@@ -62,6 +65,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
                          color = _randomcolor, resolution = (750, 750),
                          makiekwargs = (),
                          markersizes = (-4, -1),
+                         labels = ("u₁" , "u₂"),
                          # DiffEq kwargs:
                          diffeq...) where {IIP, S, D}
 
@@ -99,6 +103,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
     colors = (c = color(u0); [c for i in 1:length(data)])
     colors_node = Observable(colors)
     scplot = scatter(positions_node, color = colors_node, markersize = ms)
+    scplot[Axis][:names][:axisnames] = labels
 
     laststate = Observable((u0, color(u0)))
 
@@ -125,7 +130,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
             positions = positions_node[]; colors = colors_node[]
             append!(positions, data)
             c = color(newstate)
-            append!(colors, [c for i in 1:length(data)])
+            append!(colors, fill(c, length(data)))
 
             # Notify the signals
             positions_node[] = positions; colors_node[] = colors
