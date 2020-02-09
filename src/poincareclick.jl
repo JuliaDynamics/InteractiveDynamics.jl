@@ -144,7 +144,8 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
     end
 
     # Button to print current state:
-    statebutton = AbstractPlotting.button(Theme(raw = true, camera = campixel!), "latest state")
+    statebutton = AbstractPlotting.button(Theme(raw = true, camera = campixel!),
+    "latest state", dimensions = (160, 40))
     on(statebutton[end][:clicks]) do c
         u0, col = laststate[]
         println("Latest state: ")
