@@ -6,7 +6,7 @@ Open an interactive application for exploring a Poincaré surface of section (PS
 of the continuous dynamical system `cds`. Return an observable containing the
 latest initial state created by `complete`, as well as its color.
 
-The `plane` can only be the `Tuple` type accepted by [`poincaresos`](@ref),
+The `plane` can only be the `Tuple` type accepted by `DynamicalSystems.poincaresos`,
 i.e. `(i, r)` for the `i`th variable crossing the value `r`. `idxs` gives the two
 indices of the variables to be displayed, since the PSOS plot is always a 2D scatterplot.
 I.e. `idxs = (1, 2)` will plot the 1st versus 2nd variable of the PSOS. It follows
@@ -19,7 +19,7 @@ The function returns: an observable containing the latest initial `state`
 and the `scene` that is plotted. The scatter plot is `scene.children[2]`.
 
 ## Keyword Arguments
-* `direction, rootkw` : Same use as in [`poincaresos`](@ref).
+* `direction, rootkw` : Same use as in `DynamicalSystems.poincaresos`.
 * `tfinal` : A 2-element tuple for the range of values for the total integration time
   (chosen interactively).
 * `Ttr` : A 2-element tuple for the range of values for the transient integration time

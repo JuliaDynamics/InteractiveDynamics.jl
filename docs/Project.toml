@@ -1,0 +1,7 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
+InteractiveChaos = "81850811-659e-51ab-a7c2-5dd848ff4aa4"
+
+[compat]
+Documenter = "0.24.6"
