@@ -5,6 +5,7 @@ CI = get(ENV, "CI", nothing) == "true" || get(ENV, "GITHUB_TOKEN", nothing) !== 
 CI && Pkg.instantiate()
 
 using InteractiveChaos
+using Documenter
 using DocumenterTools: Themes
 
 # %%
@@ -30,7 +31,6 @@ root = @__DIR__,
 format = Documenter.HTML(
     prettyurls = CI,
     assets = [
-        # "assets/logo.ico",
         asset("https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&display=swap", class=:css),
         ],
     ),
@@ -44,7 +44,7 @@ pages = [
 
 if CI
     deploydocs(
-        repo = "github.com/JuliaDynamics/DrWatson.jl.git",
+        repo = "github.com/JuliaDynamics/InteractiveChaos.jl.git",
         target = "build",
         push_preview = true
     )
