@@ -36,11 +36,11 @@ function subscript(i::Int)
     end
 end
 
-include("plot_dataset.jl")
-include("orbitdiagram.jl")
-include("poincareclick.jl")
-include("trajectory_highlighter.jl")
-
-export interactive_orbitdiagram
+include("numericdata/plot_dataset.jl")
+include("numericdata/trajectory_highlighter.jl")
+include("chaos/orbitdiagram.jl")
+include("chaos/poincareclick.jl")
+include("billiards/defs_plotting.jl")
+include("billiards/animation.jl")
 
 end
