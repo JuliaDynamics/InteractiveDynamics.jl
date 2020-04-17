@@ -1,7 +1,5 @@
 module InteractiveChaos
 
-using Reexport
-@reexport using DynamicalSystems
 using AbstractPlotting, Observables
 
 """

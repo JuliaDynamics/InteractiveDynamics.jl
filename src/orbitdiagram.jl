@@ -1,4 +1,5 @@
-using Interact, Blink, Colors
+using DynamicalSystems
+using Interact, Blink, AbstractPlotting
 export interactive_orbitdiagram, scaleod
 
 """
@@ -109,7 +110,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     history = [(i[], pmin, pmax, xmin, xmax, n[], Ttr[], density[])]
     update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
 
-    color = lift(a -> RGBA(0,0,0,a), α)
+    color = lift(a -> AbstractPlotting.RGBAf0(0,0,0,a), α)
     scplot = Scene(resolution = (1200, 800))
     scatter!(scplot, od_node, markersize = 0.008, color = color)
 

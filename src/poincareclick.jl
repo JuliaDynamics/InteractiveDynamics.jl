@@ -1,3 +1,4 @@
+using DynamicalSystems
 export interactive_poincaresos
 
 """
