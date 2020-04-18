@@ -1,7 +1,6 @@
 using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 
 # TODO: plot particle as well!
-# TODO: Add reset button
 # TODO: Allow input particles to be both `nothing` as well as specified
 # TODO: input color can be vector of length N or colormap specifier
 # TODO: N must be established to be the length of particles for both beam or input
@@ -10,6 +9,7 @@ using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 dt = 0.001
 tail = 1000 # multiple of dt
 N = 100
+plot_particles = false
 colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 colors = :dense
 bd = billiard_stadium(1.0f0, 1.0f0)
@@ -28,7 +28,7 @@ function particlebeam(x0, y0, φ, N, dx, ω = nothing)
     end
 end
 
-ps = particlebeam(0.8, 0.6, 0, N, 0.01)
+ps = particlebeam(0.8, 0.6, 0, N, 0.01, 1.5)
 p0s = deepcopy(ps) # deep is necessary because vector of mutables
 
 # Initialized inside process
@@ -40,13 +40,26 @@ allparobs = [ParObs(p, bd, tail) for p in ps]
 bdplot!(ax, bd)
 
 # Plot particles (will be reused in resetting and making new particles)
-plotted_tails_idxs = zeros(Int, N)
-L = length(ax.scene.plots)
+partmarker = Circle(Point2f0(0, 0), Float32(1))
+
+# Plot tails
 for (i, p) in enumerate(allparobs)
     lines!(ax, p.tail, color = cs[i])
-    plotted_tails_idxs[i] = L + i
+    # Not working:
+    # scatter!(ax, [p.pos]; color = cs[i], marker = partmarker, markersize = 6*AbstractPlotting.px)
 end
-# delete!(ax.scene.plots, plotted_tails_idxs) # do this to clean the scene
+
+# Plot particles
+if plot_particles
+    balls = Observable([Point2f0(p.p.pos) for p in allparobs])
+    vr = Float32(0.05)
+    vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
+    scatter!(ax, balls; color = cs, marker = partmarker, markersize = 6AbstractPlotting.px)
+    arrows!(ax, balls, vels;
+        normalize = false, arrowsize = 0.01AbstractPlotting.px,
+        linewidth  = 2,
+    )
+end
 
 # Controls:
 nslider = LSlider(scene, range = 0:10, startvalue=0)
@@ -87,6 +100,14 @@ on(runbutton.clicks) do nclicks
             p = ps[i]
             parobs = allparobs[i]
             animstep!(parobs, bd, dt, true)
+            if plot_particles
+                balls[][i] = parobs.p.pos
+                vels[][i] = vr * parobs.p.vel
+            end
+        end
+        if plot_particles
+            balls[] = balls[]
+            vels[] = vels[]
         end
         for _ in 1:nslider.value[]
             for i in 1:N
@@ -114,11 +135,3 @@ end
 
 
 display(scene)
-
-# for _ in 1:1000
-#     for i in 1:N
-#         p = ps[i]
-#         parobs = allparobs[i]
-#         animstep!(parobs, bd, dt, true)
-#     end
-# end

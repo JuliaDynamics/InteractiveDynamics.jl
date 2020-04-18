@@ -11,6 +11,7 @@ mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
     T::Float32
     # Fields used in plotting
     tail::Observable{CircularBuffer{Point2f0}}
+    # TODO: When all is said and done, remove pos and vel fields?
     pos::Observable{Point2f0}
     vel::Observable{Point2f0}
     ξsin::Observable{Point2f0}
