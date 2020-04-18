@@ -1,4 +1,4 @@
-using InteractiveChaos, Makie
+using InteractiveChaos, DynamicalSystems, Makie
 
 ds = Systems.henonheiles()
 

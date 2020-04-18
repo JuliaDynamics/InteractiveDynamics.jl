@@ -26,6 +26,20 @@ function ParticleObservable(p, bd, n) # initializer
 end
 const ParObs = ParticleObservable
 
+function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd)
+    i, tmin::Float32, cp = next_collision(p0, bd)
+    ξ = sφ = 0f0 # TODO: Use boundary map on cp
+    p.p.pos = p0.pos
+    p.p.vel = p0.vel
+    ismagnetic(p.p) && (p.p.center = find_cyclotron(p.p))
+    p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0f0, 0, 0f0
+    L = length(p.tail[])
+    append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
+    p.pos[] = p0.pos
+    p.vel[] = p0.vel
+    # p.ξsin # TODO: reset this as well
+end
+
 function animstep!(parobs, bd, dt, updateplot = true)
     if parobs.t + dt - parobs.tmin > 0
         rt = parobs.tmin - parobs.t # remaining time

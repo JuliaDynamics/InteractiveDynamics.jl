@@ -1,7 +1,6 @@
 using AbstractPlotting, Observables
 using StatsBase
 using StatsMakie
-import Colors
 export trajectory_highlighter
 
 const DEFAULT_α = 0.01
@@ -47,7 +46,7 @@ function trajectory_highlighter(datasets, vals;
 
     # First prepare the colors of the datasets:
     colormap = to_colormap(cmap, length(datasets))
-    get_color(i) = Colors.color(AbstractPlotting.interpolated_getindex(
+    get_color(i) = AbstractPlotting.color(AbstractPlotting.interpolated_getindex(
         colormap, vals[i], extrema(vals)
     ))
     # The colors are observables; the transparency can be changed

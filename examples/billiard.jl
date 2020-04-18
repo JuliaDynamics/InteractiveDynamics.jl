@@ -4,13 +4,14 @@ using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 # TODO: Add reset button
 # TODO: Allow input particles to be both `nothing` as well as specified
 # TODO: input color can be vector of length N or colormap specifier
+# TODO: N must be established to be the length of particles for both beam or input
 
 # Input
 dt = 0.001
 tail = 1000 # multiple of dt
 N = 100
 colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
-# colors = :dense
+colors = :dense
 bd = billiard_stadium(1.0f0, 1.0f0)
 bd = Billiard(bd..., Disk(SVector(0.5f0, 0.5f0), 0.2f0))
 ps = [MagneticParticle(1, 0.6f0 + 0.0005f0*i, 0, 1f0) for i in 1:N]
@@ -27,16 +28,18 @@ function particlebeam(x0, y0, φ, N, dx, ω = nothing)
     end
 end
 
-ps = particlebeam(0.8, 0.6, 0, N, 0.01, 1.0)
+ps = particlebeam(0.8, 0.6, 0, N, 0.01)
+p0s = deepcopy(ps) # deep is necessary because vector of mutables
 
 # Initialized inside process
-cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, n = N) : colors
+cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, N) : colors
 scene, layout = layoutscene(resolution = (1000, 800))
 ax = layout[1, 1] = LAxis(scene)
 ax.autolimitaspect = 1
+allparobs = [ParObs(p, bd, tail) for p in ps]
 bdplot!(ax, bd)
 
-allparobs = [ParObs(p, bd, tail) for p in ps]
+# Plot particles (will be reused in resetting and making new particles)
 plotted_tails_idxs = zeros(Int, N)
 L = length(ax.scene.plots)
 for (i, p) in enumerate(allparobs)
@@ -61,7 +64,6 @@ runbutton = LButton(scene, label = Observable("run"),
     # width = Auto(false),
 )
 
-
 # Functionality that CREATES the play/stop button
 on(runbutton.clicks) do n
     t = runbutton.label[] == "run" ? "stop" : "run"
@@ -73,7 +75,7 @@ on(runbutton.clicks) do n
     runbutton.labelcolor_hover[] = runbutton.labelcolor[]
 end
 
-
+# Create the "control panel"
 layout[2, 1] = grid!(hcat(
     runbutton, resetbutton, LText(scene, "speed:"), nslider
 ), width = Auto(false), height = Auto(true))
@@ -99,6 +101,17 @@ on(runbutton.clicks) do nclicks
 end
 
 # Resetting functionality
+on(resetbutton.clicks) do nclicks
+    @async if runbutton.label[] == "stop"
+        runbutton.clicks[] += 1 # TODO: this is a hack until full support for LToggleButton
+    end
+    # update parobs
+    for i in 1:N
+        rebind_partobs!(allparobs[i], p0s[i], bd)
+    end
+    yield()
+end
+
 
 display(scene)
 
