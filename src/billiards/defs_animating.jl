@@ -1,4 +1,5 @@
 using DataStructures
+using DynamicalBilliards: ismagnetic, find_cyclotron
 
 mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
     # Fields necessary for simulation
@@ -47,6 +48,7 @@ function animbounce!(parobs, bd, rt, updateplot = true)
     propagate!(parobs.p, rt)
     DynamicalBilliards._correct_pos!(parobs.p, bd[parobs.i])
     DynamicalBilliards.resolvecollision!(parobs.p, bd[parobs.i])
+    ismagnetic(parobs.p) && (parobs.p.center = find_cyclotron(parobs.p))
     i, tmin::Float32, = next_collision(parobs.p, bd)
     parobs.i = i
     parobs.tmin = tmin
