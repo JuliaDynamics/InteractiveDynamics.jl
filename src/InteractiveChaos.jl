@@ -41,6 +41,6 @@ include("numericdata/trajectory_highlighter.jl")
 include("chaos/orbitdiagram.jl")
 include("chaos/poincareclick.jl")
 include("billiards/defs_plotting.jl")
-include("billiards/animation.jl")
+include("billiards/defs_animating.jl")
 
 end

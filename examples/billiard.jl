@@ -1,4 +1,8 @@
-using DynamicalBilliards, InteractivePlotting, Makie, MakieLayout
+using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
+
+# TODO: Fix magnetic particles!
+# TODO: plot particle as well!
+# TODO: Add reset button
 
 # %% test
 dt = 0.001
@@ -9,10 +13,10 @@ bd = billiard_stadium(1.0f0, 1.0f0)
 bd = Billiard(bd..., Disk(SVector(0.5f0, 0.5f0), 0.2f0))
 cs = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 ps = [Particle(1, 0.6f0 + 0.0005f0*i, 0) for i in 1:N]
-ps = [MagneticParticle(1, 0.6f0 + 0.0005f0*i, 0, 1.0f0) for i in 1:N]
+ps = [Particle(1, 0.6f0 + 0.0005f0*i, 0) for i in 1:N]
 # scale_plot=false
 scene, layout = layoutscene(resolution = (800, 800))
-ax = layout[1:3, 1] = LAxis(scene)
+ax = layout[1, 1] = LAxis(scene)
 ax.autolimitaspect = 1
 # bdplot!(ax, bd[1])
 # bdplot!(ax, bd[2])
@@ -22,28 +26,44 @@ ax.autolimitaspect = 1
 bdplot!(ax, bd)
 
 allparobs = [ParObs(p, bd, tail) for p in ps]
-
+plotted_tails_idxs = zeros(Int, N)
+L = length(ax.scene.plots)
 for (i, p) in enumerate(allparobs)
     lines!(ax, p.tail, color = cs[i])
+    plotted_tails_idxs[i] = L + i
 end
-
 runtoggle = LToggle(scene, active = false)
-runtext = LText(scene, "run:")
-layout[4, 1] = grid!(hcat(runtext, runtoggle), width = Auto(false), height = Auto(false))
+dtslider = LSlider(scene, range = 1:100)
+layout[2, 1] = grid!(hcat(
+    LText(scene, "run:"), runtoggle, LText(scene, "speed:"), dtslider
+), width = Auto(false), height = Auto(true))
 
 # Toggle test
+# TODO: I need to change my animation to not update a plot all the time...
 on(runtoggle.active) do act
     @async while runtoggle.active[]
-        for i in 1:N
-            p = ps[i]
-            parobs = allparobs[i]
-            animstep!(p, bd, dt, parobs)
-        end
+        # nsims = dtslider.value[]
+        # for j in 1:nsims
+            for i in 1:N
+                p = ps[i]
+                parobs = allparobs[i]
+                animstep!(p, bd, dt, parobs)
+            end
+        # end
+        # for j in 1:maximum(dtslider.range)-nsims
+        #     for i in 1:N
+        #         p = ps[i]
+        #         parobs = allparobs[i]
+        #         animstep!(p, bd, dt, parobs, true)
+        #     end
+        # end
         yield()
+        # yield()
         isopen(scene) || break
     end
 end
 
+display(scene)
 
 # layout[4, 1] = controlgrid = GridLayout(width = Auto(false), height = Auto(false))
 # runbutton = LButton(scene, label = "run")
@@ -83,20 +103,19 @@ end
 # end
 
 # initialize all the stuff
-scene
 
-# %%
-using BenchmarkTools, DataStructures
-# TODO: try https://juliacollections.github.io/DataStructures.jl/latest/circ_buffer/
-n = 100
-x = [Point2f0(0.5, 0.5) for i in 1:n]
-@btime (popfirst!(v); push!(v, Point2f0(1.0, 1.0))) setup=(v=copy(x));
-@btime popfirst!(push!(v, Point2f0(1.0, 1.0))) setup=(v=copy(x));
-
-cb = CircularBuffer{Point2f0}(n)
-append!(cb, x)
-
-@btime push!(c, Point2f0(0.1, 0.1)) setup = (c=copy(cb))
+# # %%
+# using BenchmarkTools, DataStructures
+# # TODO: try https://juliacollections.github.io/DataStructures.jl/latest/circ_buffer/
+# n = 100
+# x = [Point2f0(0.5, 0.5) for i in 1:n]
+# @btime (popfirst!(v); push!(v, Point2f0(1.0, 1.0))) setup=(v=copy(x));
+# @btime popfirst!(push!(v, Point2f0(1.0, 1.0))) setup=(v=copy(x));
+#
+# cb = CircularBuffer{Point2f0}(n)
+# append!(cb, x)
+#
+# @btime push!(c, Point2f0(0.1, 0.1)) setup = (c=copy(cb))
 
 # TODO: Don't update plots in every step. This will allow smaller `dt`, (higher resolution)
 # but not updating at every dt. instead every 10 dt or so.

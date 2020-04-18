@@ -1,3 +1,5 @@
+using DynamicalSystemsBase: Dataset
+
 plot_dataset(args...; kwargs...) = plot_dataset!(Scene(), args...; kwargs...)
 function plot_dataset!(scene, data::Dataset{2}, color = :black; kwargs...)
     makiedata = [Point2f0(d) for d in data]

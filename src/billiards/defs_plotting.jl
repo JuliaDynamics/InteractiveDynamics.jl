@@ -11,13 +11,14 @@ BROWN = "#736357"
 # DynamicalBilliards.jl constants
 using DynamicalBilliards, AbstractPlotting, Observables
 using DynamicalBilliards: SV
+using AbstractPlotting: RGBf0, RGBAf0
 
-obcolor(::Obstacle) = AbstractPlotting.RGBf0(0,0.6,0)
-obcolor(::Union{RandomWall, RandomDisk}) = (149/255, 88/255, 178/255)
-obcolor(::Union{SplitterWall, Antidot, Ellipse}) = AbstractPlotting.RGBf0(0.8,0.0,0)
-obcolor(::PeriodicWall) = AbstractPlotting.RGBf0(0.8,0.8,0)
-obfill(o::Obstacle) = AbstractPlotting.RGBAf0(obcolor(o), 0.5)
-obfill(o::Union{Antidot, Ellipse}) = AbstractPlotting.RGBAf0(obcolor(o)..., 0.1)
+obcolor(::Obstacle) = RGBf0(0,0.6,0)
+obcolor(::Union{RandomWall, RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
+obcolor(::Union{SplitterWall, Antidot, Ellipse}) = RGBf0(0.8,0.0,0)
+obcolor(::PeriodicWall) = RGBf0(0.8,0.8,0)
+obfill(o::Obstacle) = RGBAf0(obcolor(o), 0.5)
+obfill(o::Union{Antidot, Ellipse}) = RGBAf0(obcolor(o)..., 0.1)
 obls(::Obstacle) = "solid"
 obls(::Union{SplitterWall, Antidot, Ellipse}) = "dashed"
 obls(::PeriodicWall) = "dotted"
