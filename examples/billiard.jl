@@ -3,6 +3,8 @@ using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 # TODO: Fix magnetic particles!
 # TODO: plot particle as well!
 # TODO: Add reset button
+# TODO: Allow input particles to be both `nothing` as well as specified
+# TODO: input color can be vector of length N or colormap specifier
 
 dt = 0.001
 tail = 500 # multiple of dt
@@ -31,6 +33,9 @@ for (i, p) in enumerate(allparobs)
     lines!(ax, p.tail, color = cs[i])
     plotted_tails_idxs[i] = L + i
 end
+# delete!(ax.scene.plots, plotted_tails_idxs)
+
+# Controls:
 runtoggle = LToggle(scene, active = false)
 nslider = LSlider(scene, range = 0:10, startvalue=0)
 layout[2, 1] = grid!(hcat(
@@ -43,13 +48,13 @@ on(runtoggle.active) do act
         for i in 1:N
             p = ps[i]
             parobs = allparobs[i]
-            animstep!(p, bd, dt, parobs, true)
+            animstep!(parobs, bd, dt, true)
         end
         for _ in 1:nslider.value[]
             for i in 1:N
                 p = ps[i]
                 parobs = allparobs[i]
-                animstep!(p, bd, dt, parobs, false)
+                animstep!(parobs, bd, dt, false)
             end
         end
         yield()

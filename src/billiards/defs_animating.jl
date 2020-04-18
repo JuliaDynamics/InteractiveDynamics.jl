@@ -1,8 +1,8 @@
 using DataStructures
 
-mutable struct ParticleObservable
-    # Numbers necessary for simulation
-    # TODO: do they have to be Observables?
+mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
+    # Fields necessary for simulation
+    p::P
     i::Int
     tmin::Float32
     t::Float32
@@ -17,48 +17,46 @@ end
 function ParticleObservable(p, bd, n) # initializer
     i, tmin::Float32, cp = next_collision(p, bd)
     ξ = sφ = 0f0 # TODO: Use boundary map on cp
-    x = [Point2f0(p.pos) for i in 1:n]
     cb = CircularBuffer{Point2f0}(n)
-    append!(cb, x)
-    ParticleObservable(i, tmin, 0f0, 0, 0f0, Observable.((
+    append!(cb, [Point2f0(p.pos) for i in 1:n])
+    ParticleObservable(p, i, tmin, 0f0, 0, 0f0, Observable.((
         cb, Point2f0(p.pos), Point2f0(p.vel), Point2f0(ξ, sφ)
     ))...)
 end
 const ParObs = ParticleObservable
 
-function animstep!(p, bd, dt, parobs, updateplot = true)
+function animstep!(parobs, bd, dt, updateplot = true)
     if parobs.t + dt - parobs.tmin > 0
         rt = parobs.tmin - parobs.t # remaining time
-        animbounce!(p, bd, rt, parobs, updateplot)
+        animbounce!(parobs, bd, rt, updateplot)
     else
-        propagate!(p, dt)
+        propagate!(parobs.p, dt)
         parobs.t += dt
         parobs.T += dt
-        popfirst!(parobs.tail[])
-        push!(parobs.tail[], p.pos)
+        push!(parobs.tail[], parobs.p.pos)
         if updateplot
-            parobs.pos[] = p.pos
-            parobs.vel[] = p.vel
+            parobs.pos[] = parobs.p.pos
+            parobs.vel[] = parobs.p.vel
             parobs.tail[] = parobs.tail[] # trigger update
         end
     end
     return
 end
 
-function animbounce!(p, bd, rt, parobs, updateplot = true)
-    propagate!(p, rt)
-    DynamicalBilliards._correct_pos!(p, bd[parobs.i])
-    DynamicalBilliards.resolvecollision!(p, bd[parobs.i])
-    i, tmin::Float32, = next_collision(p, bd)
+function animbounce!(parobs, bd, rt, updateplot = true)
+    propagate!(parobs.p, rt)
+    DynamicalBilliards._correct_pos!(parobs.p, bd[parobs.i])
+    DynamicalBilliards.resolvecollision!(parobs.p, bd[parobs.i])
+    i, tmin::Float32, = next_collision(parobs.p, bd)
     parobs.i = i
     parobs.tmin = tmin
     parobs.t = 0f0
     parobs.T += rt
     parobs.n += 1
-    push!(parobs.tail[], p.pos)
+    push!(parobs.tail[], parobs.p.pos)
     if updateplot
-        parobs.pos[] = p.pos
-        parobs.vel[] = p.vel
+        parobs.pos[] = parobs.p.pos
+        parobs.vel[] = parobs.p.vel
         parobs.tail[] = parobs.tail[] # trigger update
     end
     # TODO: adjust boundary map
