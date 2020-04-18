@@ -36,6 +36,7 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd)
     p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0f0, 0, 0f0
     L = length(p.tail[])
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
+    p.tail[] = p.tail[]
     p.pos[] = p0.pos
     p.vel[] = p0.vel
     # p.ξsin # TODO: reset this as well

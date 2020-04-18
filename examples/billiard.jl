@@ -51,8 +51,8 @@ end
 
 # Plot particles
 if plot_particles
+    vr = _estimate_vr(bd)
     balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-    vr = Float32(0.05)
     vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
     particle_plots = (
         scatter!(ax, balls; color = cs, marker = partmarker, markersize = 6AbstractPlotting.px),
@@ -63,13 +63,15 @@ if plot_particles
     )
 end
 
+function _estimate_vr(bd)
+    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+    f = max((xmax-xmin), (ymax-ymin))
+    isinf(f) && error("cellsize of billiard is infinite")
+    vr = Float32(f/50)
+end
+
 # Controls:
-nslider = LSlider(scene, range = 0:30, startvalue=0)
 resetbutton = LButton(scene, label = "reset",
-    buttoncolor = RGBf0(0.8, 0.8, 0.8),
-    height = 40, width = 80
-)
-particlebutton = LButton(scene, label = "balls",
     buttoncolor = RGBf0(0.8, 0.8, 0.8),
     height = 40, width = 80
 )
@@ -80,10 +82,19 @@ runbutton = LButton(scene, label = Observable("run"),
     labelcolor = Observable((RGBf0(0,0,0))),
     labelcolor_active = Observable((RGBf0(1,1,1))),
     height = 40, width = 70,
-    # width = Auto(false),
 )
+nslider = LSlider(scene, range = 0:30, startvalue=0)
+controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
+if plot_particles
+    particlebutton = LButton(scene, label = "particles",
+        buttoncolor = RGBf0(0.8, 0.8, 0.8),
+        height = 40, width = 100
+    )
+    pushfirst!(controls, particlebutton)
+end
 
 # Functionality that CREATES the play/stop button
+# TODO: will be deleted once MakieLayout has proper togglable button
 on(runbutton.clicks) do n
     t = runbutton.label[] == "run" ? "stop" : "run"
     runbutton.label[] = t
@@ -96,7 +107,7 @@ end
 
 # Create the "control panel"
 layout[2, 1] = grid!(hcat(
-    runbutton, resetbutton, particlebutton, LText(scene, "speed:"), nslider
+    controls...,
 ), width = Auto(false), height = Auto(true))
 
 # Play/stop functionality
@@ -129,12 +140,22 @@ end
 
 # Resetting functionality
 on(resetbutton.clicks) do nclicks
-    @async if runbutton.label[] == "stop"
+    if runbutton.label[] == "stop"
         runbutton.clicks[] += 1 # TODO: this is a hack until full support for LToggleButton
     end
+    yield()
     # update parobs
     for i in 1:N
-        rebind_partobs!(allparobs[i], p0s[i], bd)
+        parobs = allparobs[i]
+        rebind_partobs!(parobs, p0s[i], bd)
+        if plot_particles
+            balls[][i] = parobs.p.pos
+            vels[][i] = vr * parobs.p.vel
+        end
+    end
+    if plot_particles
+        balls[] = balls[]
+        vels[] = vels[]
     end
     yield()
 end
