@@ -1,6 +1,5 @@
 using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 
-# TODO: Fix magnetic particles!
 # TODO: plot particle as well!
 # TODO: Add reset button
 # TODO: Allow input particles to be both `nothing` as well as specified
@@ -31,8 +30,8 @@ end
 ps = particlebeam(0.8, 0.6, 0, N, 0.01, 1.0)
 
 # Initialized inside process
-cs = colors isa Symbol ? AbstractPlotting.cgrad(colors)[1:N] : colors
-scene, layout = layoutscene(resolution = (800, 800))
+cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, n = N) : colors
+scene, layout = layoutscene(resolution = (1000, 800))
 ax = layout[1, 1] = LAxis(scene)
 ax.autolimitaspect = 1
 bdplot!(ax, bd)
@@ -44,18 +43,44 @@ for (i, p) in enumerate(allparobs)
     lines!(ax, p.tail, color = cs[i])
     plotted_tails_idxs[i] = L + i
 end
-# delete!(ax.scene.plots, plotted_tails_idxs)
+# delete!(ax.scene.plots, plotted_tails_idxs) # do this to clean the scene
 
 # Controls:
-runtoggle = LToggle(scene, active = false)
 nslider = LSlider(scene, range = 0:10, startvalue=0)
+resetbutton = LButton(scene, label = "reset",
+    buttoncolor = RGBf0(0.8, 0.8, 0.8),
+    height = 40, width = 80
+)
+runbutton = LButton(scene, label = Observable("run"),
+    buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
+    buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
+    buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
+    labelcolor = Observable((RGBf0(0,0,0))),
+    labelcolor_active = Observable((RGBf0(1,1,1))),
+    height = 40, width = 70,
+    # width = Auto(false),
+)
+
+
+# Functionality that CREATES the play/stop button
+on(runbutton.clicks) do n
+    t = runbutton.label[] == "run" ? "stop" : "run"
+    runbutton.label[] = t
+    for (s1, s2) in ((:buttoncolor, :buttoncolor_active), (:labelcolor, :labelcolor_active))
+    getproperty(runbutton, s1)[], getproperty(runbutton, s2)[] =
+        getproperty(runbutton, s2)[], getproperty(runbutton, s1)[]
+    end
+    runbutton.labelcolor_hover[] = runbutton.labelcolor[]
+end
+
+
 layout[2, 1] = grid!(hcat(
-    LText(scene, "run:"), runtoggle, LText(scene, "speed:"), nslider
+    runbutton, resetbutton, LText(scene, "speed:"), nslider
 ), width = Auto(false), height = Auto(true))
 
-# Toggle test
-on(runtoggle.active) do act
-    @async while runtoggle.active[]
+# Play/stop functionality
+on(runbutton.clicks) do nclicks
+    @async while runbutton.label[] == "stop"
         for i in 1:N
             p = ps[i]
             parobs = allparobs[i]
@@ -72,6 +97,8 @@ on(runtoggle.active) do act
         isopen(scene) || break
     end
 end
+
+# Resetting functionality
 
 display(scene)
 
