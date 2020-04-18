@@ -33,32 +33,27 @@ for (i, p) in enumerate(allparobs)
     plotted_tails_idxs[i] = L + i
 end
 runtoggle = LToggle(scene, active = false)
-dtslider = LSlider(scene, range = 1:100)
+nslider = LSlider(scene, range = 10:-1:0, startvalue = 0)
 layout[2, 1] = grid!(hcat(
-    LText(scene, "run:"), runtoggle, LText(scene, "speed:"), dtslider
+    LText(scene, "run:"), runtoggle, LText(scene, "speed:"), nslider
 ), width = Auto(false), height = Auto(true))
 
 # Toggle test
-# TODO: I need to change my animation to not update a plot all the time...
 on(runtoggle.active) do act
     @async while runtoggle.active[]
-        # nsims = dtslider.value[]
-        # for j in 1:nsims
+        for i in 1:N
+            p = ps[i]
+            parobs = allparobs[i]
+            animstep!(p, bd, dt, parobs, true)
+        end
+        for _ in 1:nslider.value[]
             for i in 1:N
                 p = ps[i]
                 parobs = allparobs[i]
-                animstep!(p, bd, dt, parobs)
+                animstep!(p, bd, dt, parobs, false)
             end
-        # end
-        # for j in 1:maximum(dtslider.range)-nsims
-        #     for i in 1:N
-        #         p = ps[i]
-        #         parobs = allparobs[i]
-        #         animstep!(p, bd, dt, parobs, true)
-        #     end
-        # end
+        end
         yield()
-        # yield()
         isopen(scene) || break
     end
 end

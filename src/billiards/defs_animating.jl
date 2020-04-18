@@ -1,9 +1,12 @@
 struct ParticleObservable
+    # Numbers necessary for simulation
+    # TODO: do they have to be Observables?
     i::Observable{Int}
     tmin::Observable{Float32}
     t::Observable{Float32}
     n::Observable{Int}
     T::Observable{Float32}
+    # Fields used in plotting
     tail::Observable{Vector{Point2f0}}
     pos::Observable{Point2f0}
     vel::Observable{Point2f0}
@@ -19,24 +22,26 @@ function ParticleObservable(p, bd, n) # initializer
 end
 const ParObs = ParticleObservable
 
-function animstep!(p, bd, dt, parobs)
+function animstep!(p, bd, dt, parobs, updateplot = true)
     if parobs.t[] + dt - parobs.tmin[] > 0
         rt = parobs.tmin[] - parobs.t[] # remaining time
-        animbounce!(p, bd, rt, parobs)
+        animbounce!(p, bd, rt, parobs, updateplot)
     else
         propagate!(p, dt)
         parobs.t[] += dt
         parobs.T[] += dt
-        parobs.pos[] = p.pos
-        parobs.vel[] = p.vel
         popfirst!(parobs.tail[])
         push!(parobs.tail[], p.pos)
-        parobs.tail[] = parobs.tail[] # trigger update
+        if updateplot
+            parobs.pos[] = p.pos
+            parobs.vel[] = p.vel
+            parobs.tail[] = parobs.tail[] # trigger update
+        end
     end
     return
 end
 
-function animbounce!(p, bd, rt, parobs)
+function animbounce!(p, bd, rt, parobs, updateplot = true)
     propagate!(p, rt)
     DynamicalBilliards._correct_pos!(p, bd[parobs.i[]])
     DynamicalBilliards.resolvecollision!(p, bd[parobs.i[]])
@@ -45,11 +50,13 @@ function animbounce!(p, bd, rt, parobs)
     parobs.tmin[] = tmin
     parobs.t[] = 0f0
     parobs.T[] += rt
-    parobs.pos[] = p.pos
-    parobs.vel[] = p.vel
     popfirst!(parobs.tail[])
     push!(parobs.tail[], p.pos)
-    parobs.tail[] = parobs.tail[] # trigger update
+    if updateplot
+        parobs.pos[] = p.pos
+        parobs.vel[] = p.vel
+        parobs.tail[] = parobs.tail[] # trigger update
+    end
     # TODO: adjust boundary map
     return
 end
