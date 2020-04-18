@@ -9,9 +9,9 @@ using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 dt = 0.001
 tail = 1000 # multiple of dt
 N = 100
-plot_particles = false
-colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
+plot_particles = true
 colors = :dense
+colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 bd = billiard_stadium(1.0f0, 1.0f0)
 bd = Billiard(bd..., Disk(SVector(0.5f0, 0.5f0), 0.2f0))
 ps = [MagneticParticle(1, 0.6f0 + 0.0005f0*i, 0, 1f0) for i in 1:N]
@@ -54,16 +54,22 @@ if plot_particles
     balls = Observable([Point2f0(p.p.pos) for p in allparobs])
     vr = Float32(0.05)
     vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
-    scatter!(ax, balls; color = cs, marker = partmarker, markersize = 6AbstractPlotting.px)
-    arrows!(ax, balls, vels;
-        normalize = false, arrowsize = 0.01AbstractPlotting.px,
-        linewidth  = 2,
+    particle_plots = (
+        scatter!(ax, balls; color = cs, marker = partmarker, markersize = 6AbstractPlotting.px),
+        arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
+            normalize = false, arrowsize = 0.01AbstractPlotting.px,
+            linewidth  = 2,
+        )
     )
 end
 
 # Controls:
-nslider = LSlider(scene, range = 0:10, startvalue=0)
+nslider = LSlider(scene, range = 0:30, startvalue=0)
 resetbutton = LButton(scene, label = "reset",
+    buttoncolor = RGBf0(0.8, 0.8, 0.8),
+    height = 40, width = 80
+)
+particlebutton = LButton(scene, label = "balls",
     buttoncolor = RGBf0(0.8, 0.8, 0.8),
     height = 40, width = 80
 )
@@ -90,7 +96,7 @@ end
 
 # Create the "control panel"
 layout[2, 1] = grid!(hcat(
-    runbutton, resetbutton, LText(scene, "speed:"), nslider
+    runbutton, resetbutton, particlebutton, LText(scene, "speed:"), nslider
 ), width = Auto(false), height = Auto(true))
 
 # Play/stop functionality
@@ -133,5 +139,14 @@ on(resetbutton.clicks) do nclicks
     yield()
 end
 
+# Show/hide particles functionality
+if plot_particles
+    on(particlebutton.clicks) do nclicks
+        particle_plots[1].visible[] = !particle_plots[1].visible[]
+        for i in 1:2
+        particle_plots[2].plots[i].visible[] = !particle_plots[2].plots[i].visible[]
+        end
+    end
+end
 
 display(scene)
