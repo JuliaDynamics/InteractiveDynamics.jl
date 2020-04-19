@@ -74,8 +74,14 @@ end
 
 bdplot!(ax, p::AbstractParticle; kwargs...) = bdplot!(ax, [p]; kwargs...)
 
+function _estimate_vr(bd)
+    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+    f = max((xmax-xmin), (ymax-ymin))
+    isinf(f) && error("cellsize of billiard is infinite")
+    vr = Float32(f/50)
+end
 
-function bdplot!(ax, ps::Vector{<:AbstractParticle};
+function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
     use_cell = true, kwargs...)
     c = haskey(kwargs, :color) ? kwargs[:color] : AbstractPlotting.RGBf0(0,0,0)
     N = length(ps)
@@ -84,7 +90,7 @@ function bdplot!(ax, ps::Vector{<:AbstractParticle};
 
     # need heuristic for ms and vr
     ms = 6
-    vr = 0.05
+    vr = _estimate_vr(bd)
     for i in 1:N
         p = ps[i]
         pos = use_cell ? p.pos + p.current_cell : p.pos

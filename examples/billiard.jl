@@ -1,14 +1,15 @@
 using DynamicalBilliards, InteractiveChaos, Makie, MakieLayout
 
-# TODO: plot particle as well!
-# TODO: Allow input particles to be both `nothing` as well as specified
+# TODO: Draw particle/rectangle
 # TODO: input color can be vector of length N or colormap specifier
 # TODO: N must be established to be the length of particles for both beam or input
+# TODO: Allow input particles to be both `nothing` as well as specified
 
 # Input
 dt = 0.001
 tail = 1000 # multiple of dt
 N = 100
+dx =  0.01
 plot_particles = true
 colors = :dense
 colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
@@ -28,8 +29,9 @@ function particlebeam(x0, y0, φ, N, dx, ω = nothing)
     end
 end
 
-ps = particlebeam(0.8, 0.6, 0, N, 0.01, 1.5)
+ps = particlebeam(0.8, 0.6, 0, N, dx, 1.5)
 p0s = deepcopy(ps) # deep is necessary because vector of mutables
+ω0 = ismagnetic(ps[1]) ? ps[1].ω : nothing
 
 # Initialized inside process
 cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, N) : colors
@@ -63,12 +65,6 @@ if plot_particles
     )
 end
 
-function _estimate_vr(bd)
-    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
-    f = max((xmax-xmin), (ymax-ymin))
-    isinf(f) && error("cellsize of billiard is infinite")
-    vr = Float32(f/50)
-end
 
 # Controls:
 resetbutton = LButton(scene, label = "reset",
@@ -168,6 +164,16 @@ if plot_particles
         particle_plots[2].plots[i].visible[] = !particle_plots[2].plots[i].visible[]
         end
     end
+end
+
+# Selecting new particle functionality
+newparticles = select_line(ax.scene)
+on(newparticles) do val
+    pos = val[1]
+    dir = val[2] - val[1]
+    φ = atan(dir[2], dir[1])
+    p0s .= particlebeam(pos..., φ, N, dx, ω0)
+    resetbutton.clicks[] += 1
 end
 
 display(scene)
