@@ -17,7 +17,7 @@ StatsMakie = "65254759-4cff-5aa5-8326-61ce017a8c70"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AbstractPlotting = "0.9.17, 0.10, 0.11, 0.12, 0.13, 0.14"
+AbstractPlotting = "0.10.2"
 Blink = "0.12"
 DynamicalBilliards = "3.10"
 DynamicalSystems = "1"
