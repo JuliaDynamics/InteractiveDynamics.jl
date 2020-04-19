@@ -19,7 +19,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [compat]
 AbstractPlotting = "0.10.2"
 Blink = "0.12"
-DynamicalBilliards = "3.10"
+DynamicalBilliards = "3.11"
 DynamicalSystems = "1"
 Interact = "0.10"
 MakieLayout = "0.6"
