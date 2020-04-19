@@ -24,9 +24,12 @@ obls(::Union{SplitterWall, Antidot, Ellipse}) = "dashed"
 obls(::PeriodicWall) = "dotted"
 oblw(::Obstacle) = 2.0
 
+function bdplot!(ax, o::T; kwargs...) where {T}
+    error("Element of type $T does not have a plotting definition yet.")
+end
 
 function bdplot!(ax, s::Semicircle; kwargs...)
-    θ1 = atan(s.facedir[2], s.facedir[1]) + π # start of semicircle
+    θ1 = atan(s.facedir[2], s.facedir[1]) + π/2 # start of semicircle
     θ2 = θ1 + π
     arc!(ax, Point2f0(s.c...), s.r, θ1, θ2; color = obcolor(s), linewidth = oblw(s),
          scale_plot=false, kwargs...)

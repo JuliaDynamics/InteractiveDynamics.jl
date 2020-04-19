@@ -7,8 +7,34 @@ export interactive_billiard
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
     interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
 
-Launch an interactive application that evolves particles in a dynamical billiard, using
+Launch an interactive application that evolves particles in a dynamical billiard `bd`, using
 [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/).
+You can either specify exactly the particles that will be used `ps` or provide
+some initial conditions `x,y,φ,ω`, which by default are random in the billiard.
+
+The particles are evolved in real time instead of being pre-calculated,
+so the application be left to run for infinite time.
+
+## Interaction
+Push "play" to start evolving particles in the billiard, and "reset" to restore them
+to their (latest) initial condition. The "particles" hides or shows the particles.
+The "speed" slider controls the animation speed (in fact, it controls how often
+are the plots updated).
+
+Clicking and dragging inside the billiard plot shows a line. When the line is selected,
+new particles are created that have the direction of this line, as well as its starting
+position, using the function `particlebeam` from `DynamicalBilliards`.
+
+## Further keywords
+* `N = 100` : if exact particles are not given, `N` are created. Otherwise it is `length(ps)`.
+* `dx = 0.01` : width of the particle beam.
+* `dt = 0.001` : time resolution of the animation.
+* `tail = 1000` : length of the tail of the particles (multiplies `dt`).
+* colors = :bkr : If a symbol (colormap name) each particle gets a color from the map.
+  Otherwise, colors can be a vector of colors of length `N`.
+* `α = 0.5` : Alpha value for the particle colors (if not given explicitly).
+* `plot_particles = true` : If false, the particles are not plotted (as balls and arrows).
+  This makes the application faster (you cannot show them again with the button).
 """
 interactive_billiard(bd::Billiard, ω = nothing; kwargs...) =
 interactive_billiard(bd::Billiard, randominside_xyφ(bd)..., ω; kwargs...)
@@ -20,7 +46,7 @@ function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = not
 end
 
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
-        dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr, ω = nothing,
+        dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
         plot_particles = true, α = 0.5,
     )
 
