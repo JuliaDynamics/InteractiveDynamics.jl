@@ -77,7 +77,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
 
     scene, layout = layoutscene(resolution = (1000, 800))
 
-    T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal, Ttr)
+    T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal)
     ax = layout[0, :] = LAxis(scene)
 
     # Initial Section
@@ -119,7 +119,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
     return laststate, ax
 end
 
-function _add_psos_controls!(scene, layout, tfinal, Ttr)
+function _add_psos_controls!(scene, layout, tfinal)
     T_slider = LSlider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
     T_text_prev = LText(scene, "T =", halign = :right)
     T_text_after = LText(scene, lift(a -> "$(round(a))", T_slider.value), halign = :left)
@@ -130,5 +130,6 @@ function _add_psos_controls!(scene, layout, tfinal, Ttr)
     sublayout[:h] = [T_text_prev, T_slider, T_text_after, LText(scene, "   "),
                     m_text_prev, m_slider]
 
+    colsize!(sublayout, 6, Auto(0.5))
     return T_slider.value, m_slider.value
 end
