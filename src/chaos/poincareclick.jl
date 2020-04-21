@@ -1,11 +1,10 @@
-using DynamicalSystems
+using DynamicalSystems, MakieLayout
 export interactive_poincaresos
 
 """
     interactive_poincaresos(cds, plane, idxs, complete; kwargs...)
-Open an interactive application for exploring a Poincaré surface of section (PSOS)
-of the continuous dynamical system `cds`. Return an observable containing the
-latest initial state created by `complete`, as well as its color.
+Launch an interactive application for exploring a Poincaré surface of section (PSOS)
+of the continuous dynamical system `cds` using `poincaresos` from DynamicalSystems.jl.
 
 The `plane` can only be the `Tuple` type accepted by `DynamicalSystems.poincaresos`,
 i.e. `(i, r)` for the `i`th variable crossing the value `r`. `idxs` gives the two
@@ -17,27 +16,23 @@ that `plane[1] ∉ idxs` must be true.
 during interactive use, see below.
 
 The function returns: an observable containing the latest initial `state`
-and the `scene` that is plotted. The scatter plot is `scene.children[2]`.
+and the `axis` with the scatterplot
 
 ## Keyword Arguments
 * `direction, rootkw` : Same use as in `DynamicalSystems.poincaresos`.
-* `tfinal` : A 2-element tuple for the range of values for the total integration time
-  (chosen interactively).
-* `Ttr` : A 2-element tuple for the range of values for the transient integration time
-  (chosen interactively).
-* `markersizes = (-4, -1)` : A 2-element tuple for the range of the marker sizes
-  (which scale exponentially: the actual size is `10.0^markersize`).
-* `color` : A *function* of the system's initial condition, that returns a color to
-  plot the new points with. A random color is chosen by default. Notice that for
-  type stability reasons this function must return an instance of
-  `RGBf0(red, green, blue)`.
-* `labels = ("u₁" , "u₂")` : Axis labels.
+* `tfinal = (1000.0, 10.0^4)` : A 2-element tuple for the range of values
+  for the total integration time (chosen interactively).
+* `color` : A **function** of the system's initial condition, that returns a color to
+  plot the new points with. The color must be `RGBf0/RGBAf0`.
+   A random color is chosen by default.
+* `labels = ("u₁" , "u₂")` : Axis labels (you can change them youself `ax.xlabel = ...`)
+* `scatterkwargs = ()`: Named tuple of keywords passed to `scatter`.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
 ## Interaction
-The application is a standard AbstractPlotting scatterplot, which shows the PSOS of the system,
-initially using the system's `u0`. Two sliders control the final evolution time and
-the size of the marker points.
+The application is a standard scatterplot, which shows the PSOS of the system,
+initially using the system's `u0`. Two sliders control the total evolution time
+and the size of the marker points (which is always in pixels).
 
 Upon clicking within the bounds of the scatter plot your click is transformed into
 a new initial condition, which is further evolved and its PSOS is computed and then
@@ -57,18 +52,16 @@ This `newstate` is also given to the function `color` that
 gets a new color for the new points.
 """
 function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
-                         # PSOS kwargs:
-                         direction = -1,
-                         Ttr = (0.0, 1000.0),
-                         tfinal = (1000.0, 10.0^4),
-                         rootkw = (xrtol = 1e-6, atol = 1e-6),
-                         # AbstractPlotting kwargs:
-                         color = _randomcolor, resolution = (750, 750),
-                         makiekwargs = (),
-                         markersizes = (-4, -1),
-                         labels = ("u₁" , "u₂"),
-                         # DiffEq kwargs:
-                         diffeq...) where {IIP, S, D}
+         # PSOS kwargs:
+         direction = -1,
+         tfinal = (1000.0, 10.0^4),
+         rootkw = (xrtol = 1e-6, atol = 1e-6),
+         # AbstractPlotting kwargs:
+         color = randomcolor,
+         scatterkwargs = (),
+         labels = ("u₁" , "u₂"),
+         # DiffEq kwargs:
+         diffeq...) where {IIP, S, D}
 
     @assert typeof(plane) <: Tuple
     @assert length(idxs) == 2
@@ -82,83 +75,60 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
     planecrossing = PlaneCrossing(plane, direction > 0)
     i = SVector{2, Int}(idxs)
 
-    # Time sliders:
-    ui_tf, tf = AbstractPlotting.textslider(
-        range(tfinal[1], tfinal[2], length = 1000), "tfinal", start=tfinal[1]
-    )
-    ui_ttr, Ttr = AbstractPlotting.textslider(
-        range(Ttr[1], Ttr[2], length = 100), "Ttr", start=Ttr[1]
-    )
+    scene, layout = layoutscene(resolution = (1000, 800))
+
+    T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal, Ttr)
+    ax = layout[0, :] = LAxis(scene)
 
     # Initial Section
-    data = poincaresos(integ, planecrossing, tf[], Ttr[], i, rootkw)
+    data = poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
     length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 
-    # Plot the first trajectory on the section:
-    ui_ms, mss = AbstractPlotting.textslider(range(markersizes[1], markersizes[2];
-    length = 100), "size", start = markersizes[2])
-    ms = lift(a -> 10.0^a, mss)
-
-    scene = Scene(resolution = (1500, 1000))
     positions_node = Observable(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
     colors_node = Observable(colors)
-    scplot = scatter(positions_node, color = colors_node, markersize = ms)
-    scplot[Axis][:names][:axisnames] = labels
+    scplot = scatter!(
+        ax, positions_node, color = colors_node,
+        markersize = lift(o -> o*px, m_slider), marker = MARKER, scatterkwargs...
+    )
 
-    laststate = Observable((u0, color(u0)))
+    ax.xlabel, ax.ylabel = labels
+    laststate = Observable(u0)
 
     # Interactive clicking on the psos:
-    on(events(scplot).mousebuttons) do buttons
-        if (ispressed(scplot, Mouse.left) && !ispressed(scplot, Keyboard.space) &&
-            AbstractPlotting.is_mouseinside(scplot))
-
-            pos = mouseposition(scplot)
-
-            x, y = pos; z = plane[2] # third variable comes from plane
-
-            newstate = try
-               complete(x, y, z)
-            catch err
-               @error "Could not get state, got error: " exception=err
-               return
-            end
-
-            reinit!(integ, newstate)
-
-            data = poincaresos(integ, planecrossing, tf[], Ttr[], i, rootkw)
-
-            positions = positions_node[]; colors = colors_node[]
-            append!(positions, data)
-            c = color(newstate)
-            append!(colors, fill(c, length(data)))
-
-            # Notify the signals
-            positions_node[] = positions; colors_node[] = colors
-
-            # Update last state
-            laststate[] = (newstate, c)
-
-            # AbstractPlotting.scatter!(scplot, data; makiekwargs..., color = color(newstate))
-            # display(scene)
+    spoint = select_point(ax.scene)
+    on(spoint) do pos
+        x, y = pos; z = plane[2] # third variable comes from plane
+        newstate = try
+           complete(x, y, z)
+        catch err
+           @error "Could not get state, got error: " exception=err
+           return
         end
-    end
 
-    # Button to print current state:
-    statebutton = AbstractPlotting.button(Theme(raw = true, camera = campixel!),
-    "latest state", dimensions = (160, 40))
-    on(statebutton[end][:clicks]) do c
-        u0, col = laststate[]
-        println("Latest state: ")
-        println(u0)
-        println("with color: $(col)")
+        reinit!(integ, newstate)
+        data = poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
+        positions = positions_node[]; colors = colors_node[]
+        append!(positions, data)
+        c = color(newstate)
+        append!(colors, fill(c, length(data)))
+        # update all the observables with Array as value:
+        positions_node[], colors_node[], laststate[] = positions, colors, newstate
     end
-
-    AbstractPlotting.hbox(AbstractPlotting.vbox(ui_ms, ui_tf, ui_ttr, statebutton), scplot, parent=scene)
     display(scene)
-    return laststate, scene
+    return laststate, ax
 end
 
-_randomcolor(args...) = RGBf0(rand(Float32), rand(Float32), rand(Float32))
+function _add_psos_controls!(scene, layout, tfinal, Ttr)
+    T_slider = LSlider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
+    T_text_prev = LText(scene, "T =", halign = :right)
+    T_text_after = LText(scene, lift(a -> "$(round(a))", T_slider.value), halign = :left)
+    m_slider = LSlider(scene, range = 10.0 .^ range(-1, 2, length = 100), startvalue = 10)
+    m_text_prev = LText(scene, "ms =", halign=:right)
+    sublayout = GridLayout()
+    layout[1, :] = sublayout
+    sublayout[:h] = [T_text_prev, T_slider, T_text_after, LText(scene, "   "),
+                    m_text_prev, m_slider]
 
-# TODO: Better estimate of marker size and last Tfinal
+    return T_slider.value, m_slider.value
+end

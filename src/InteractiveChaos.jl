@@ -1,6 +1,6 @@
 module InteractiveChaos
 
-using AbstractPlotting, Observables
+using AbstractPlotting, Observables, MakieLayout
 
 """
     subscript(i::Int)
@@ -35,6 +35,10 @@ function subscript(i::Int)
         string(i)
     end
 end
+
+const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
+using AbstractPlotting: px
+randomcolor(args...) = RGBAf0(rand(Float32), rand(Float32), rand(Float32), 0.75)
 
 include("numericdata/plot_dataset.jl")
 include("numericdata/trajectory_highlighter.jl")
