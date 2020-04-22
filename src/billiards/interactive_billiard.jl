@@ -209,10 +209,17 @@ end
 
 """
     interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
-FAFA.
+FAFA
+
+## Keywords
+
+* `sleept = 0.00001` : The animation for only one particle is actually too fast even
+  in its lowest speed, so we are forced to sleep inbetween each step for `sleept`.
+  Give `nothing` to never sleep.
+* `newcolor = randomcolor` ...
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
-    kwargs...)
+    newcolor = randomcolor, kwargs...)
 
     intervals = arcintervals(bd)
     scene, layout, allparobs, resetbutton, p0s = interactive_billiard(bd, ω;
@@ -220,32 +227,32 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
     parobs = allparobs[1] # only one exists.
 
-    # TODO: make psos a GridLayout and _then_ addit to the plot
     sublayout = GridLayout()
     bmapax = sublayout[1,1] = LAxis(scene)
     bmapax.xlabel = "ξ"
     bmapax.ylabel = "sin(φₙ)"
-
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
+    current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
+
     scatter_points = Observable(Point2f0[])
-    current_color = Observable(RGBAf0(0, 0, 0, 1))
+    scatter_colors = Observable(RGBAf0[])
     on(parobs.ξsin) do v
-        push!(scatter_points[], v)
-        scatter_points[] = scatter_points[]
+        pushupdate!(scatter_points, v)
+        pushupdate!(scatter_colors, current_color[])
     end
-    scatter!(bmapax.scene, scatter_points,
-    marker = MARKER, markersize = 6AbstractPlotting.px)
+    scatter!(bmapax.scene, scatter_points; color = scatter_colors,
+    marker = MARKER, markersize = 10AbstractPlotting.px)
 
     # Selecting a point on the boundary map:
     spoint = select_point(bmapax.scene)
     on(spoint) do ξsin
         pos, vel = from_bcoords(ξsin..., bd, intervals)
+        current_color[] = newcolor(pos, vel, ξsin...)
         p0s[1] = ω ≠ nothing ? MagneticParticle(pos, vel, ω) : Particle(pos, vel)
-        propagate!(p0s[1], 10eps(Float32))
+        propagate!(p0s[1], 10eps(Float32)) # ensure no bad behavior with boundary
         rebind_partobs!(parobs, p0s[1], bd, ξsin)
         resetbutton.clicks[] += 1 # reset main billiard
-        # TODO: Here I choose new color
     end
 
     # TODO: Make observable of colors so that I can push random colors.
@@ -253,6 +260,14 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     # TODO: Add obstacle index up axis like in original.
     # TODO: Add mean collision time at the bottom
 
+    cleanbutton = LButton(scene, label = "clean", width = Auto(false))
+    sublayout[2, 1] = cleanbutton
+    on(cleanbutton.clicks) do nclicks
+        scatter_points[] = Point2f0[]
+        scatter_colors[] = RGBAf0[]
+    end
+
     layout[:, 2] = sublayout
+    display(scene)
     return scene, layout, parobs
 end
