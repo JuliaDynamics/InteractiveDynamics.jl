@@ -12,4 +12,10 @@ ps = [MagneticParticle(1, 0.6f0 + 0.0005f0*i, 0, 1f0) for i in 1:N]
 ps = [Particle(1, 0.6f0 + 0.0005f0*i, 0) for i in 1:N]
 ps = particlebeam(0.8, 0.6, π/4, 100, 0.01, nothing, Float32)
 
-interactive_billiard(bd; α = 0.75, N = N)
+scene, layout, allparobs = interactive_billiard(bd)
+
+
+# %%
+
+scene, layout, allparobs = interactive_billiard_bmap(bd)
+z = allparobs[1].ξsin

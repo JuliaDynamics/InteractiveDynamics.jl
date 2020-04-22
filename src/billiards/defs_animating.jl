@@ -13,20 +13,15 @@ mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
     tail::Observable{CircularBuffer{Point2f0}}
     ξsin::Observable{Point2f0}
 end
-function ParticleObservable(p, bd, n, intervals = nothing) # initializer
+function ParticleObservable(p, bd, n, ξsin = Point2f0(0, 0)) # initializer
     i, tmin::Float32, cp = next_collision(p, bd)
-    if intervals == nothing
-        ξsin = Point2f0(0, 0)
-    else
-        ξsin = update_me #TODO
-    end
     cb = CircularBuffer{Point2f0}(n)
-    append!(cb, [Point2f0(p.pos) for i in 1:n])
+    for i in 1:n; push!(cb, Point2f0(p.pos)); end
     ParticleObservable(p, i, tmin, 0f0, 0, 0f0, Observable.((cb, ξsin))...)
 end
 const ParObs = ParticleObservable
 
-function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, intervals = nothing)
+function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin = nothing)
     i, tmin::Float32, cp = next_collision(p0, bd)
     ξ = sφ = 0f0 # TODO: Use boundary map on cp
     p.p.pos = p0.pos
@@ -36,8 +31,8 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, interv
     L = length(p.tail[])
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
-    if intervals ≠ nothing
-        p.ξsin = update_me # TODO: reset this as well
+    if ξsin ≠ nothing
+        p.ξsin = ξsin # This can only be updated from bmap, which gives selection directly
     end
 end
 
@@ -61,6 +56,10 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     DynamicalBilliards._correct_pos!(parobs.p, bd[parobs.i])
     DynamicalBilliards.resolvecollision!(parobs.p, bd[parobs.i])
     ismagnetic(parobs.p) && (parobs.p.center = find_cyclotron(parobs.p))
+    if intervals ≠ nothing
+        ξ, sφ = to_bcoords(parobs.p.pos, parobs.p.vel, bd[parobs.i])
+        parobs.ξsin = (ξ, sφ)
+    end
     i, tmin::Float32, = next_collision(parobs.p, bd)
     parobs.i = i
     parobs.tmin = tmin
@@ -70,9 +69,6 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     push!(parobs.tail[], parobs.p.pos)
     if updateplot
         parobs.tail[] = parobs.tail[] # trigger update
-    end
-    if intervals ≠ nothing # Always update boundary map plot even if main billiard is off
-        parobs.ξsin = update_me # TODO: adjust boundary map
     end
     return
 end

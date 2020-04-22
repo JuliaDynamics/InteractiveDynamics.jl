@@ -1,5 +1,5 @@
 using DynamicalBilliards, AbstractPlotting, MakieLayout
-export interactive_billiard
+export interactive_billiard, interactive_billiard_bmap
 
 #TODO: Make tails transparent going towards the past (easy!)
 # (add keyword fade = true)
@@ -31,24 +31,27 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
 * `dx = 0.01` : width of the particle beam.
 * `dt = 0.001` : time resolution of the animation.
 * `tail = 1000` : length of the tail of the particles (multiplies `dt`).
-* colors = :bkr : If a symbol (colormap name) each particle gets a color from the map.
-  Otherwise, colors can be a vector of colors of length `N`.
+* colors = (:bkr, 0.75) : If a symbol/tuple (colormap name/ with alpha) each particle gets
+  a color from the map. Otherwise, colors can be a vector of colors of length `N`.
 * `α = 0.5` : Alpha value for the particle colors (if not given explicitly).
 * `plot_particles = true` : If false, the particles are not plotted (as balls and arrows).
   This makes the application faster (you cannot show them again with the button).
 """
-interactive_billiard(bd::Billiard, ω = nothing; kwargs...) =
+interactive_billiard(bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
 interactive_billiard(bd::Billiard, randominside_xyφ(bd)..., ω; kwargs...)
 
 function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = nothing;
-    N = 100, dx = 0.01, kwargs...)
+    kwargs...)
+    N = get(kwargs, :N, 100)
+    dx = get(kwargs, :dx, 0.01)
     ps = particlebeam(x, y, φ, N, dx, ω, Float32)
-    interactive_billiard(bd::Billiard, ps; dx=dx, kwargs...)
+    interactive_billiard(bd::Billiard, ps; kwargs...)
 end
 
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
-        plot_particles = true, α = 0.5, intervals = nothing # or arcintervals(bd)
+        plot_particles = true, α = 0.5, N = 100, res = (800, 800),
+        intervals = nothing # or arcintervals(bd)
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -57,14 +60,14 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
     end
     N = length(ps)
-    cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, N) : colors
     p0s = deepcopy(ps) # deep is necessary because vector of mutables
     ω0 = ismagnetic(ps[1]) ? ps[1].ω : nothing
 
     # Initialized inside process
-    cs = colors isa Symbol ? colors_from_map(colors, α, N) : colors
-    scene, layout = layoutscene(resolution = (1000, 800))
+    cs = colors isa Vector ? colors : colors_from_map(colors, α, N)
+    scene, layout = layoutscene(resolution = res)
     ax = layout[1, 1] = LAxis(scene)
+    tight_ticklabel_spacing!(ax)
     ax.autolimitaspect = 1
     allparobs = [ParObs(p, bd, tail) for p in ps]
     bdplot!(ax, bd)
@@ -104,7 +107,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         labelcolor_active = Observable((RGBf0(1,1,1))),
         height = 40, width = 70,
     )
-    nslider = LSlider(scene, range = 0:30, startvalue=0)
+    nslider = LSlider(scene, range = 0:50, startvalue=0)
     controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
     if plot_particles
         particlebutton = LButton(scene, label = "particles",
@@ -137,7 +140,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             for i in 1:N
                 p = ps[i]
                 parobs = allparobs[i]
-                animstep!(parobs, bd, dt, true)
+                animstep!(parobs, bd, dt, true, intervals)
                 if plot_particles
                     balls[][i] = parobs.p.pos
                     vels[][i] = vr * parobs.p.vel
@@ -151,7 +154,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
                 for i in 1:N
                     p = ps[i]
                     parobs = allparobs[i]
-                    animstep!(parobs, bd, dt, false)
+                    animstep!(parobs, bd, dt, false, intervals)
                 end
             end
             yield()
@@ -168,7 +171,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         # update parobs
         for i in 1:N
             parobs = allparobs[i]
-            rebind_partobs!(parobs, p0s[i], bd)
+            rebind_partobs!(parobs, p0s[i], bd, nothing)
             if plot_particles
                 balls[][i] = parobs.p.pos
                 vels[][i] = vr * parobs.p.vel
@@ -205,6 +208,25 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     return scene, layout, allparobs
 end
 
-function colors_from_map(cmap, α, N)
-    cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]
+function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
+    intervals = arcintervals(bd)
+    scene, layout, allparobs = interactive_billiard(bd, ω;
+    kwargs..., N = 1, intervals = intervals, res = (1600, 800))
+    parobs = allparobs[1] # only one exists.
+
+    # TODO: make psos a GridLayout and _then_ addit to the plot
+    sublayout = GridLayout()
+    bmapax = sublayout[1,1] = LAxis(scene)
+    bmapax.xlabel = "ξ"
+    bmapax.ylabel = "sin(φₙ)"
+
+    layout[:, 2] = sublayout
+    # scatter_points = Observable(Point2f0[])
+    # on(parobs.ξsin) do v
+    #     push!(scatter_points[], v)
+    #     scatter_points[] = scatter_points[]
+    # end
+    # # TODO: Make observable of colors so that I can push random colors.
+    # scatter!(bmapax, scatter_points)
+    return scene, layout, allparobs
 end

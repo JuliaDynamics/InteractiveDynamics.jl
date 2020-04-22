@@ -40,6 +40,12 @@ const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom inde
 using AbstractPlotting: px
 randomcolor(args...) = RGBAf0(0.75 .* (rand(), rand(), rand())..., 0.75)
 
+function colors_from_map(cmap, α, N)
+    N == 1 && return [RGBAf0(0, 0, 0, 1)]
+    cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]
+end
+
+
 include("numericdata/plot_dataset.jl")
 include("numericdata/trajectory_highlighter.jl")
 include("chaos/orbitdiagram.jl")
