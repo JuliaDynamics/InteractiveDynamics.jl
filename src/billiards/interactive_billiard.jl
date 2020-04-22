@@ -51,7 +51,7 @@ end
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
         plot_particles = true, α = 0.5, N = 100, res = (800, 800),
-        intervals = nothing # or arcintervals(bd)
+        intervals = nothing, sleept = nothing
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -154,21 +154,21 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
                     animstep!(parobs, bd, dt, false, intervals)
                 end
             end
-            yield()
+            if sleept == nothing
+                yield()
+            else
+                sleep(sleept)
+            end
             isopen(scene) || break
         end
     end
 
     # Resetting
     on(resetbutton.clicks) do nclicks
-        if runbutton.label[] == "stop"
-            runbutton.clicks[] += 1 # TODO: this is a hack until full support for LToggleButton
-        end
-        yield()
         # update parobs
         for i in 1:N
             parobs = allparobs[i]
-            rebind_partobs!(parobs, p0s[i], bd, nothing)
+            rebind_partobs!(parobs, p0s[i], bd)
             if plot_particles
                 balls[][i] = parobs.p.pos
                 vels[][i] = vr * parobs.p.vel
@@ -202,12 +202,20 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     display(scene)
-    return scene, layout, allparobs
+    return scene, layout, allparobs, resetbutton, p0s
 end
 
-function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
+
+
+"""
+    interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
+FAFA.
+"""
+function interactive_billiard_bmap(bd::Billiard, ω=nothing;
+    kwargs...)
+
     intervals = arcintervals(bd)
-    scene, layout, allparobs = interactive_billiard(bd, ω;
+    scene, layout, allparobs, resetbutton, p0s = interactive_billiard(bd, ω;
     kwargs..., N = 1, intervals = intervals, res = (1600, 800))
 
     parobs = allparobs[1] # only one exists.
@@ -221,6 +229,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     scatter_points = Observable(Point2f0[])
+    current_color = Observable(RGBAf0(0, 0, 0, 1))
     on(parobs.ξsin) do v
         push!(scatter_points[], v)
         scatter_points[] = scatter_points[]
@@ -228,10 +237,22 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
     scatter!(bmapax.scene, scatter_points,
     marker = MARKER, markersize = 6AbstractPlotting.px)
 
-    # # TODO: Make observable of colors so that I can push random colors.
+    # Selecting a point on the boundary map:
+    spoint = select_point(bmapax.scene)
+    on(spoint) do ξsin
+        pos, vel = from_bcoords(ξsin..., bd, intervals)
+        p0s[1] = ω ≠ nothing ? MagneticParticle(pos, vel, ω) : Particle(pos, vel)
+        propagate!(p0s[1], 10eps(Float32))
+        rebind_partobs!(parobs, p0s[1], bd, ξsin)
+        resetbutton.clicks[] += 1 # reset main billiard
+        # TODO: Here I choose new color
+    end
+
+    # TODO: Make observable of colors so that I can push random colors.
     # scatter!(bmapax, scatter_points)
     # TODO: Add obstacle index up axis like in original.
-    
+    # TODO: Add mean collision time at the bottom
+
     layout[:, 2] = sublayout
-    return scene, layout, allparobs
+    return scene, layout, parobs
 end

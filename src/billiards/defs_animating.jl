@@ -21,7 +21,7 @@ function ParticleObservable(p, bd, n, ξsin = Point2f0(0, 0)) # initializer
 end
 const ParObs = ParticleObservable
 
-function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin = nothing)
+function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin = p.ξsin[])
     i, tmin::Float32, cp = next_collision(p0, bd)
     ξ = sφ = 0f0 # TODO: Use boundary map on cp
     p.p.pos = p0.pos
@@ -32,7 +32,7 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin 
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
     if ξsin ≠ nothing
-        p.ξsin = ξsin # This can only be updated from bmap, which gives selection directly
+        p.ξsin[] = ξsin # This can only be updated from bmap, which gives selection directly
     end
 end
 
