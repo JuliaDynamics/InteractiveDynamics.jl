@@ -58,7 +58,8 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     ismagnetic(parobs.p) && (parobs.p.center = find_cyclotron(parobs.p))
     if intervals ≠ nothing
         ξ, sφ = to_bcoords(parobs.p.pos, parobs.p.vel, bd[parobs.i])
-        parobs.ξsin = (ξ, sφ)
+        ξ += intervals[parobs.i]
+        parobs.ξsin[] = (ξ, sφ)
     end
     i, tmin::Float32, = next_collision(parobs.p, bd)
     parobs.i = i

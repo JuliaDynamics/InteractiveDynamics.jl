@@ -18,4 +18,4 @@ scene, layout, allparobs = interactive_billiard(bd)
 # %%
 
 scene, layout, allparobs = interactive_billiard_bmap(bd)
-z = allparobs[1].ξsin
+parobs = allparobs[1]

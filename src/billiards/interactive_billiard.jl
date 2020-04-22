@@ -75,18 +75,15 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     # Plot tails
     for (i, p) in enumerate(allparobs)
         lines!(ax, p.tail, color = cs[i])
-        # Not working:
-        # scatter!(ax, [p.pos]; color = cs[i], marker = partmarker, markersize = 6*AbstractPlotting.px)
     end
 
     # Plot particles
     if plot_particles
-        partmarker = Circle(Point2f0(0, 0), Float32(1))
         vr = _estimate_vr(bd)
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
-            scatter!(ax, balls; color = cs, marker = partmarker, markersize = 6AbstractPlotting.px),
+            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 6AbstractPlotting.px),
             arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
                 normalize = false, arrowsize = 0.01AbstractPlotting.px,
                 linewidth  = 2,
@@ -212,6 +209,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
     intervals = arcintervals(bd)
     scene, layout, allparobs = interactive_billiard(bd, ω;
     kwargs..., N = 1, intervals = intervals, res = (1600, 800))
+
     parobs = allparobs[1] # only one exists.
 
     # TODO: make psos a GridLayout and _then_ addit to the plot
@@ -220,13 +218,20 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
     bmapax.xlabel = "ξ"
     bmapax.ylabel = "sin(φₙ)"
 
-    layout[:, 2] = sublayout
-    # scatter_points = Observable(Point2f0[])
-    # on(parobs.ξsin) do v
-    #     push!(scatter_points[], v)
-    #     scatter_points[] = scatter_points[]
-    # end
+    bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
+
+    scatter_points = Observable(Point2f0[])
+    on(parobs.ξsin) do v
+        push!(scatter_points[], v)
+        scatter_points[] = scatter_points[]
+    end
+    scatter!(bmapax.scene, scatter_points,
+    marker = MARKER, markersize = 6AbstractPlotting.px)
+
     # # TODO: Make observable of colors so that I can push random colors.
     # scatter!(bmapax, scatter_points)
+    # TODO: Add obstacle index up axis like in original.
+    
+    layout[:, 2] = sublayout
     return scene, layout, allparobs
 end
