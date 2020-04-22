@@ -1,7 +1,8 @@
 using DynamicalBilliards, AbstractPlotting, MakieLayout
 export interactive_billiard
 
-#TODO: Docstring
+#TODO: Make tails transparent going towards the past (easy!)
+# (add keyword fade = true)
 
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
@@ -47,11 +48,14 @@ end
 
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
-        plot_particles = true, α = 0.5,
+        plot_particles = true, α = 0.5, intervals = nothing # or arcintervals(bd)
     )
 
-    @assert eltype(bd) == Float32 "Only Float32 number type is possible in this application."
-    @assert eltype(ps[1]) == Float32 "Only Float32 number type is possible in this application."
+    if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
+        error("Only Float32 number type is possible for the billiard applications. "*
+        "Please initialize billiards and particles by explicitly passing Float32 numbers "*
+        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
+    end
     N = length(ps)
     cs = colors isa Symbol ? AbstractPlotting.to_colormap(colors, N) : colors
     p0s = deepcopy(ps) # deep is necessary because vector of mutables
@@ -198,7 +202,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     display(scene)
-    return nothing
+    return scene, layout, allparobs
 end
 
 function colors_from_map(cmap, α, N)

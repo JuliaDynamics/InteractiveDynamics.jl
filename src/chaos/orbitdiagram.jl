@@ -218,11 +218,11 @@ function minimal_normalized_od(integ, i, p_index, pmin, pmax,
     xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
     #= @inbounds =# for (j, p) in enumerate(pvalues)
         pp = (p - pmin)/pdif # p to plot, in [0, 1]
-        DynamicalSystemsBase.reinit!(integ, u0)
+        DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p
-        DynamicalSystemsBase.step!(integ, Ttr)
+        DynamicalSystems.step!(integ, Ttr)
         for z in 1:n
-            DynamicalSystemsBase.step!(integ)
+            DynamicalSystems.step!(integ)
             x = integ.u[i]
             push!(od, Point2f0(pp, integ.u[i]))
             # update limits
@@ -250,11 +250,11 @@ function minimal_normalized_od(integ, i, p_index, pmin, pmax,
     od = Vector{Point2f0}()
     #= @inbounds =# for p in pvalues
         pp = (p - pmin)/pdif # p to plot, in [0, 1]
-        DynamicalSystemsBase.reinit!(integ, u0)
+        DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p
-        DynamicalSystemsBase.step!(integ, Ttr)
+        DynamicalSystems.step!(integ, Ttr)
         for z in 1:n
-            DynamicalSystemsBase.step!(integ)
+            DynamicalSystems.step!(integ)
             x = integ.u[i]
             if xmin ≤ x ≤ xmax
                 push!(od, Point2f0(pp, (integ.u[i] - xmin)/xdif))

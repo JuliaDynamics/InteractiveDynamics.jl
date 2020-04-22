@@ -3,31 +3,30 @@ using DynamicalBilliards: ismagnetic, find_cyclotron
 
 mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
     # Fields necessary for simulation
-    p::P
-    i::Int
-    tmin::Float32
-    t::Float32
-    n::Int
-    T::Float32
+    p::P   # particle
+    i::Int # index of obstacle to be collided with
+    tmin::Float32 # time to next collision
+    t::Float32    # current time (resets at each collision)
+    n::Int        # number of collisions done so far
+    T::Float32    # total time
     # Fields used in plotting
     tail::Observable{CircularBuffer{Point2f0}}
-    # TODO: When all is said and done, remove pos and vel fields?
-    pos::Observable{Point2f0}
-    vel::Observable{Point2f0}
     ξsin::Observable{Point2f0}
 end
-function ParticleObservable(p, bd, n) # initializer
+function ParticleObservable(p, bd, n, intervals = nothing) # initializer
     i, tmin::Float32, cp = next_collision(p, bd)
-    ξ = sφ = 0f0 # TODO: Use boundary map on cp
+    if intervals == nothing
+        ξsin = Point2f0(0, 0)
+    else
+        ξsin = update_me #TODO
+    end
     cb = CircularBuffer{Point2f0}(n)
     append!(cb, [Point2f0(p.pos) for i in 1:n])
-    ParticleObservable(p, i, tmin, 0f0, 0, 0f0, Observable.((
-        cb, Point2f0(p.pos), Point2f0(p.vel), Point2f0(ξ, sφ)
-    ))...)
+    ParticleObservable(p, i, tmin, 0f0, 0, 0f0, Observable.((cb, ξsin))...)
 end
 const ParObs = ParticleObservable
 
-function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd)
+function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, intervals = nothing)
     i, tmin::Float32, cp = next_collision(p0, bd)
     ξ = sφ = 0f0 # TODO: Use boundary map on cp
     p.p.pos = p0.pos
@@ -37,30 +36,27 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd)
     L = length(p.tail[])
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
-    p.pos[] = p0.pos
-    p.vel[] = p0.vel
-    # p.ξsin # TODO: reset this as well
+    if intervals ≠ nothing
+        p.ξsin = update_me # TODO: reset this as well
+    end
 end
 
-function animstep!(parobs, bd, dt, updateplot = true)
+function animstep!(parobs, bd, dt, updateplot = true, intervals = nothing)
     if parobs.t + dt - parobs.tmin > 0
         rt = parobs.tmin - parobs.t # remaining time
-        animbounce!(parobs, bd, rt, updateplot)
+        animbounce!(parobs, bd, rt, updateplot, intervals)
     else
         propagate!(parobs.p, dt)
         parobs.t += dt
-        parobs.T += dt
         push!(parobs.tail[], parobs.p.pos)
         if updateplot
-            parobs.pos[] = parobs.p.pos
-            parobs.vel[] = parobs.p.vel
             parobs.tail[] = parobs.tail[] # trigger update
         end
     end
     return
 end
 
-function animbounce!(parobs, bd, rt, updateplot = true)
+function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     propagate!(parobs.p, rt)
     DynamicalBilliards._correct_pos!(parobs.p, bd[parobs.i])
     DynamicalBilliards.resolvecollision!(parobs.p, bd[parobs.i])
@@ -69,14 +65,14 @@ function animbounce!(parobs, bd, rt, updateplot = true)
     parobs.i = i
     parobs.tmin = tmin
     parobs.t = 0f0
-    parobs.T += rt
+    parobs.T += tmin
     parobs.n += 1
     push!(parobs.tail[], parobs.p.pos)
     if updateplot
-        parobs.pos[] = parobs.p.pos
-        parobs.vel[] = parobs.p.vel
         parobs.tail[] = parobs.tail[] # trigger update
     end
-    # TODO: adjust boundary map
+    if intervals ≠ nothing # Always update boundary map plot even if main billiard is off
+        parobs.ξsin = update_me # TODO: adjust boundary map
+    end
     return
 end

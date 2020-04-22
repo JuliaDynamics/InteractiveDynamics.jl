@@ -20,14 +20,14 @@ plane = (1, 0.0) # first variable crossing 0
 
 # %%
 state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;
-markersizes = (-5, -1), labels = ("q₂" , "p₂"), diffeq...);
+labels = ("q₂" , "p₂"), diffeq...);
 
 # %% Coloring points using a custom function
 # Here I use the first momentum
 momentum(u) = RGBf0((0.5*u[3]^2 + 0.5*u[4]^2)/E, 0, 0)
 
 state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;
-markersizes = (-5, -1), color = momentum, diffeq...)
+labels = ("q₂" , "p₂"), color = momentum, diffeq...)
 
 # %% Coloring points using the Lyapunov exponent
 function λcolor(u)
