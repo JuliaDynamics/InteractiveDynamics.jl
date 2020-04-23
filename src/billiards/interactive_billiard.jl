@@ -31,9 +31,11 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
 * `dx = 0.01` : width of the particle beam.
 * `dt = 0.001` : time resolution of the animation.
 * `tail = 1000` : length of the tail of the particles (multiplies `dt`).
-* colors = (:bkr, 0.75) : If a symbol/tuple (colormap name/ with alpha) each particle gets
+* `colors = (:bkr, 0.75)` : If a symbol/tuple (colormap name/ with alpha) each particle gets
   a color from the map. Otherwise, colors can be a vector of colors of length `N`.
-* `α = 0.5` : Alpha value for the particle colors (if not given explicitly).
+* `fade = true` : Whether to add fadeout to the particle tail.
+* `sleept = nothing` : If the slowest speed of the animation is already too fast,
+  give a small number to `sleept`.
 * `plot_particles = true` : If false, the particles are not plotted (as balls and arrows).
   This makes the application faster (you cannot show them again with the button).
 """
@@ -51,7 +53,7 @@ end
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
         plot_particles = true, α = 0.5, N = 100, res = (800, 800),
-        intervals = nothing, sleept = nothing
+        intervals = nothing, sleept = nothing, fade = true
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -74,7 +76,11 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     # Plot tails
     for (i, p) in enumerate(allparobs)
-        lines!(ax, p.tail, color = cs[i])
+        x = to_color(cs[i])
+        if fade
+            x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
+        end
+        lines!(ax, p.tail, color = x)
     end
 
     # Plot particles
@@ -192,8 +198,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     # Selecting new particles
-    newparticles = select_line(ax.scene)
-    on(newparticles) do val
+    sline = select_line(ax.scene)
+    on(sline) do val
         pos = val[1]
         dir = val[2] - val[1]
         φ = atan(dir[2], dir[1])
@@ -202,7 +208,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     display(scene)
-    return scene, layout, allparobs, resetbutton, p0s
+    return scene, layout, allparobs, resetbutton, p0s, sline
 end
 
 
@@ -213,40 +219,62 @@ FAFA
 
 ## Keywords
 
-* `sleept = 0.00001` : The animation for only one particle is actually too fast even
-  in its lowest speed, so we are forced to sleep inbetween each step for `sleept`.
-  Give `nothing` to never sleep.
 * `newcolor = randomcolor` ...
+* `ms = 10` markersize (in pixels).
+* `dt, tail, sleept, fade` : propagated to `interactive_billiard`.
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
-    newcolor = randomcolor, kwargs...)
+    newcolor = randomcolor, ms = 12, kwargs...)
+
+    # TODO: Add obstacle index up axis like in original.
 
     intervals = arcintervals(bd)
-    scene, layout, allparobs, resetbutton, p0s = interactive_billiard(bd, ω;
-    kwargs..., N = 1, intervals = intervals, res = (1600, 800))
-
+    scene, layout, allparobs, resetbutton, p0s, sline = interactive_billiard(
+        bd, ω; kwargs..., N = 1, intervals = intervals, res = (1600, 800)
+    )
     parobs = allparobs[1] # only one exists.
 
+
     sublayout = GridLayout()
-    bmapax = sublayout[1,1] = LAxis(scene)
+    cleanbutton = LButton(scene, label = "clean", width = Auto(false))
+    sublayout[2, 1] = cleanbutton
+    mct = Observable("m.c.t. = 0.0")
+    mcttext = LText(scene, mct, haligh = :left, width = Auto(false))
+    sublayout[2, 2] = mcttext
+    bmapax = sublayout[1,:] = LAxis(scene)
     bmapax.xlabel = "ξ"
     bmapax.ylabel = "sin(φₙ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
-
     scatter_points = Observable(Point2f0[])
     scatter_colors = Observable(RGBAf0[])
+
+    scatter!(bmapax.scene, scatter_points; color = scatter_colors,
+        marker = MARKER, markersize = ms*AbstractPlotting.px
+    )
+
+    # Obtain new color when selecting line in main plot
+    on(sline) do val
+        current_color[] = newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...)
+    end
+    # Whenever boundary map is updated, plot the update
     on(parobs.ξsin) do v
         pushupdate!(scatter_points, v)
         pushupdate!(scatter_colors, current_color[])
+        τ = parobs.T/parobs.n
+        mct[] = "m.c.t. = $(rpad(string(τ), 25))"
     end
-    scatter!(bmapax.scene, scatter_points; color = scatter_colors,
-    marker = MARKER, markersize = 10AbstractPlotting.px)
 
     # Selecting a point on the boundary map:
     spoint = select_point(bmapax.scene)
     on(spoint) do ξsin
+        ξ, sφ = ξsin
+        sφ = clamp(sφ, -1, 1)
+        ξsin = Point2f0(ξ, sφ)
+        if !(intervals[1] ≤ ξ ≤ intervals[end])
+            error("selected point is outside the boundary map")
+        end
         pos, vel = from_bcoords(ξsin..., bd, intervals)
         current_color[] = newcolor(pos, vel, ξsin...)
         p0s[1] = ω ≠ nothing ? MagneticParticle(pos, vel, ω) : Particle(pos, vel)
@@ -255,13 +283,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         resetbutton.clicks[] += 1 # reset main billiard
     end
 
-    # TODO: Make observable of colors so that I can push random colors.
-    # scatter!(bmapax, scatter_points)
-    # TODO: Add obstacle index up axis like in original.
-    # TODO: Add mean collision time at the bottom
-
-    cleanbutton = LButton(scene, label = "clean", width = Auto(false))
-    sublayout[2, 1] = cleanbutton
+    # Clean button functionality
     on(cleanbutton.clicks) do nclicks
         scatter_points[] = Point2f0[]
         scatter_colors[] = RGBAf0[]
