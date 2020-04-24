@@ -1,9 +1,6 @@
 using DynamicalBilliards, AbstractPlotting, MakieLayout
 export interactive_billiard, interactive_billiard_bmap
 
-#TODO: Make tails transparent going towards the past (easy!)
-# (add keyword fade = true)
-
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
     interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
@@ -14,7 +11,9 @@ You can either specify exactly the particles that will be used `ps` or provide
 some initial conditions `x,y,φ,ω`, which by default are random in the billiard.
 
 The particles are evolved in real time instead of being pre-calculated,
-so the application be left to run for infinite time.
+so the application can be left to run for infinite time.
+
+See also [`interactive_billiard_bmap`](@ref) and [`billiard_video`](@ref).
 
 ## Interaction
 Push "play" to start evolving particles in the billiard, and "reset" to restore them
@@ -53,7 +52,8 @@ end
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
         plot_particles = true, α = 0.5, N = 100, res = (800, 800),
-        intervals = nothing, sleept = nothing, fade = true
+        intervals = nothing, sleept = nothing, fade = true,
+        _liftcolor = false # totally internal
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -220,7 +220,7 @@ FAFA
 ## Keywords
 
 * `newcolor = randomcolor` ...
-* `ms = 10` markersize (in pixels).
+* `ms = 12` markersize (in pixels).
 * `dt, tail, sleept, fade` : propagated to `interactive_billiard`.
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
@@ -241,9 +241,9 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     mct = Observable("m.c.t. = 0.0")
     mcttext = LText(scene, mct, haligh = :left, width = Auto(false))
     sublayout[2, 2] = mcttext
-    bmapax = sublayout[1,:] = LAxis(scene)
-    bmapax.xlabel = "ξ"
-    bmapax.ylabel = "sin(φₙ)"
+    bmapax = sublayout[1,:] = LAxis(scene, height = 520)
+    bmapax.xlabel = "arclength ξ"
+    bmapax.ylabel = "normal angle sin(φₙ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
@@ -252,6 +252,33 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
     scatter!(bmapax.scene, scatter_points; color = scatter_colors,
         marker = MARKER, markersize = ms*AbstractPlotting.px
+    )
+
+    ticklabels = [
+        "$(round(ξ, sigdigits=4))"
+        for (i, ξ) in enumerate(intervals) if i ∉ (1, length(intervals))
+    ]
+    bmapax.xticks = ManualTicks(Float32[intervals[2:end-1]...], ticklabels)
+    # bmapax.xgridstyle = :dash # This doesn't work because MakieLayout doesn't really
+    # support initializing a plot with empty data.
+    for (i, ξ) in enumerate(intervals[2:end-1])
+        lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
+    end
+
+    # Obstacle axis
+    obstacle_ticklabels = String[]
+    obstacle_ticks = Float32[]
+    for (i, ξ) in enumerate(intervals[1:end-1])
+        push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
+        push!(obstacle_ticklabels, string(i))
+    end
+    obstacle_axis = MakieLayout.LineAxis(scene,
+        endpoints = lift(MakieLayout.topline, bmapax.layoutobservables.computedbbox),
+        limits = [0, intervals[end]], flipped = true, ticklabelalign = (:center, :bottom),
+        # these are just because I forgot to set defaults...
+        spinecolor = :black, labelfont = "Dejavu", ticklabelfont = "Dejavu",
+        label = "obstacle index",  spinevisible = true,
+        ticks = ManualTicks(obstacle_ticks, obstacle_ticklabels)
     )
 
     # Obtain new color when selecting line in main plot
@@ -293,3 +320,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     display(scene)
     return scene, layout, parobs
 end
+
+
+# TODO: Make version that can just export a video.
+# Will probably require a bit of code duplication...
