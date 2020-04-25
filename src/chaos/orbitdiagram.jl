@@ -49,12 +49,48 @@ function controlwindow(D, n, Ttr, density, i)
            ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
 end
 
+function observable_slider!(layout, i, j, scene, ltext, r; wl = 80, wr = 120)
+    slider = LSlider(scene, range = r)
+    text_prev = LText(scene, "$ltext =", halign = :right, width = wl)
+    text_after = LText(scene, lift(a -> "$(round(a))", slider.value),
+    halign = :left, width = wr)
+    layout[i, j] = hbox!(text_prev, slider, text_after)
+    return slider
+end
+
+function controlwindow(scene, D, i0, parname)
+    controllayout = GridLayout()
+    # Sliders
+    nslider = observable_slider!(controllayout, :, 1, scene, "n", 1000:1000:1000000)
+    Tslider = observable_slider!(controllayout, :, 2, scene, "Ttr", 1000:1000:1000000)
+    dslider = observable_slider!(controllayout, :, 3, scene, "d", 100:100:10000)
+    αslider = observable_slider!(controllayout, :, 4, scene, "α", 0:0.01:1)
+    # Buttons (incl. variable chooser)
+    ▢update = LButton(scene, label = "update", width = Auto(false))
+    ▢back = LButton(scene, label = "← back", width = Auto(false))
+    ▢reset = LButton(scene, label = "reset", width = Auto(false))
+    imenu = LMenu(scene, options = [string(j) for j in 1:D])
+    controllayout[:, 5] = hbox!(▢update, ▢back, ▢reset, LText(Scene, "variable:"), imenu)
+    # Limit boxes. Unfortunately can't be made observables yet...
+    ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
+    text_p₋ = LButton(scene, label = lift(o -> "$(parname)₋ = $(o)", ⬜p₋))
+    text_p₊ = LButton(scene, label = lift(o -> "$(parname)₊ = $(o)", ⬜p₊))
+    text_u₋ = LButton(scene, label = lift(o -> "u₋ = $(o)", ⬜u₋))
+    text_p₊ = LButton(scene, label = lift(o -> "u₊ = $(o)", ⬜u₊))
+    controllayout[:, 6] = hbox!(text_p₋, text_p₊)
+    controllayout[:, 7] = hbox!(text_u₋, text_u₊)
+
+    return nslider.value, Tslider.value, dslider.value, αslider.value,
+           imenu.selection, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
+           ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
+end
+
 
 
 """
     interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
         i::Int, p_index, p_min, p_max;
-        density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
+        u0 = get_state(ds),
         parname = "p"
     )
 
