@@ -1,5 +1,5 @@
 using DynamicalBilliards, AbstractPlotting, MakieLayout
-export interactive_billiard, interactive_billiard_bmap
+export interactive_billiard, interactive_billiard_bmap, billiard_video
 
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
@@ -53,7 +53,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
         plot_particles = true, α = 0.5, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
-        _liftcolor = false # totally internal
+        backgroundcolor = RGBf0(0.99, 0.99, 0.99),
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -67,8 +67,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     # Initialized inside process
     cs = colors isa Vector ? colors : colors_from_map(colors, α, N)
-    scene, layout = layoutscene(resolution = res)
-    ax = layout[1, 1] = LAxis(scene)
+    scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
+    ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
     ax.autolimitaspect = 1
     allparobs = [ParObs(p, bd, tail) for p in ps]
@@ -213,20 +213,130 @@ end
 
 
 
+
 """
-    interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
-FAFA
+    billiard(file, bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
+    billiard(file, bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
+
+Perform the same animation like in [`interactive_billiard`](@ref), but there is no
+interaction; the result is saved directly as a video in `file` (no buttons are shown).
 
 ## Keywords
+* `N, dt, tail, dx, colors, plot_particles, fade`: same as `interactive_billiard`, but
+  with a bit "denser" defaults. `plot_particles` is `false` by default here.
+* `speed = 4`: Animation "speed" (how many `dt` steps are taken before a frame is recorded)
+* `frames = 1000`: amount of frames to record.
+* `framerate = 60`: exported framerate.
+* `backgroundcolor = RGBf0(0.99, 0.99, 0.99)`.
+* `res = nothing`: resolution of the frames. If nothing, a resolution matching the
+  the billiard aspect ratio is estimated. Otherwise pass a 2-tuple.
+"""
+billiard_video(file::String, bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
+billiard_video(file::String, bd::Billiard, randominside_xyφ(bd)..., ω; kwargs...)
 
-* `newcolor = randomcolor` ...
+function billiard_video(file::String, bd::Billiard, x::Real, y::Real, φ::Real, ω = nothing;
+    kwargs...)
+    N = get(kwargs, :N, 500)
+    dx = get(kwargs, :dx, 0.01)
+    ps = particlebeam(x, y, φ, N, dx, ω, Float32)
+    billiard_video(file, bd, ps; kwargs...)
+end
+
+function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticle};
+        dt = 0.002, tail = 500, dx = 0.01, colors = :darkrainbow,
+        plot_particles = false, res = nothing, α = 0.5,
+        fade = true, backgroundcolor = RGBf0(0.99, 0.99, 0.99),
+        speed = 4, frames = 1000, framerate = 60
+    )
+
+    if res == nothing
+        xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+        aspect = (xmax - xmin)/(ymax-ymin)
+        res = (round(Int, aspect*800), 800)
+    end
+    if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
+        error("Only Float32 number type is possible for the billiard applications. "*
+        "Please initialize billiards and particles by explicitly passing Float32 numbers "*
+        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
+    end
+    N = length(ps)
+    cs = colors isa Vector ? colors : colors_from_map(colors, α, N)
+    scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
+    ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
+    tight_ticklabel_spacing!(ax)
+    ax.autolimitaspect = 1
+    allparobs = [ParObs(p, bd, tail) for p in ps]
+    bdplot!(ax, bd)
+
+    for (i, p) in enumerate(allparobs)
+        x = to_color(cs[i])
+        if fade
+            x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
+        end
+        lines!(ax, p.tail, color = x)
+    end
+    if plot_particles
+        vr = _estimate_vr(bd)
+        balls = Observable([Point2f0(p.p.pos) for p in allparobs])
+        vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
+        particle_plots = (
+            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 6AbstractPlotting.px),
+            arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
+                normalize = false, arrowsize = 0.01AbstractPlotting.px,
+                linewidth  = 2,
+            )
+        )
+    end
+
+    record(scene, file, 1:frames; framerate = framerate) do j
+        for i in 1:N
+            p = ps[i]
+            parobs = allparobs[i]
+            animstep!(parobs, bd, dt, true)
+            if plot_particles
+                balls[][i] = parobs.p.pos
+                vels[][i] = vr * parobs.p.vel
+            end
+        end
+        if plot_particles
+            balls[] = balls[]
+            vels[] = vels[]
+        end
+        for _ in 1:speed
+            for i in 1:N
+                p = ps[i]
+                parobs = allparobs[i]
+                animstep!(parobs, bd, dt, false)
+            end
+        end
+    end
+    return
+end
+
+
+
+"""
+    interactive_billiard_bmap(bd::Billiard, ω=nothing; kwargs...)
+Launch an interactive application whose left part is [`interactive_billiard`](@ref)
+and whose write part is an interactive boundary map of the billiard (see "Phase spaces"
+in DynamicalBilliards.jl).
+
+A particle evolved in the real billiard is also shown on the boundary map.
+All interaction of the billiard works as before, but there is also interaction in
+the boundary map: clicking on it will generate a particle whose boundary map is
+the clicked point.
+
+The mean collision time "m.c.t." of the particle is shown as well.
+
+## Keywords
+* `newcolor = randomcolor` A function which takes as input `(pos, vel, ξ, sφ)` and
+  outputs a color (for the scatter points in the boundary map).
 * `ms = 12` markersize (in pixels).
 * `dt, tail, sleept, fade` : propagated to `interactive_billiard`.
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
-    newcolor = randomcolor, ms = 12, kwargs...)
-
-    # TODO: Add obstacle index up axis like in original.
+    newcolor = randomcolor, ms = 12, lock = true,
+    kwargs...)
 
     intervals = arcintervals(bd)
     scene, layout, allparobs, resetbutton, p0s, sline = interactive_billiard(
@@ -254,10 +364,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         marker = MARKER, markersize = ms*AbstractPlotting.px
     )
 
-    ticklabels = [
-        "$(round(ξ, sigdigits=4))"
-        for (i, ξ) in enumerate(intervals) if i ∉ (1, length(intervals))
-    ]
+    ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
     bmapax.xticks = ManualTicks(Float32[intervals[2:end-1]...], ticklabels)
     # bmapax.xgridstyle = :dash # This doesn't work because MakieLayout doesn't really
     # support initializing a plot with empty data.
@@ -316,11 +423,15 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         scatter_colors[] = RGBAf0[]
     end
 
+    # Lock zooming
+    if lock
+        bmapax.xpanlock = true
+        bmapax.ypanlock = true
+        bmapax.xzoomlock = true
+        bmapax.yzoomlock = true
+    end
+
     layout[:, 2] = sublayout
     display(scene)
     return scene, layout, parobs
 end
-
-
-# TODO: Make version that can just export a video.
-# Will probably require a bit of code duplication...

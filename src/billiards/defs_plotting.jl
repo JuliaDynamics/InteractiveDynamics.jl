@@ -18,10 +18,10 @@ obcolor(::Union{RandomWall, RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
 obcolor(::Union{SplitterWall, Antidot, Ellipse}) = RGBf0(0.8,0.0,0)
 obcolor(::PeriodicWall) = RGBf0(0.8,0.8,0)
 obfill(o::Obstacle) = RGBAf0(obcolor(o), 0.5)
-obfill(o::Union{Antidot, Ellipse}) = RGBAf0(obcolor(o)..., 0.1)
-obls(::Obstacle) = "solid"
-obls(::Union{SplitterWall, Antidot, Ellipse}) = "dashed"
-obls(::PeriodicWall) = "dotted"
+obfill(o::Union{Antidot, Ellipse}) = RGBAf0(obcolor(o), 0.1)
+obls(::Obstacle) = nothing
+obls(::Union{SplitterWall, Antidot, Ellipse}) = :dash
+obls(::PeriodicWall) = :dotted
 oblw(::Obstacle) = 2.0
 
 function bdplot!(ax, o::T; kwargs...) where {T}
@@ -42,10 +42,9 @@ end
 
 function bdplot!(ax, o::Circular; kwargs...)
     c = Circle(Point2f0(o.c...), Float32(o.r))
-    # scatter!(ax, [o.c[1]], [o.c[2]]; marker = c, color = obfill(o),
-    # strokecolor = obcolor(o), strokewidth = oblw(o), scale_plot=false, kwargs...)
     poly!(ax, c; color = obfill(o), scale_plot=false, kwargs...)
-    lines!(ax, c; color = obcolor(o), linewidth = oblw(o), scale_plot=false, kwargs...)
+    lines!(ax, c; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
+    scale_plot=false, kwargs...)
 end
 
 function bdplot!(ax, bd::Billiard; kwargs...)
