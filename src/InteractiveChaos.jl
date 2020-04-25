@@ -40,6 +40,10 @@ const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom inde
 using AbstractPlotting: px
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
+
+# JULIADYNAMICS_CMAP = to_color.(("#7a60bb", "#624d96", "#202020", "#17888c", "#1fb6bb"))
+JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
+
 function colors_from_map(cmap, α, N)
     N == 1 && return [RGBAf0(0, 0, 0, 1)]
     cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]

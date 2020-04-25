@@ -23,4 +23,4 @@ scene, layout, allparobs = interactive_billiard(bd, 1f0)
 scene, layout, parobs = interactive_billiard_bmap(bd)
 
 # %% make it a video
-billiard_video("billiard.mp4", bd)
+billiard_video("billiard.mp4", bd, 1f0)

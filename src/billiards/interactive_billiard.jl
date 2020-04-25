@@ -30,8 +30,9 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
 * `dx = 0.01` : width of the particle beam.
 * `dt = 0.001` : time resolution of the animation.
 * `tail = 1000` : length of the tail of the particles (multiplies `dt`).
-* `colors = (:bkr, 0.75)` : If a symbol/tuple (colormap name/ with alpha) each particle gets
-  a color from the map. Otherwise, colors can be a vector of colors of length `N`.
+* `colors = JULIADYNAMICS_COLORS` : If a symbol (colormap name) each particle gets
+  a color from the map. If Vector of length `N`, each particle gets a color form the vector.
+  If Vector with length < `N`, linear interpolation across contained colors is done.
 * `fade = true` : Whether to add fadeout to the particle tail.
 * `sleept = nothing` : If the slowest speed of the animation is already too fast,
   give a small number to `sleept`.
@@ -50,8 +51,8 @@ function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = not
 end
 
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
-        dt = 0.001, tail = 1000, dx = 0.01, colors = :bkr,
-        plot_particles = true, α = 0.5, N = 100, res = (800, 800),
+        dt = 0.001, tail = 1000, dx = 0.01, colors = JULIADYNAMICS_COLORS,
+        plot_particles = true, α = 1.0, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
         backgroundcolor = RGBf0(0.99, 0.99, 0.99),
     )
@@ -66,7 +67,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     ω0 = ismagnetic(ps[1]) ? ps[1].ω : nothing
 
     # Initialized inside process
-    cs = colors isa Vector ? colors : colors_from_map(colors, α, N)
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
     scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
     ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
@@ -243,7 +244,7 @@ function billiard_video(file::String, bd::Billiard, x::Real, y::Real, φ::Real, 
 end
 
 function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticle};
-        dt = 0.002, tail = 500, dx = 0.01, colors = :darkrainbow,
+        dt = 0.002, tail = 500, dx = 0.01, colors = JULIADYNAMICS_COLORS,
         plot_particles = false, res = nothing, α = 0.5,
         fade = true, backgroundcolor = RGBf0(0.99, 0.99, 0.99),
         speed = 4, frames = 1000, framerate = 60
@@ -260,7 +261,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
         "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
     end
     N = length(ps)
-    cs = colors isa Vector ? colors : colors_from_map(colors, α, N)
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
     scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
     ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
