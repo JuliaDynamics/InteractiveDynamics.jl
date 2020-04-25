@@ -1,13 +1,3 @@
-# Colors of JuliaDynamics
-MAIN = "#624d96"  # main color of the org theme
-ACCENT = "#17888c"
-WHITE = "fff"
-BLACK = "#202020"
-
-# Colors of 3b1b
-BLUE = "#1C758A"
-BROWN = "#736357"
-
 # DynamicalBilliards.jl constants
 using DynamicalBilliards, AbstractPlotting, Observables
 using DynamicalBilliards: SV

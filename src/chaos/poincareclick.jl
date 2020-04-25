@@ -16,7 +16,7 @@ that `plane[1] ∉ idxs` must be true.
 during interactive use, see below.
 
 The function returns: an observable containing the latest initial `state`
-and the `axis` with the scatterplot
+and the scene.
 
 ## Keyword Arguments
 * `direction, rootkw` : Same use as in `DynamicalSystems.poincaresos`.
@@ -116,7 +116,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
         positions_node[], colors_node[], laststate[] = positions, colors, newstate
     end
     display(scene)
-    return laststate, ax
+    return laststate, scene
 end
 
 function _add_psos_controls!(scene, layout, tfinal)
