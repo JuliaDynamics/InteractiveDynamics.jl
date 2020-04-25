@@ -1,8 +1,6 @@
 module InteractiveChaos
 
-using Reexport
-@reexport using DynamicalSystems
-using AbstractPlotting, Observables
+using AbstractPlotting, Observables, MakieLayout
 
 """
     subscript(i::Int)
@@ -38,11 +36,32 @@ function subscript(i::Int)
     end
 end
 
-include("plot_dataset.jl")
-include("orbitdiagram.jl")
-include("poincareclick.jl")
-include("trajectory_highlighter.jl")
+const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
+using AbstractPlotting: px
+randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
-export interactive_orbitdiagram
+
+# JULIADYNAMICS_CMAP = to_color.(("#7a60bb", "#624d96", "#202020", "#17888c", "#1fb6bb"))
+JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
+
+function colors_from_map(cmap, α, N)
+    N == 1 && return [RGBAf0(0, 0, 0, 1)]
+    cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]
+end
+
+function pushupdate!(o::Observable, v)
+    push!(o[], v)
+    o[] = o[]
+    return o
+end
+
+
+include("numericdata/plot_dataset.jl")
+include("numericdata/trajectory_highlighter.jl")
+include("chaos/orbitdiagram.jl")
+include("chaos/poincareclick.jl")
+include("billiards/defs_plotting.jl")
+include("billiards/defs_animating.jl")
+include("billiards/interactive_billiard.jl")
 
 end

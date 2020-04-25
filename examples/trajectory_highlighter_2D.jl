@@ -1,4 +1,4 @@
-using InteractiveChaos, Makie
+using InteractiveChaos, DynamicalSystems, Makie
 ds = Systems.qbh()
 # Grid of initial conditions at given energy:
 energy(x,y,px,py) = 0.5(px^2 + py^2) + potential(x,y)
