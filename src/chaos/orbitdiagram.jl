@@ -49,10 +49,13 @@ end
 
 """
     interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
-                             u0 = get_state(ds), parname = "p")
+                             u0 = get_state(ds), parname = "p", title = "")
 
 Open an interactive application for exploring orbit diagrams (ODs) of
 discrete systems. The functionality works for _any_ discrete system of _any_ dimensionality.
+
+Keywords control the name of the parameter, the initial state (used for _any_ parameter)
+or whether to add a title above the orbit diagram.
 
 ## Interaction
 The application is separated in the "OD plot" (left) and the "control panel" (right).
@@ -90,7 +93,7 @@ ps, us = scaleod(oddata)
 ```
 """
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p_max, i0 = 1;
-    u0 = get_state(ds), parname = "p")
+    u0 = get_state(ds), parname = "p", title = "")
 
     scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
     display(scene)
@@ -202,6 +205,10 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
         set_close_to!(nslider, m)
         set_close_to!(Tslider, T)
         set_close_to!(dslider, dens)
+    end
+
+    if title ≠ ""
+        layout[0, 1] = LText(scene, title, textsize = 30)
     end
 
     return od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
