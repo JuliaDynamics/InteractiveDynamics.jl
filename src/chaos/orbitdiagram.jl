@@ -13,7 +13,7 @@ function observable_slider!(layout, i, j, scene, ltext, r;
 end
 function add_controls!(controllayout, scene, D, parname, i0)
     # Sliders
-    nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:1000:10000)
+    nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
     Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
     dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
     αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
@@ -40,7 +40,8 @@ function add_controls!(controllayout, scene, D, parname, i0)
         halign = :left, width = Auto(false), textsize = tsize)
     controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
     ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
-    return nslider.value, Tslider.value, dslider.value, αslider.value,
+    return nslider, Tslider, dslider, αslider,
+           nslider.value, Tslider.value, dslider.value, αslider.value,
            imenu.i_selected, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
            ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
 end
@@ -94,8 +95,11 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
     controllayout = layout[1, 2] = GridLayout(height = Auto(false))
     colsize!(layout, 1, Relative(3/5))
     display(scene)
-    n, Ttr, d, α, i, ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
-    add_controls!(controllayout, scene, dimension(ds), parname, i0)
+
+        nslider, Tslider, dslider, αslider,
+        n, Ttr, d, α, i,
+        ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
+        add_controls!(controllayout, scene, dimension(ds), parname, i0)
 
     # Initial Orbit diagram data
     integ = integrator(ds, u0)
@@ -180,6 +184,15 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
             update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
     end
+
+    # for the following two buttons the slider values must be updated
+    onany(▢reset, ▢back) do val1, val2
+        j, p₋, p₊, xmin, xmax, m, T, dens = history[end]
+        set_close_to!(nslider, m)
+        set_close_to!(Tslider, T)
+        set_close_to!(dslider, dens)
+    end
+
     return od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
 end
 
