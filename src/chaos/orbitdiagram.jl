@@ -1,5 +1,5 @@
 using DynamicalSystems
-using Interact, AbstractPlotting, MakieLayout
+using AbstractPlotting, MakieLayout
 export interactive_orbitdiagram, scaleod
 
 function observable_slider!(layout, i, j, scene, ltext, r;
@@ -40,7 +40,7 @@ function add_controls!(controllayout, scene, D, parname, i0)
         halign = :left, width = Auto(false), textsize = tsize)
     controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
     ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
-    return nslider, Tslider, dslider, αslider,
+    return nslider, Tslider, dslider,
            nslider.value, Tslider.value, dslider.value, αslider.value,
            imenu.i_selected, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
            ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
@@ -62,17 +62,20 @@ and drag with the left mouse button to select a region in the OD. This region is
 
 The options at the control panel are straight-forward, with
 * `n` amount of steps recorded for the orbit diagram (not all are in the zoomed region!)
-* `t` transient steps
+* `t` transient steps before starting to record steps
 * `d` density of x-axis (the parameter axis)
 * `α` alpha value for the plotted points.
 
+Notice that at each update `n*t*d` steps are taken.
 You have to press `update` after changing these parameters.
-You can even decide which variable to get the OD for,
-by choosing one of the variables from the wheel (again, press `update` afterwards).
-
 Press `reset` to bring the OD in the original
 state (and variable). Pressing `back` will go back through the history of your exploration
 History is stored when the "update" button is pressed or a region is zoomed in.
+
+You can even decide which variable to get the OD for
+by choosing one of the variables from the wheel!
+Because the y-axis limits can't be known when changing variable, they reset to the size
+of the selected variable.
 
 ## Accessing the data
 What is plotted on the application window is a _true_ orbit diagram, not a plotting
@@ -89,17 +92,19 @@ ps, us = scaleod(oddata)
 function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p_max, i0 = 1;
     u0 = get_state(ds), parname = "p")
 
-    scene, layout = layoutscene(resolution = (1400, 600))
+    scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
     display(scene)
     odax = layout[1,1] = LAxis(scene)
+    for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
+        setproperty!(odax, z, true)
+    end
     controllayout = layout[1, 2] = GridLayout(height = Auto(false))
     colsize!(layout, 1, Relative(3/5))
     display(scene)
 
-        nslider, Tslider, dslider, αslider,
-        n, Ttr, d, α, i,
-        ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
-        add_controls!(controllayout, scene, dimension(ds), parname, i0)
+    nslider, Tslider, dslider, n, Ttr, d, α, i,
+    ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
+    add_controls!(controllayout, scene, dimension(ds), parname, i0)
 
     # Initial Orbit diagram data
     integ = integrator(ds, u0)
@@ -153,13 +158,19 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
             j == i[] && m == n[] && T == Ttr[] && dens == d[])
 
             p₋, p₊, xmin, xmax = ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[]
-            j, m, T, dens = i[], n[], Ttr[], d[]
+            newj, m, T, dens = i[], n[], Ttr[], d[]
 
-            od_obs[] = minimal_normalized_od(
-            integ, j, p_index, p₋, p₊, d[], n[], Ttr[], u0, xmin, xmax
-            )
+            if newj ≠ j # a new variable is selected, so x limits must be recomputed
+                od_obs[], xmin, xmax = minimal_normalized_od(
+                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0
+                )
+            else
+                od_obs[] = minimal_normalized_od(
+                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0, xmin, xmax
+                )
+            end
             # Update history and controls
-            push!(history, (j, p₋, p₊, xmin, xmax, m, T, dens))
+            push!(history, (newj, p₋, p₊, xmin, xmax, m, T, dens))
             update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
     end
@@ -198,8 +209,8 @@ end
 
 
 """
-    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0)
-    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0, xmin, xmax)
+    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0) → od, xmin, xmax
+    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0, xmin, xmax) → od
 
 Compute and return a minimal and normalized orbit diagram (OD).
 
@@ -217,7 +228,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     pdif = p₊ - p₋
     od = Vector{Point2f0}() # make this pre-allocated
     xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
-    #= @inbounds =# for (j, p) in enumerate(pvalues)
+    @inbounds for (j, p) in enumerate(pvalues)
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
         DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p
@@ -236,7 +247,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     end
     # normalize x values to [0, 1]
     xdif = xmax - xmin
-    #= @inbounds =# for j in eachindex(od)
+    @inbounds for j in eachindex(od)
         x = od[j][2]; p = od[j][1]
         od[j] = Point2f0(p, (x - xmin)/xdif)
     end
@@ -249,7 +260,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     pvalues = range(p₋, stop = p₊, length = d)
     pdif = p₊ - p₋; xdif = xmax - xmin
     od = Vector{Point2f0}()
-    #= @inbounds =# for p in pvalues
+    @inbounds for p in pvalues
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
         DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p

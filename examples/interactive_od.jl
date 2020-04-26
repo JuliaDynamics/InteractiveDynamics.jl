@@ -5,9 +5,9 @@ p_index = 1
 
 systems = [(Systems.logistic(), 2.5, 4.0, "r"),
            (Systems.henon(), 0.8, 1.4, "a"),
-           (Systems.standardmap(), 0.6, 1.2, "k")]
+           (Systems.standardmap(), 0.0, 1.2, "k")]
 
-ds, p_min, p_max, parname = systems[2]
+ds, p_min, p_max, parname = systems[3]
 
 oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
                                   parname = parname)

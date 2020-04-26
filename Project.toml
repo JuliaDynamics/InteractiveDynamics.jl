@@ -5,11 +5,9 @@ version = "0.5.0"
 
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
-Blink = "ad839575-38b3-5650-b840-f874b8c74a25"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5"
 DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634"
-Interact = "c601a237-2ae4-5e1e-952c-7a85b0c7eef1"
 MakieLayout = "5a521ce4-ebb9-4793-b5b7-b334dfe8393c"
 Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -18,11 +16,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 AbstractPlotting = "0.10.2"
-Blink = "0.12"
 DataStructures = "0.17"
 DynamicalBilliards = "3.11.1"
 DynamicalSystems = "1"
-Interact = "0.10"
 MakieLayout = "0.7.1"
 Observables = "0.2, 0.3"
 StatsBase = "0.32.0"
