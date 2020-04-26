@@ -54,7 +54,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001, tail = 1000, dx = 0.01, colors = JULIADYNAMICS_COLORS,
         plot_particles = true, α = 1.0, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
-        backgroundcolor = RGBf0(0.99, 0.99, 0.99),
+        backgroundcolor = DEFAULT_BG,
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32

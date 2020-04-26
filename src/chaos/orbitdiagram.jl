@@ -1,81 +1,84 @@
 using DynamicalSystems
-using Interact, Blink, AbstractPlotting
+using AbstractPlotting, MakieLayout
 export interactive_orbitdiagram, scaleod
 
-"""
-    controlwindow(D, n, Ttr, density, i)
-Create an Electron control window for the orbit diagram interactive application.
-
-```julia
-return n, Ttr, density, i, ▢update, ▢back, ▢reset, α,
-       ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
-```
-
-All returned values are `Observable`s.
-Their value corresponds to the one chosen in the Electron window.
-Items with `▢` are buttons and with `⬜` are the boxes with limits.
-"""
-function controlwindow(D, n, Ttr, density, i)
-    n = Interact.textbox(string(n); value = n, label = "n")
-    Ttr = Interact.textbox(string(Ttr); value = Ttr, label = "Ttr")
-    density = Interact.textbox(string(density); value = density, label = "density")
-
-    i = Interact.dropdown(OrderedDict(string(j) => j for j in 1:D); label = "variable")
-    ▢update = Interact.button("update")
-    ▢back = Interact.button("← back")
-    ▢reset = Interact.button("reset")
-
-    α = Interact.slider(0:0.001:1; value = 0.1, label = "α (transparency)")
-
-    # Limit boxes
-    ⬜pmin = Interact.textbox(; value = 0.0, label = "pmin")
-    ⬜pmax = Interact.textbox(; value = 1.0, label = "pmax")
-    ⬜umin = Interact.textbox(; value = 0.0, label = "umin")
-    ⬜umax = Interact.textbox(; value = 1.0, label = "umax")
-
-    w = Window(Dict(:height => 400, :title => "Orbit Diagram controls"))
-    s = 5em
-    body!(w, Interact.vbox(
-        α,
-        Interact.hbox(n, Ttr, density),
-        Interact.hbox(i, hskip(s), ▢update, hskip(s), ▢back, hskip(s), ▢reset),
-        Interact.hline(),
-        Interact.hbox(⬜pmin, ⬜pmax),
-        Interact.hbox(⬜umin, ⬜umax)
-        )
+function observable_slider!(layout, i, j, scene, ltext, r;
+    wl = 40, wr = nothing, startvalue = r[1])
+    slider = LSlider(scene, range = r, startvalue = startvalue)
+    text_prev = LText(scene, "$ltext =", halign = :right)
+    text_after = LText(scene, lift(a -> "$(string(a))", slider.value),
+    halign = :left)
+    layout[i, j] = hbox!(text_prev, slider, text_after)
+    return slider
+end
+function add_controls!(controllayout, scene, D, parname, i0)
+    # Sliders
+    nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
+    Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
+    dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
+    αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
+    # Buttons (incl. variable chooser)
+    ▢update = LButton(scene, label = "update")
+    ▢back = LButton(scene, label = "← back")
+    ▢reset = LButton(scene, label = "reset")
+    imenu = LMenu(scene, options = [string(j) for j in 1:D], width = 60)
+    imenu.i_selected = i0
+    controllayout[5, 1] = hbox!(
+        ▢update, ▢back, ▢reset,
+        LText(scene, "variable:"), imenu, width = Auto(false)
     )
-
-    return n, Ttr, density, i, ▢update, ▢back, ▢reset, observe(α),
-           ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
+    # Limit boxes. Unfortunately can't be made observables yet...
+    ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
+    tsize = 16
+    text_p₋ = LText(scene, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_p₊ = LText(scene, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_u₋ = LText(scene, lift(o -> "u₋ = $(o)", ⬜u₋),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_u₊ = LText(scene, lift(o -> "u₊ = $(o)", ⬜u₊),
+        halign = :left, width = Auto(false), textsize = tsize)
+    controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
+    ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
+    return nslider, Tslider, dslider,
+           nslider.value, Tslider.value, dslider.value, αslider.value,
+           imenu.i_selected, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
+           ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
 end
 
 
-
 """
-    interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
-        i::Int, p_index, p_min, p_max;
-        density = 500, u0 = get_state(ds), Ttr = 200, n = 500,
-        parname = "p"
-    )
+    interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
+                             u0 = get_state(ds), parname = "p", title = "")
 
 Open an interactive application for exploring orbit diagrams (ODs) of
-discrete systems. The functionality works for _any_ discrete system.
+discrete systems. The functionality works for _any_ discrete system of _any_ dimensionality.
 
-Once initialized it opens a Makie plot window and an Electron control window.
+Keywords control the name of the parameter, the initial state (used for _any_ parameter)
+or whether to add a title above the orbit diagram.
 
 ## Interaction
-By using the Electron window you are able to update all parameters of the OD
-interactively (like e.g. `n` or `Ttr`). You have to press `update` after changing
-these parameters. You can even decide which variable to get the OD for,
-by choosing one of the variables from the wheel (again, press `update` afterwards).
-
-In the Makie window you can interactively zoom into the OD. Click
+The application is separated in the "OD plot" (left) and the "control panel" (right).
+On the OD plot you can interactively click
 and drag with the left mouse button to select a region in the OD. This region is then
 **re-computed** at a higher resolution (i.e. we don't "just zoom").
 
-Back in the Electron window, you can press `reset` to bring the OD in the original
+The options at the control panel are straight-forward, with
+* `n` amount of steps recorded for the orbit diagram (not all are in the zoomed region!)
+* `t` transient steps before starting to record steps
+* `d` density of x-axis (the parameter axis)
+* `α` alpha value for the plotted points.
+
+Notice that at each update `n*t*d` steps are taken.
+You have to press `update` after changing these parameters.
+Press `reset` to bring the OD in the original
 state (and variable). Pressing `back` will go back through the history of your exploration
-History is stored when any change happens (besides transparency).
+History is stored when the "update" button is pressed or a region is zoomed in.
+
+You can even decide which variable to get the OD for
+by choosing one of the variables from the wheel!
+Because the y-axis limits can't be known when changing variable, they reset to the size
+of the selected variable.
 
 ## Accessing the data
 What is plotted on the application window is a _true_ orbit diagram, not a plotting
@@ -85,81 +88,93 @@ even though plotting is `Float32`-based). This however means that it is
 necessary to transform the data in real scale. This is done through the function
 [`scaleod`](@ref) which accepts the 5 arguments returned from the current function:
 ```
-od, pmin, pmax, umin, umax = interactive_orbitdiagram(...)
-ps, us = scaleod(od, pmin, pmax, umin, umax)
+oddata = interactive_orbitdiagram(...)
+ps, us = scaleod(oddata)
 ```
 """
-function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
-    i::Int, p_index, p_min, p_max;
-    density = 1000, u0 = get_state(ds), Ttr = 200, n = 500,
-    parname = "p"
-    )
+function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p_max, i0 = 1;
+    u0 = get_state(ds), parname = "p", title = "")
 
-    # UI elements
-    n, Ttr, density, i, ▢update, ▢back, ▢reset, α, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax =
-    controlwindow(dimension(ds), n, Ttr, density, i)
+    scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
+    display(scene)
+    odax = layout[1,1] = LAxis(scene)
+    for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
+        setproperty!(odax, z, true)
+    end
+    controllayout = layout[1, 2] = GridLayout(height = Auto(false))
+    colsize!(layout, 1, Relative(3/5))
+    display(scene)
+
+    nslider, Tslider, dslider, n, Ttr, d, α, i,
+    ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
+    add_controls!(controllayout, scene, dimension(ds), parname, i0)
 
     # Initial Orbit diagram data
     integ = integrator(ds, u0)
-    pmin, pmax = p_min, p_max
-    odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, pmin, pmax, density[], n[], Ttr[], u0)
-    od_node = Observable(odinit)
-    densityinit = density[]; ninit = n[]; Ttrinit = Ttr[]
+    p₋, p₊ = p_min, p_max
+    odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, p₋, p₊, d[], n[], Ttr[], u0)
+    od_obs = Observable(odinit)
+    dinit = d[]; ninit = n[]; Ttrinit = Ttr[]
 
     # History stores the variable index and true diagram limits
-    history = [(i[], pmin, pmax, xmin, xmax, n[], Ttr[], density[])]
-    update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
+    history = [(i[], p₋, p₊, xmin, xmax, n[], Ttr[], d[])]
+    update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
 
-    color = lift(a -> AbstractPlotting.RGBAf0(0,0,0,a), α)
-    scplot = Scene(resolution = (1200, 800))
-    scatter!(scplot, od_node, markersize = 0.008, color = color)
+    color = lift(a -> RGBAf0(0,0,0,a), α)
+    scatter!(odax, od_obs, markersize = 0.002, color = color)
 
-    scplot[Axis][:ticks][:ranges] = (collect(0:0.25:1), collect(0:0.25:1))
-    scplot[Axis][:ticks][:labels] =
-    (["pmin", " ", " ", " ", "pmax"], ["umin", " ", " ", " ", "umax"])
-    scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(i[]))
+    xlims!(odax, 0, 1)
+    ylims!(odax, 0, 1)
+    odax.xticks = ManualTicks(0:0.25:1, ["$(parname)₋", " ", " ", " ", "$(parname)₊"])
+    odax.yticks = ManualTicks(0:0.25:1, ["u₋", " ", " ", " ", "u₊"])
+    odax.ylabel = "u"*subscript(i[])
+    on(i) do o; odax.ylabel = "u"*subscript(o); end
+    odax.xlabel = parname
+    rect = select_rectangle(odax.scene)
 
-    display(scplot)
-    rect = select_rectangle(scplot)
-
-    # Uppon interactively selecting a rectangle, with value `r` (in [0,1]²)
+    # # Uppon interactively selecting a rectangle, with value `r` (in [0,1]²)
     on(rect) do r
-        spmin, sxmin = r.origin
-        spmax, sxmax = r.origin + r.widths
+        sp₋, sxmin = r.origin
+        sp₊, sxmax = r.origin + r.widths
         # Convert p,x to true values
-        j, ppmin, ppmax, pxmin, pxmax = history[end]
-        pdif = ppmax - ppmin; xdif = pxmax - pxmin
-        pmin = spmin*pdif + ppmin
-        pmax = spmax*pdif + ppmin
+        j, pp₋, pp₊, pxmin, pxmax = history[end]
+        pdif = pp₊ - pp₋; xdif = pxmax - pxmin
+        p₋ = sp₋*pdif + pp₋
+        p₊ = sp₊*pdif + pp₋
         xmin = sxmin*xdif + pxmin
         xmax = sxmax*xdif + pxmin
 
-        od_node[] = minimal_normalized_od(
-            integ, j,  p_index, pmin, pmax,
-            density[], n[], Ttr[], u0, xmin, xmax
+        od_obs[] = minimal_normalized_od(
+            integ, j,  p_index, p₋, p₊,
+            d[], n[], Ttr[], u0, xmin, xmax
         )
         # update history and controls
-        push!(history, (j, pmin, pmax, xmin, xmax, n[], Ttr[], density[]))
-        update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
+        push!(history, (j, p₋, p₊, xmin, xmax, n[], Ttr[], d[]))
+        update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
     end
 
     # Upon hitting the update button
     on(▢update) do clicks
-        j, pmin, pmax, xmin, xmax, m, T, d = history[end]
+        j, p₋, p₊, xmin, xmax, m, T, dens = history[end]
         # Check if there was any change:
-        if !(⬜pmin[] == pmin && ⬜pmax[] == pmax && ⬜umin[] == xmin && ⬜umax[] == xmax &&
-            j == i[] && m == n[] && T == Ttr[] && d == density[])
+        if !(⬜p₋[] == p₋ && ⬜p₊[] == p₊ && ⬜u₋[] == xmin && ⬜u₊[] == xmax &&
+            j == i[] && m == n[] && T == Ttr[] && dens == d[])
 
-            pmin, pmax, xmin, xmax = ⬜pmin[], ⬜pmax[], ⬜umin[], ⬜umax[]
-            j, m, T, d = i[], n[], Ttr[], density[]
+            p₋, p₊, xmin, xmax = ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[]
+            newj, m, T, dens = i[], n[], Ttr[], d[]
 
-            od_node[] = minimal_normalized_od(
-            integ, j, p_index, pmin, pmax, density[], n[], Ttr[], u0, xmin, xmax
-            )
+            if newj ≠ j # a new variable is selected, so x limits must be recomputed
+                od_obs[], xmin, xmax = minimal_normalized_od(
+                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0
+                )
+            else
+                od_obs[] = minimal_normalized_od(
+                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0, xmin, xmax
+                )
+            end
             # Update history and controls
-            push!(history, (j, pmin, pmax, xmin, xmax, m, T, d))
-            update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
-            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(i[]))
+            push!(history, (newj, p₋, p₊, xmin, xmax, m, T, dens))
+            update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
     end
 
@@ -167,11 +182,8 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     on(▢reset) do clicks
         if length(history) > 1
             deleteat!(history, 2:length(history))
-            j, pmin, pmax, xmin, xmax, m, T, d = history[end]
-            od_node[] = odinit
-            # Update controls/labels
-            update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
-            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(j))
+            od_obs[] = odinit
+            update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
     end
 
@@ -179,26 +191,33 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem,
     on(▢back) do clicks
         if length(history) > 1
             pop!(history)
-            j, pmin, pmax, xmin, xmax, m, T, d = history[end]
-            od_node[] = minimal_normalized_od(
-                integ, j, p_index, pmin, pmax, d, m, T, u0, xmin, xmax
+            j, p₋, p₊, xmin, xmax, m, T, dens = history[end]
+            od_obs[] = minimal_normalized_od(
+                integ, j, p_index, p₋, p₊, dens, m, T, u0, xmin, xmax
             )
-            # Update limits in textboxes
-            update_controls!(history[end], i, n, Ttr, density,  ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
-            scplot[Axis][:names][:axisnames] = (parname, "u"*subscript(j))
+            update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
     end
 
-    display(scplot)
-    return od_node, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax
+    # for the following two buttons the slider values must be updated
+    onany(▢reset, ▢back) do val1, val2
+        j, p₋, p₊, xmin, xmax, m, T, dens = history[end]
+        set_close_to!(nslider, m)
+        set_close_to!(Tslider, T)
+        set_close_to!(dslider, dens)
+    end
+
+    if title ≠ ""
+        layout[0, 1] = LText(scene, title, textsize = 30)
+    end
+
+    return od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
 end
 
 
 """
-    minimal_normalized_od(integ, i, p_index, pmin, pmax,
-                         density, n, Ttr, u0)
-    minimal_normalized_od(integ, i, p_index, pmin, pmax,
-                         density, n, Ttr, u0, xmin, xmax)
+    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0) → od, xmin, xmax
+    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0, xmin, xmax) → od
 
 Compute and return a minimal and normalized orbit diagram (OD).
 
@@ -209,15 +228,15 @@ plotting. In addition all numbers are scaled to [0, 1]. This allows us to have
 The version with `xmin, xmax` only keeps points with limits between the
 real `xmin, xmax` (in the normal units of the dynamical system).
 """
-function minimal_normalized_od(integ, i, p_index, pmin, pmax,
-                              density::Int, n::Int, Ttr::Int, u0)
+function minimal_normalized_od(integ, i, p_index, p₋, p₊,
+                              d::Int, n::Int, Ttr::Int, u0)
 
-    pvalues = range(pmin, stop = pmax, length = density)
-    pdif = pmax - pmin
+    pvalues = range(p₋, stop = p₊, length = d)
+    pdif = p₊ - p₋
     od = Vector{Point2f0}() # make this pre-allocated
     xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
-    #= @inbounds =# for (j, p) in enumerate(pvalues)
-        pp = (p - pmin)/pdif # p to plot, in [0, 1]
+    @inbounds for (j, p) in enumerate(pvalues)
+        pp = (p - p₋)/pdif # p to plot, in [0, 1]
         DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p
         DynamicalSystems.step!(integ, Ttr)
@@ -235,21 +254,21 @@ function minimal_normalized_od(integ, i, p_index, pmin, pmax,
     end
     # normalize x values to [0, 1]
     xdif = xmax - xmin
-    #= @inbounds =# for j in eachindex(od)
+    @inbounds for j in eachindex(od)
         x = od[j][2]; p = od[j][1]
         od[j] = Point2f0(p, (x - xmin)/xdif)
     end
     return od, xmin, xmax
 end
 
-function minimal_normalized_od(integ, i, p_index, pmin, pmax,
-                              density::Int, n::Int, Ttr::Int, u0, xmin, xmax)
+function minimal_normalized_od(integ, i, p_index, p₋, p₊,
+                              d::Int, n::Int, Ttr::Int, u0, xmin, xmax)
 
-    pvalues = range(pmin, stop = pmax, length = density)
-    pdif = pmax - pmin; xdif = xmax - xmin
+    pvalues = range(p₋, stop = p₊, length = d)
+    pdif = p₊ - p₋; xdif = xmax - xmin
     od = Vector{Point2f0}()
-    #= @inbounds =# for p in pvalues
-        pp = (p - pmin)/pdif # p to plot, in [0, 1]
+    @inbounds for p in pvalues
+        pp = (p - p₋)/pdif # p to plot, in [0, 1]
         DynamicalSystems.reinit!(integ, u0)
         integ.p[p_index] = p
         DynamicalSystems.step!(integ, Ttr)
@@ -264,26 +283,27 @@ function minimal_normalized_od(integ, i, p_index, pmin, pmax,
     return od
 end
 
-function  update_controls!(h, i, n, Ttr, density, ⬜pmin, ⬜pmax, ⬜umin, ⬜umax)
-    j, pmin, pmax, xmin, xmax, m, T, d = h
-    i[] = j; n[] = m; Ttr[] = T; density[] = d
-    ⬜pmin[] = pmin; ⬜pmax[] = pmax
-    ⬜umin[] = xmin; ⬜umax[] = xmax
+function  update_controls!(h, i, n, Ttr, d, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
+    j, p₋, p₊, xmin, xmax, m, T, dens = h
+    i[] = j; n[] = m; Ttr[] = T; d[] = dens
+    ⬜p₋[] = p₋; ⬜p₊[] = p₊
+    ⬜u₋[] = xmin; ⬜u₊[] = xmax
     return
 end
 
 """
-    scaleod(od, pmin, pmax, umin, umax) -> ps, us
+    scaleod(oddata) -> ps, us
 Given the return values of [`interactive_orbitdiagram`](@ref), produce
 orbit diagram data scaled correctly in data units. Return the data as a vector of
 parameter values and a vector of corresponding variable values.
 """
-function scaleod(od, pmin, pmax, umin, umax)
+scaleod(r) = scaleod(r...)
+function scaleod(od, p₋, p₊, u₋, u₊)
     oddata = od[]; L = length(oddata);
-    T = promote_type(typeof(umin[]), Float32)
+    T = promote_type(typeof(u₋[]), Float32)
     ps = zeros(T, L); us = copy(ps)
-    udif = umax[] - umin[]; um = umin[]
-    pdif = pmax[] - pmin[]; pm = pmin[]
+    udif = u₊[] - u₋[]; um = u₋[]
+    pdif = p₊[] - p₋[]; pm = p₋[]
     @inbounds for i ∈ 1:length(oddata)
         p, u = oddata[i]
         ps[i] = pm + pdif*p; us[i] = um + udif*u
@@ -291,7 +311,4 @@ function scaleod(od, pmin, pmax, umin, umax)
     return ps, us
 end
 
-# TODO: Use `α` directly after Simon's fix, no need for observe(α)
-# TODO: Add exit button that closes both windows
-# TODO: Make marker GLMakie.FastPixel()
 # TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
