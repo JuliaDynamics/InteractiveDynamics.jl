@@ -11,6 +11,20 @@ scaleod
 ```
 
 ---
+running
+
+```
+i = p_index = 1
+ds, p_min, p_max, parname = Systems.standardmap(), 0.0, 1.2, "k"
+t = "orbit diagram for the standard map"
+
+oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
+                                  parname = parname, title = t)
+
+ps, us = scaleod(oddata)
+```
+
+gives
 
 ```@raw html
 <video width="100%" height="auto" controls autoplay loop>

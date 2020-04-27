@@ -11,6 +11,14 @@ interactive_billiard
 
 ---
 
+Running
+```
+using DynamicalBilliards, InteractiveChaos, Makie
+bd, = billiard_logo(T = Float32)
+interactive_billiard(bd, 1f0, tail = 1000)
+```
+gives
+
 ```@raw html
 <video width="100%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/bill1.mp4?raw=true" type="video/mp4">
