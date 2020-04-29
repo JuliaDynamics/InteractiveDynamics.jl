@@ -49,3 +49,9 @@ interactive_billiard_bmap
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/bmap.mp4?raw=true" type="video/mp4">
 </video>
 ```
+
+---
+
+```@docs
+billiard_bmap_plot
+```

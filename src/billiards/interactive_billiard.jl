@@ -55,6 +55,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         plot_particles = true, α = 1.0, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
         backgroundcolor = DEFAULT_BG,
+        add_controls = true
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -99,52 +100,84 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     # Controls:
-    resetbutton = LButton(scene, label = "reset",
-        buttoncolor = RGBf0(0.8, 0.8, 0.8),
-        height = 40, width = 80
-    )
-    runbutton = LButton(scene, label = Observable("run"),
-        buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
-        buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
-        buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
-        labelcolor = Observable((RGBf0(0,0,0))),
-        labelcolor_active = Observable((RGBf0(1,1,1))),
-        height = 40, width = 70,
-    )
-    nslider = LSlider(scene, range = 0:50, startvalue=0)
-    controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
-    if plot_particles
-        particlebutton = LButton(scene, label = "particles",
+    if add_controls
+        resetbutton = LButton(scene, label = "reset",
             buttoncolor = RGBf0(0.8, 0.8, 0.8),
-            height = 40, width = 100
+            height = 40, width = 80
         )
-        pushfirst!(controls, particlebutton)
-    end
-
-    # Functionality that CREATES the play/stop button
-    # TODO: will be deleted once MakieLayout has proper togglable button
-    on(runbutton.clicks) do n
-        t = runbutton.label[] == "run" ? "stop" : "run"
-        runbutton.label[] = t
-        for (s1, s2) in ((:buttoncolor, :buttoncolor_active), (:labelcolor, :labelcolor_active))
-        getproperty(runbutton, s1)[], getproperty(runbutton, s2)[] =
-            getproperty(runbutton, s2)[], getproperty(runbutton, s1)[]
+        runbutton = LButton(scene, label = Observable("run"),
+            buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
+            buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
+            buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
+            labelcolor = Observable((RGBf0(0,0,0))),
+            labelcolor_active = Observable((RGBf0(1,1,1))),
+            height = 40, width = 70,
+        )
+        nslider = LSlider(scene, range = 0:50, startvalue=0)
+        controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
+        if plot_particles
+            particlebutton = LButton(scene, label = "particles",
+                buttoncolor = RGBf0(0.8, 0.8, 0.8),
+                height = 40, width = 100
+            )
+            pushfirst!(controls, particlebutton)
         end
-        runbutton.labelcolor_hover[] = runbutton.labelcolor[]
-    end
 
-    # Create the "control panel"
-    layout[2, 1] = grid!(hcat(
-        controls...,
-    ), width = Auto(false), height = Auto(true))
+        # Functionality that CREATES the play/stop button
+        # TODO: will be deleted once MakieLayout has proper togglable button
+        on(runbutton.clicks) do n
+            t = runbutton.label[] == "run" ? "stop" : "run"
+            runbutton.label[] = t
+            for (s1, s2) in ((:buttoncolor, :buttoncolor_active), (:labelcolor, :labelcolor_active))
+            getproperty(runbutton, s1)[], getproperty(runbutton, s2)[] =
+                getproperty(runbutton, s2)[], getproperty(runbutton, s1)[]
+            end
+            runbutton.labelcolor_hover[] = runbutton.labelcolor[]
+        end
 
-    # Play/stop
-    on(runbutton.clicks) do nclicks
-        @async while runbutton.label[] == "stop"
+        # Create the "control panel"
+        layout[2, 1] = grid!(hcat(
+            controls...,
+        ), width = Auto(false), height = Auto(true))
+
+        # Play/stop
+        on(runbutton.clicks) do nclicks
+            @async while runbutton.label[] == "stop"
+                for i in 1:N
+                    p = ps[i]
+                    parobs = allparobs[i]
+                    animstep!(parobs, bd, dt, true, intervals)
+                    if plot_particles
+                        balls[][i] = parobs.p.pos
+                        vels[][i] = vr * parobs.p.vel
+                    end
+                end
+                if plot_particles
+                    balls[] = balls[]
+                    vels[] = vels[]
+                end
+                for _ in 1:nslider.value[]
+                    for i in 1:N
+                        p = ps[i]
+                        parobs = allparobs[i]
+                        animstep!(parobs, bd, dt, false, intervals)
+                    end
+                end
+                if sleept == nothing
+                    yield()
+                else
+                    sleep(sleept)
+                end
+                isopen(scene) || break
+            end
+        end
+
+        # Resetting
+        on(resetbutton.clicks) do nclicks
+            # update parobs
             for i in 1:N
-                p = ps[i]
                 parobs = allparobs[i]
-                animstep!(parobs, bd, dt, true, intervals)
+                rebind_partobs!(parobs, p0s[i], bd)
                 if plot_particles
                     balls[][i] = parobs.p.pos
                     vels[][i] = vr * parobs.p.vel
@@ -154,62 +187,39 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
                 balls[] = balls[]
                 vels[] = vels[]
             end
-            for _ in 1:nslider.value[]
-                for i in 1:N
-                    p = ps[i]
-                    parobs = allparobs[i]
-                    animstep!(parobs, bd, dt, false, intervals)
+            yield()
+        end
+
+        # Show/hide particles
+        if plot_particles
+            on(particlebutton.clicks) do nclicks
+                particle_plots[1].visible[] = !particle_plots[1].visible[]
+                for i in 1:2
+                particle_plots[2].plots[i].visible[] = !particle_plots[2].plots[i].visible[]
                 end
             end
-            if sleept == nothing
-                yield()
-            else
-                sleep(sleept)
-            end
-            isopen(scene) || break
         end
-    end
 
-    # Resetting
-    on(resetbutton.clicks) do nclicks
-        # update parobs
-        for i in 1:N
-            parobs = allparobs[i]
-            rebind_partobs!(parobs, p0s[i], bd)
-            if plot_particles
-                balls[][i] = parobs.p.pos
-                vels[][i] = vr * parobs.p.vel
-            end
+        # Selecting new particles
+        sline = select_line(ax.scene)
+        on(sline) do val
+            pos = val[1]
+            dir = val[2] - val[1]
+            φ = atan(dir[2], dir[1])
+            p0s .= particlebeam(pos..., φ, N, dx, ω0, Float32)
+            resetbutton.clicks[] += 1
         end
-        if plot_particles
-            balls[] = balls[]
-            vels[] = vels[]
-        end
-        yield()
-    end
 
-    # Show/hide particles
-    if plot_particles
-        on(particlebutton.clicks) do nclicks
-            particle_plots[1].visible[] = !particle_plots[1].visible[]
-            for i in 1:2
-            particle_plots[2].plots[i].visible[] = !particle_plots[2].plots[i].visible[]
-            end
-        end
-    end
-
-    # Selecting new particles
-    sline = select_line(ax.scene)
-    on(sline) do val
-        pos = val[1]
-        dir = val[2] - val[1]
-        φ = atan(dir[2], dir[1])
-        p0s .= particlebeam(pos..., φ, N, dx, ω0, Float32)
-        resetbutton.clicks[] += 1
-    end
+    end # adding controls blocks
 
     display(scene)
-    return scene, layout, allparobs, resetbutton, p0s, sline
+    if add_controls
+        return scene, layout, allparobs, resetbutton, p0s, sline
+    elseif plot_particles
+        return scene, layout, allparobs, balls, vels, vr
+    else
+        return scene, layout, allparobs, nothing, nothing, nothing
+    end
 end
 
 
@@ -244,10 +254,8 @@ function billiard_video(file::String, bd::Billiard, x::Real, y::Real, φ::Real, 
 end
 
 function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticle};
-        dt = 0.002, tail = 500, dx = 0.01, colors = JULIADYNAMICS_COLORS,
-        plot_particles = false, res = nothing, α = 0.5,
-        fade = true, backgroundcolor = RGBf0(0.99, 0.99, 0.99),
-        speed = 4, frames = 1000, framerate = 60
+        plot_particles = false, res = nothing, dt = 0.001,
+        speed = 4, frames = 1000, framerate = 60, kwargs...
     )
 
     if res == nothing
@@ -255,39 +263,11 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
         aspect = (xmax - xmin)/(ymax-ymin)
         res = (round(Int, aspect*800), 800)
     end
-    if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
-        error("Only Float32 number type is possible for the billiard applications. "*
-        "Please initialize billiards and particles by explicitly passing Float32 numbers "*
-        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
-    end
-    N = length(ps)
-    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
-    scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
-    ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
-    tight_ticklabel_spacing!(ax)
-    ax.autolimitaspect = 1
-    allparobs = [ParObs(p, bd, tail) for p in ps]
-    bdplot!(ax, bd)
 
-    for (i, p) in enumerate(allparobs)
-        x = to_color(cs[i])
-        if fade
-            x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
-        end
-        lines!(ax, p.tail, color = x)
-    end
-    if plot_particles
-        vr = _estimate_vr(bd)
-        balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-        vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
-        particle_plots = (
-            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 6AbstractPlotting.px),
-            arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
-                normalize = false, arrowsize = 0.01AbstractPlotting.px,
-                linewidth  = 2,
-            )
-        )
-    end
+    scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
+        res = res, plot_particles=plot_particles, kwargs..., add_controls =false
+    )
+    N = length(ps)
 
     record(scene, file, 1:frames; framerate = framerate) do j
         for i in 1:N
@@ -365,29 +345,29 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         marker = MARKER, markersize = ms*AbstractPlotting.px
     )
 
-    ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
-    bmapax.xticks = ManualTicks(Float32[intervals[2:end-1]...], ticklabels)
-    # bmapax.xgridstyle = :dash # This doesn't work because MakieLayout doesn't really
-    # support initializing a plot with empty data.
-    for (i, ξ) in enumerate(intervals[2:end-1])
-        lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
-    end
+    # Make obstacle axis, add info about where each obstacle terminates
+    if length(intervals) > 2 # at least 2 obstacles
+        ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
+        bmapax.xticks = ManualTicks(Float32[intervals[2:end-1]...], ticklabels)
+        for (i, ξ) in enumerate(intervals[2:end-1])
+            lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
+        end
 
-    # Obstacle axis
-    obstacle_ticklabels = String[]
-    obstacle_ticks = Float32[]
-    for (i, ξ) in enumerate(intervals[1:end-1])
-        push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
-        push!(obstacle_ticklabels, string(i))
+        obstacle_ticklabels = String[]
+        obstacle_ticks = Float32[]
+        for (i, ξ) in enumerate(intervals[1:end-1])
+            push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
+            push!(obstacle_ticklabels, string(i))
+        end
+        obstacle_axis = MakieLayout.LineAxis(scene,
+            endpoints = lift(MakieLayout.topline, bmapax.layoutobservables.computedbbox),
+            limits = [0, intervals[end]], flipped = true, ticklabelalign = (:center, :bottom),
+            # these are just because I forgot to set defaults...
+            spinecolor = :black, labelfont = "Dejavu", ticklabelfont = "Dejavu",
+            label = "obstacle index",  spinevisible = true,
+            ticks = ManualTicks(obstacle_ticks, obstacle_ticklabels)
+        )
     end
-    obstacle_axis = MakieLayout.LineAxis(scene,
-        endpoints = lift(MakieLayout.topline, bmapax.layoutobservables.computedbbox),
-        limits = [0, intervals[end]], flipped = true, ticklabelalign = (:center, :bottom),
-        # these are just because I forgot to set defaults...
-        spinecolor = :black, labelfont = "Dejavu", ticklabelfont = "Dejavu",
-        label = "obstacle index",  spinevisible = true,
-        ticks = ManualTicks(obstacle_ticks, obstacle_ticklabels)
-    )
 
     # Obtain new color when selecting line in main plot
     on(sline) do val
@@ -435,4 +415,79 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     layout[:, 2] = sublayout
     display(scene)
     return scene, layout, parobs
+end
+
+export billiard_bmap_plot
+
+"""
+    billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
+Return a static scene which has particles plotted on both the real billiard as well
+the boundary map, each with its own color (keyword `colors`), and the same color is used
+for the corresponding scatter points in the boundary map.
+
+All keyword arguments are the same as [`interactive_billiard_bmap`](@ref), besides
+the interaction part of course.
+"""
+function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
+        ms = 12, plot_particles=true, colors = JULIADYNAMICS_COLORS,
+        dt = 0.001, steps = round(Int, 10/dt), kwargs...
+    )
+
+    N = length(ps)
+    intervals = arcintervals(bd)
+    scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
+        kwargs..., dt = dt, add_controls =false, plot_particles=plot_particles,
+        intervals = intervals, res = (1600, 800), colors = colors
+    )
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
+
+    sublayout = GridLayout()
+    bmapax = layout[1,2] = LAxis(scene)
+    bmapax.xlabel = "arclength ξ"
+    bmapax.ylabel = "normal angle sin(φₙ)"
+
+    # create listeners that update boundary map points
+    all_bmap_scatters = [Point2f0[] for i in 1:N]
+    for i in 1:N
+        parobs = allparobs[i]
+        vector = all_bmap_scatters[i]
+        on(parobs.ξsin) do val
+            push!(vector, val)
+        end
+    end
+
+    # evolve particles until necessary time
+    for j in 1:steps-1
+        for i in 1:N
+            p = ps[i]
+            parobs = allparobs[i]
+            animstep!(parobs, bd, dt, false, intervals)
+            if plot_particles
+                balls[][i] = parobs.p.pos
+                vels[][i] = vr * parobs.p.vel
+            end
+        end
+    end
+    # last step (that actually updates plot)
+    for i in 1:N
+        p = ps[i]
+        parobs = allparobs[i]
+        animstep!(parobs, bd, dt, true)
+    end
+    if plot_particles
+        balls[] = balls[]
+        vels[] = vels[]
+    end
+
+    # Scatterplots:
+    for i in 1:N
+        c = cs[i]
+        vector = all_bmap_scatters[i]
+        scatter!(bmapax, vector; color = cs[i],
+            marker = MARKER, markersize = ms*AbstractPlotting.px
+        )
+    end
+    ylims!(bmapax, -1, 1)
+    xlims!(bmapax, intervals[1], intervals[end])
+    return scene
 end
