@@ -37,7 +37,7 @@ function subscript(i::Int)
 end
 
 const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
-const DEFAULT_BG = RGBf0(0.98, 0.97, 1.0)
+const DEFAULT_BG = RGBf0(0.99, 0.98, 1.0)
 using AbstractPlotting: px
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 

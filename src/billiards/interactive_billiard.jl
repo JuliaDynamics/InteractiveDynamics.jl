@@ -1,6 +1,7 @@
 using DynamicalBilliards, AbstractPlotting, MakieLayout
 export interactive_billiard, interactive_billiard_bmap, billiard_video
 
+
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
     interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
@@ -138,7 +139,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         # Create the "control panel"
         layout[2, 1] = grid!(hcat(
             controls...,
-        ), width = Auto(false), height = Auto(true))
+        ), tellwidth = false, tellheight = true)
 
         # Play/stop
         on(runbutton.clicks) do nclicks
@@ -327,12 +328,12 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
 
     sublayout = GridLayout()
-    cleanbutton = LButton(scene, label = "clean", width = Auto(false))
+    cleanbutton = LButton(scene, label = "clean", tellwidth = false)
     sublayout[2, 1] = cleanbutton
     mct = Observable("m.c.t. = 0.0")
-    mcttext = LText(scene, mct, haligh = :left, width = Auto(false))
+    mcttext = LText(scene, mct, haligh = :left, tellwidth = false)
     sublayout[2, 2] = mcttext
-    bmapax = sublayout[1,:] = LAxis(scene, height = 520)
+    bmapax = sublayout[1,:] = LAxis(scene)
     bmapax.xlabel = "arclength ξ"
     bmapax.ylabel = "normal angle sin(φₙ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
@@ -348,24 +349,34 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     # Make obstacle axis, add info about where each obstacle terminates
     if length(intervals) > 2 # at least 2 obstacles
         ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
-        bmapax.xticks = ManualTicks(Float32[intervals[2:end-1]...], ticklabels)
+        bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
         for (i, ξ) in enumerate(intervals[2:end-1])
             lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
         end
-
         obstacle_ticklabels = String[]
         obstacle_ticks = Float32[]
         for (i, ξ) in enumerate(intervals[1:end-1])
             push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
             push!(obstacle_ticklabels, string(i))
         end
+
+        # obax = sublayout[1,:] = LAxis(scene)
+        # linkxaxes!(bmapax, obax)
+        # obax.xticks = (obstacle_ticks, obstacle_ticklabels)
+        # obax.xaxisposition = :top
+        # obax.xticklabelalign = (:center, :bottom)
+        # obax.xlabel = "obstacle index"
+        # obax.xgridvisible = false
+        # hideydecorations!(obax)
+        # hidespines!(obax)
+        #
         obstacle_axis = MakieLayout.LineAxis(scene,
             endpoints = lift(MakieLayout.topline, bmapax.layoutobservables.computedbbox),
             limits = [0, intervals[end]], flipped = true, ticklabelalign = (:center, :bottom),
             # these are just because I forgot to set defaults...
             spinecolor = :black, labelfont = "Dejavu", ticklabelfont = "Dejavu",
             label = "obstacle index",  spinevisible = true,
-            ticks = ManualTicks(obstacle_ticks, obstacle_ticklabels)
+            ticks = (obstacle_ticks, obstacle_ticklabels),
         )
     end
 
