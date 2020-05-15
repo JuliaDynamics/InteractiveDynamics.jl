@@ -92,10 +92,10 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
-            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 6AbstractPlotting.px),
+            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 12AbstractPlotting.px),
             arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
-                normalize = false, arrowsize = 0.01AbstractPlotting.px,
-                linewidth  = 2,
+                normalize = false, arrowsize = 0.05AbstractPlotting.px,
+                linewidth  = 4,
             )
         )
     end
