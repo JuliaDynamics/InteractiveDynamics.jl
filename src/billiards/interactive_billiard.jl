@@ -56,7 +56,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         plot_particles = true, α = 1.0, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
         backgroundcolor = DEFAULT_BG,
-        add_controls = true
+        vr = _estimate_vr(bd),
+        add_controls = true,
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -88,7 +89,6 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     # Plot particles
     if plot_particles
-        vr = _estimate_vr(bd)
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
@@ -335,7 +335,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     sublayout[2, 2] = mcttext
     bmapax = sublayout[1,:] = LAxis(scene)
     bmapax.xlabel = "arclength ξ"
-    bmapax.ylabel = "normal angle sin(φₙ)"
+    bmapax.ylabel = "normal angle sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
@@ -348,36 +348,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
     # Make obstacle axis, add info about where each obstacle terminates
     if length(intervals) > 2 # at least 2 obstacles
-        ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
-        bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
-        for (i, ξ) in enumerate(intervals[2:end-1])
-            lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
-        end
-        obstacle_ticklabels = String[]
-        obstacle_ticks = Float32[]
-        for (i, ξ) in enumerate(intervals[1:end-1])
-            push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
-            push!(obstacle_ticklabels, string(i))
-        end
-
-        # obax = sublayout[1,:] = LAxis(scene)
-        # linkxaxes!(bmapax, obax)
-        # obax.xticks = (obstacle_ticks, obstacle_ticklabels)
-        # obax.xaxisposition = :top
-        # obax.xticklabelalign = (:center, :bottom)
-        # obax.xlabel = "obstacle index"
-        # obax.xgridvisible = false
-        # hideydecorations!(obax)
-        # hidespines!(obax)
-        #
-        obstacle_axis = MakieLayout.LineAxis(scene,
-            endpoints = lift(MakieLayout.topline, bmapax.layoutobservables.computedbbox),
-            limits = [0, intervals[end]], flipped = true, ticklabelalign = (:center, :bottom),
-            # these are just because I forgot to set defaults...
-            spinecolor = :black, labelfont = "Dejavu", ticklabelfont = "Dejavu",
-            label = "obstacle index",  spinevisible = true,
-            ticks = (obstacle_ticks, obstacle_ticklabels),
-        )
+        add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
     end
 
     # Obtain new color when selecting line in main plot
@@ -428,6 +399,36 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     return scene, layout, parobs
 end
 
+function add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
+    ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
+    bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
+    for (i, ξ) in enumerate(intervals[2:end-1])
+        lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
+    end
+    obstacle_ticklabels = String[]
+    obstacle_ticks = Float32[]
+    for (i, ξ) in enumerate(intervals[1:end-1])
+        push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
+        push!(obstacle_ticklabels, string(i))
+    end
+
+    obax = sublayout[1,:] = LAxis(scene)
+    obax.xticks = (obstacle_ticks, obstacle_ticklabels)
+    obax.xaxisposition = :top
+    obax.xticklabelalign = (:center, :bottom)
+    obax.xlabel = "obstacle index"
+    obax.xgridvisible = false
+    hideydecorations!(obax)
+    hidespines!(obax)
+    xlims!(obax, 0, intervals[end])
+    if lock
+        obax.xpanlock = true
+        obax.ypanlock = true
+        obax.xzoomlock = true
+        obax.yzoomlock = true
+    end
+end
+
 export billiard_bmap_plot
 
 """
@@ -440,7 +441,7 @@ All keyword arguments are the same as [`interactive_billiard_bmap`](@ref), besid
 the interaction part of course.
 """
 function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
-        ms = 12, plot_particles=true, colors = JULIADYNAMICS_COLORS,
+        ms = 8, plot_particles=true, colors = JULIADYNAMICS_COLORS,
         dt = 0.001, steps = round(Int, 10/dt), kwargs...
     )
 
@@ -450,12 +451,17 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
         kwargs..., dt = dt, add_controls =false, plot_particles=plot_particles,
         intervals = intervals, res = (1600, 800), colors = colors
     )
-    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, 1.0, N) : colors
 
     sublayout = GridLayout()
-    bmapax = layout[1,2] = LAxis(scene)
+    bmapax = sublayout[1,1] = LAxis(scene)
     bmapax.xlabel = "arclength ξ"
-    bmapax.ylabel = "normal angle sin(φₙ)"
+    bmapax.ylabel = "normal angle sin(θ)"
+    ylims!(bmapax, -1, 1)
+    xlims!(bmapax, intervals[1], intervals[end])
+    if length(intervals) > 2 # at least 2 obstacles
+        add_obstacle_axis!(scene, sublayout, intervals, bmapax, false)
+    end
 
     # create listeners that update boundary map points
     all_bmap_scatters = [Point2f0[] for i in 1:N]
@@ -500,5 +506,6 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
     ylims!(bmapax, -1, 1)
     xlims!(bmapax, intervals[1], intervals[end])
-    return scene
+    layout[:, 2] = sublayout
+    return scene, bmapax
 end

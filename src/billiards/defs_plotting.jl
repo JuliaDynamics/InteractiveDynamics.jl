@@ -70,7 +70,7 @@ function _estimate_vr(bd)
     xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
     f = max((xmax-xmin), (ymax-ymin))
     isinf(f) && error("cellsize of billiard is infinite")
-    vr = Float32(f/50)
+    vr = Float32(f/100)
 end
 
 function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
