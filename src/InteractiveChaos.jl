@@ -29,10 +29,8 @@ function subscript(i::Int)
         "₉"
     elseif i == 0
         "₀"
-    elseif i ≥ 10
-        join(subscript.(digits(i)))
     else
-        string(i)
+        join(subscript.(digits(i)))
     end
 end
 
@@ -42,8 +40,8 @@ using AbstractPlotting: px
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
 
-# JULIADYNAMICS_CMAP = to_color.(("#7a60bb", "#624d96", "#202020", "#17888c", "#1fb6bb"))
-JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
+# JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
+JULIADYNAMICS_COLORS = to_color.(["#7d53e7", "#202020", "#17c7cd"])
 
 function colors_from_map(cmap, α, N)
     N == 1 && return [RGBAf0(0, 0, 0, 1)]
@@ -54,6 +52,11 @@ function pushupdate!(o::Observable, v)
     push!(o[], v)
     o[] = o[]
     return o
+end
+
+function darken_color(c, f = 1.2)
+    tc = to_color(c)
+    return RGBAf0(c.r/f, c.g/f, c.b/f, c.alpha)
 end
 
 

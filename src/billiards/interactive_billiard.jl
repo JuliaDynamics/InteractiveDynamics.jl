@@ -92,9 +92,9 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
-            scatter!(ax, balls; color = cs, marker = MARKER, markersize = 12AbstractPlotting.px),
-            arrows!(ax, balls, vels; arrowcolor = cs, linecolor = cs,
-                normalize = false, arrowsize = 0.05AbstractPlotting.px,
+            scatter!(ax, balls; color = darken_color.(cs), marker = MARKER, markersize = 12AbstractPlotting.px),
+            arrows!(ax, balls, vels; arrowcolor = darken_color.(cs), linecolor = darken_color.(cs),
+                normalize = false, arrowsize = 0.02AbstractPlotting.px,
                 linewidth  = 4,
             )
         )
@@ -427,6 +427,7 @@ function add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
         obax.xzoomlock = true
         obax.yzoomlock = true
     end
+    return obax
 end
 
 export billiard_bmap_plot
@@ -459,9 +460,20 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     bmapax.ylabel = "normal angle sin(θ)"
     ylims!(bmapax, -1, 1)
     xlims!(bmapax, intervals[1], intervals[end])
+    bmapax.xticklabelsize = 28
+    bmapax.yticklabelsize = 28
+    bmapax.xlabelsize = 36
+    bmapax.ylabelsize = 36
+    bmapax.ylabelpadding = 20
     if length(intervals) > 2 # at least 2 obstacles
-        add_obstacle_axis!(scene, sublayout, intervals, bmapax, false)
+        obax = add_obstacle_axis!(scene, sublayout, intervals, bmapax, false)
+        obax.xticklabelsize = 28
+        obax.yticklabelsize = 28
+        obax.xlabelsize = 36
+        obax.ylabelsize = 36
+        obax.ylabelpadding = 20
     end
+
 
     # create listeners that update boundary map points
     all_bmap_scatters = [Point2f0[] for i in 1:N]

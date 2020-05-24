@@ -7,7 +7,7 @@ obcolor(::Obstacle) = RGBf0(0,0.6,0)
 obcolor(::Union{RandomWall, RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
 obcolor(::Union{SplitterWall, Antidot, Ellipse}) = RGBf0(0.8,0.0,0)
 obcolor(::PeriodicWall) = RGBf0(0.8,0.8,0)
-obfill(o::Obstacle) = RGBAf0(obcolor(o), 0.5)
+obfill(o::Obstacle) = RGBAf0(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
 obfill(o::Union{Antidot, Ellipse}) = RGBAf0(obcolor(o), 0.1)
 obls(::Obstacle) = nothing
 obls(::Union{SplitterWall, Antidot, Ellipse}) = :dash
@@ -70,7 +70,7 @@ function _estimate_vr(bd)
     xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
     f = max((xmax-xmin), (ymax-ymin))
     isinf(f) && error("cellsize of billiard is infinite")
-    vr = Float32(f/100)
+    vr = Float32(f/25)
 end
 
 function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
