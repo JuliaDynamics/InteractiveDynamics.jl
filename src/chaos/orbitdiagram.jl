@@ -11,12 +11,28 @@ function observable_slider!(layout, i, j, scene, ltext, r;
     layout[i, j] = hbox!(text_prev, slider, text_after)
     return slider
 end
+
+function od_sliders!(scene, controllayout)
+    sliders = []
+    for (i, (l, vals)) in enumerate(zip(("n =", "t =", "d =", "α ="),
+                         (1000:100:100000, 1000:1000:100000, 100:100:10000, 0.001:0.001:1)))
+
+        startvalue = l[1] == 'α' ? 0.1 : l[1] == 'd' ? 1000 : vals[1]
+        sll = labelslider!(scene, l, vals; sliderkw = Dict(:startvalue => startvalue))
+        push!(sliders, sll.slider)
+        controllayout[i, :] = sll.layout
+    end
+    return sliders
+end
+
+
 function add_controls!(controllayout, scene, D, parname, i0)
     # Sliders
-    nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
-    Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
-    dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
-    αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
+    # nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
+    # Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
+    # dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
+    # αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
+    nslider, Tslider, dslider, αslider = od_sliders!(scene, controllayout)
     # Buttons (incl. variable chooser)
     ▢update = LButton(scene, label = "update")
     ▢back = LButton(scene, label = "← back")
@@ -105,6 +121,9 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
     colsize!(layout, 1, Relative(3/5))
     display(scene)
 
+    controllayout.tellheight[] = false
+    odax.tellheight = true
+
     nslider, Tslider, dslider, n, Ttr, d, α, i,
     ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
     add_controls!(controllayout, scene, dimension(ds), parname, i0)
@@ -125,8 +144,8 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
 
     xlims!(odax, 0, 1)
     ylims!(odax, 0, 1)
-    odax.xticks = ManualTicks(0:0.25:1, ["$(parname)₋", " ", " ", " ", "$(parname)₊"])
-    odax.yticks = ManualTicks(0:0.25:1, ["u₋", " ", " ", " ", "u₊"])
+    odax.xticks = (0:0.25:1, ["$(parname)₋", " ", " ", " ", "$(parname)₊"])
+    odax.yticks = (0:0.25:1, ["u₋", " ", " ", " ", "u₊"])
     odax.ylabel = "u"*subscript(i[])
     on(i) do o; odax.ylabel = "u"*subscript(o); end
     odax.xlabel = parname
@@ -210,6 +229,7 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
     if title ≠ ""
         layout[0, 1] = LText(scene, title, textsize = 30)
     end
+    MakieLayout.trim!(layout)
 
     return od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
 end
