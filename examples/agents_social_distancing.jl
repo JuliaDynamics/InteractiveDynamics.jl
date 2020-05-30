@@ -111,8 +111,6 @@ recovered(x) = count(i == :R for i in x)
 adata = [(:status, infected), (:status, recovered)]
 mdata = [nagents]
 
-
-
 sir_colors(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
 sir_sizes(a) = 0.01*randn()
 sir_sizes(a) = 0.005*(mod1(a.id, 3)+1)
@@ -127,7 +125,7 @@ sir_shape(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
 #     φ = atan(b.vel[2], b.vel[1])
 #     xs = [(i ∈ (0, 3) ? 2 : 1)*cos(i*2π/3 + φ) for i in 0:3]
 #     ys = [(i ∈ (0, 3) ? 2 : 1)*sin(i*2π/3 + φ) for i in 0:3]
-#     Shape(xs, ys)
+#     poly(xs, ys)
 # end
 
 params = Dict(:death_rate => 0.02:0.001:1.0,
@@ -137,4 +135,4 @@ params = Dict(:death_rate => 0.02:0.001:1.0,
 when = (model, s) -> s % 50 == 0
 
 p1 = interactive_abm(model, agent_step!, model_step!, params;
-ac = sir_colors, as = sir_sizes, am = sir_shape, when = when)
+ac = sir_colors, as = sir_sizes, am = sir_shape, when = when, mdata = mdata, adata=adata)

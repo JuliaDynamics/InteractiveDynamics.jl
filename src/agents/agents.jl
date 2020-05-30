@@ -1,7 +1,3 @@
-using AbstractPlotting, MakieLayout
-using Observables
-using Agents
-
 export interactive_abm
 
 # TODO: Make run button togglable
@@ -23,10 +19,10 @@ function interactive_abm(
 
     # initialize data collection stuff stuff
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
-    df_agent = init_agent_dataframe(model, adata)
-    df_model = init_model_dataframe(model, mdata)
+    df_agent = Agents.init_agent_dataframe(model, adata)
+    df_model = Agents.init_model_dataframe(model, mdata)
     L = (isnothing(adata) ? 0 : size(df_agent)[2]-1) + (isnothing(mdata) ? 0 : size(df_model)[2]-1)
-    L > 0 && (s = 0) # define current step
+    s = 0 # current step
 
     # Initialize main layout and abm axis
     scene, layout = layoutscene(resolution = (1200, 600 + L*100))
@@ -47,7 +43,7 @@ function interactive_abm(
     end
 
     # Initialize ABM interactive platform + parameter sliders
-    AbstractPlotting.scatter!(abmax, pos;
+    scatter!(abmax, pos;
     color = colors, markersize = sizes, marker = markers)
     controllayout = layout[1, 2] = GridLayout(tellheight = false)
     slidervals, run, update, spuslider, sleslider = make_abm_controls =
@@ -56,27 +52,26 @@ function interactive_abm(
     # Initialize data plots
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
-        data = init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N)
+        data, axs = init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N)
     end
 
     # Running the simulation:
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
-        # @async while isrunning[]
-        while isrunning[]
-            # @show "IT IS RUNNING"
+        @async while isrunning[]
+        # while isrunning[]
+            @show "IT IS RUNNING"
             n = spuslider[]
             Agents.step!(model, agent_step!, model_step!, n)
-            # if L > 0
-            #     s += n
-            #     if should_we_collect(s, model, when) # update collected data
-            #         @show "WE COLLECT!"
-            #         push!(N.val, s)
-            #         update_data_plots!(data, model, df_agent, df_model, adata, mdata, N)
-            #     end
-            #     break
-            # end
+            if L > 0
+                s += n
+                if Agents.should_we_collect(s, model, when) # update collected data
+                    @show "WE COLLECT!"
+                    push!(N.val, s)
+                    update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                end
+            end
 
             ids = scheduler(model)
             update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
@@ -101,8 +96,8 @@ function interactive_abm(
 end
 
 function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N)
-    collect_agent_data!(df_agent, model, adata, 0)
-    collect_model_data!(df_model, model, mdata, 0)
+    Agents.collect_agent_data!(df_agent, model, adata, 0)
+    Agents.collect_model_data!(df_model, model, mdata, 0)
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
     Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
     data, axs = [], []
@@ -112,7 +107,7 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
     # TODO: make scatter+line plot 1.
     # TODO: make markers in pixel units.
     for i in 1:La
-        x = aggname(adata[i])
+        x = Agents.aggname(adata[i])
         val = Observable([df_agent[end, x]])
         push!(data, val)
         ax = datalayout[i, :] = LAxis(scene)
@@ -122,7 +117,7 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         scatter!(ax, N, val)
     end
     for i in 1:Lm
-        x = aggname(mdata[i])
+        x = Agents.aggname(mdata[i])
         val = Observable([df_model[end, x]])
         push!(data, val)
         ax = datalayout[i+La, :] = LAxis(scene)
@@ -134,32 +129,33 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
     # Link axis
     if La+Lm > 1
         linkxaxes!(axs...)
-        for ax in @view(axs[2:end]); hidexdecorations!(ax, grid = false); end
+        for ax in @view(axs[1:end-1]); hidexdecorations!(ax, grid = false); end
     end
     axs[end].xlabel = "step"
-    return data
+    return data, axs
 end
 
-function update_data_plots!(data, model, df_agent, df_model, adata, mdata, N)
-    collect_agent_data!(df_agent, model, adata, N[][end])
-    collect_model_data!(df_model, model, mdata, N[][end])
+function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+    Agents.collect_agent_data!(df_agent, model, adata, N[][end])
+    Agents.collect_model_data!(df_model, model, mdata, N[][end])
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
     Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
 
     for i in 1:La
         o = data[i]
-        x = aggname(adata[i])
+        x = Agents.aggname(adata[i])
         val = df_agent[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
     for i in 1:Lm
         o = data[i+La]
-        x = aggname(mdata[i])
+        x = Agents.aggname(mdata[i])
         val = df_model[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
+    for ax in axs; autolimits!(ax); end
 end
 
 function update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
