@@ -21,6 +21,8 @@ function interactive_abm(
 
     # initialize data collection stuff stuff
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
+    !isnothing(alabels) && @assert length(alabels) == length(adata)
+    !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
     df_agent = Agents.init_agent_dataframe(model, adata)
     df_model = Agents.init_model_dataframe(model, mdata)
     L = (isnothing(adata) ? 0 : size(df_agent)[2]-1) + (isnothing(mdata) ? 0 : size(df_model)[2]-1)
@@ -112,8 +114,9 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         ax = datalayout[i, :] = LAxis(scene)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
-        lines!(ax, N, val)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px)
+        c = JULIADYNAMICS_COLORS[mod1(i, 3)]
+        lines!(ax, N, val, color = c)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c)
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
@@ -122,8 +125,9 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         ax = datalayout[i+La, :] = LAxis(scene)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
-        lines!(ax, N, val)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px)
+        c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
+        lines!(ax, N, val, color = c)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c)
     end
     # Link axis
     if La+Lm > 1
