@@ -12,6 +12,8 @@ function interactive_abm(
         spu = 1:100,
         mdata = nothing,
         adata = nothing,
+        alabels = nothing,
+        mlabels = nothing,
         when = true,
         equalaspect = true,
         kwargs...
@@ -52,7 +54,7 @@ function interactive_abm(
     # Initialize data plots
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
-        data, axs = init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N)
+        data, axs = init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     end
 
     # Running the simulation:
@@ -60,14 +62,11 @@ function interactive_abm(
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
         @async while isrunning[]
-        # while isrunning[]
-            @show "IT IS RUNNING"
             n = spuslider[]
             Agents.step!(model, agent_step!, model_step!, n)
             if L > 0
                 s += n
                 if Agents.should_we_collect(s, model, when) # update collected data
-                    @show "WE COLLECT!"
                     push!(N.val, s)
                     update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
                 end
@@ -95,7 +94,7 @@ function interactive_abm(
     return scene, df_agent, df_model
 end
 
-function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N)
+function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     Agents.collect_agent_data!(df_agent, model, adata, 0)
     Agents.collect_model_data!(df_model, model, mdata, 0)
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
@@ -112,9 +111,9 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         push!(data, val)
         ax = datalayout[i, :] = LAxis(scene)
         push!(axs, ax)
-        ax.ylabel = x
+        ax.ylabel = isnothing(alabels) ? x : alabels[i]
         lines!(ax, N, val)
-        scatter!(ax, N, val)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px)
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
@@ -122,9 +121,9 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         push!(data, val)
         ax = datalayout[i+La, :] = LAxis(scene)
         push!(axs, ax)
-        ax.ylabel = x
+        ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         lines!(ax, N, val)
-        scatter!(ax, N, val)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px)
     end
     # Link axis
     if La+Lm > 1
@@ -155,6 +154,7 @@ function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, 
         push!(o[], val)
         o[] = o[] #update plot
     end
+    # TODO: Maybe we can optimize this by setting the limits ourselves (we have the data)
     for ax in axs; autolimits!(ax); end
 end
 

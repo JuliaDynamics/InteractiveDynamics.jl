@@ -109,7 +109,9 @@ end
 infected(x) = count(i == :I for i in x)
 recovered(x) = count(i == :R for i in x)
 adata = [(:status, infected), (:status, recovered)]
+alabels = ["I", "R"]
 mdata = [nagents]
+mlabels = ["N"]
 
 sir_colors(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
 sir_sizes(a) = 0.01*randn()
@@ -135,4 +137,5 @@ params = Dict(:death_rate => 0.02:0.001:1.0,
 when = (model, s) -> s % 50 == 0
 
 p1 = interactive_abm(model, agent_step!, model_step!, params;
-ac = sir_colors, as = sir_sizes, am = sir_shape, when = when, mdata = mdata, adata=adata)
+ac = sir_colors, as = sir_sizes, am = sir_shape,
+when = when, mdata = mdata, adata=adata, alabels=alabels, mlabels=mlabels)
