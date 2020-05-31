@@ -28,8 +28,8 @@ scene, but you can also access the collected data (if any).
 
 * `ac, as, am, scheduler, offset`: Same as in the function `plotabm` of Agents.jl, and
   decide how the ABM scatterplot will look like.
-* `adata, mdata`: Same as the keyword arguments of `Agents.run!`: decide which data of the
-  model will be collected and plotted below the interactive plot.
+* `adata, mdata`: Same as the keyword arguments of `Agents.run!`, and decide which data of the
+  model/agents will be collected and plotted below the interactive plot.
 * `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
   the corresponding plots have a y-label named after the collected data. Instead, you can
   give `alabels, mlabels` (vectors of strings with exactly same length as `adata, mdata`),
@@ -52,10 +52,9 @@ function interactive_abm(
         mlabels = nothing,
         when = true,
         equalaspect = true,
-        kwargs...
     )
 
-    # initialize data collection stuff stuff
+    # initialize data collection stuff
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
@@ -66,7 +65,7 @@ function interactive_abm(
     s = 0 # current step
 
     # Initialize main layout and abm axis
-    scene, layout = layoutscene(resolution = (1200, 600 + L*100))
+    scene, layout = layoutscene(resolution = (1200, 600 + L*100), backgroundcolor = DEFAULT_BG))
     abmax = layout[1,1] = LAxis(scene)
     xlims!(abmax, 0, model.space.extend[1])
     ylims!(abmax, 0, model.space.extend[2])
