@@ -4,6 +4,10 @@
 
 To install it do `]add InteractiveChaos Makie`. `Makie` is necessary for providing a plotting backend, since `InteractiveChaos` does not install one by default.
 
+#TODO: Add bullet points of what this is
+#TODO: say it works for any class of systems
+#TODO: say that it uses requires.
+
 The functionality of `InteractiveChaos` is contained within individual functions, all of which launch a dedicated interactive application. Here is their list:
 
 * [`interactive_orbitdiagram`](@ref)

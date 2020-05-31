@@ -67,8 +67,8 @@ end
     interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
                              u0 = get_state(ds), parname = "p", title = "")
 
-Open an interactive application for exploring orbit diagrams (ODs) of
-discrete systems. The functionality works for _any_ discrete system of _any_ dimensionality.
+Open an interactive application for exploring orbit diagrams (ODs) of discrete
+dynamical systems. Requires `DynamicalSystems`.
 
 Keywords control the name of the parameter, the initial state (used for _any_ parameter)
 or whether to add a title above the orbit diagram.

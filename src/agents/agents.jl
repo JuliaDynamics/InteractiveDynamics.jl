@@ -2,6 +2,42 @@ export interactive_abm
 
 # TODO: Make run button togglable
 
+"""
+    interactive_abm(model::ABM, agent_step!, model_step!, params; kwargs...)
+Open an interactive application for exploring an Agent-Based-Model. Requires `Agents`.
+
+The application evolves an ABM interactively and plots its evolution, while allowing
+changing any of the model parameters interactively and also
+showing the evolution of collected data over time (if any are asked for, see keywords).
+
+`model, agent_step!, model_step!` are the same arguments that `step` or `run!` from
+`Agents` accept. The extra argument `params` is a dictionary and decides which
+parameters of the model will be configurable from the interactive application.
+Each entry of `params` is a pair of `Symbol` to an `AbstractVector`, and provides a range
+of possible values for the parameter named after the given symbol.
+
+Buttons and sliders on the right-hand-side allow running/pausing the application.
+The slider `sleep` controls how much sleep time should occur after each plot update.
+The slider `spu` is the steps-per-update, i.e. how many times to step the model before
+updating the plot.
+
+Calling `interactive_abm` returns: `scene, agent_df, model_df`. So you can save the
+scene, but you can also access the collected data (if any).
+
+## Keywords
+
+* `ac, as, am, scheduler, offset`: Same as in the function `plotabm` of Agents.jl, and
+  decide how the ABM scatterplot will look like.
+* `adata, mdata`: Same as the keyword arguments of `Agents.run!`: decide which data of the
+  model will be collected and plotted below the interactive plot.
+* `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
+  the corresponding plots have a y-label named after the collected data. Instead, you can
+  give `alabels, mlabels` (vectors of strings with exactly same length as `adata, mdata`),
+  and these labels will be used instead.
+* `when = true`: When to perform data collection, as in `Agents.run!`.
+* `equalaspect = true`: Set the ABM scatterplot's aspect ratio to equal.
+* `spu = 1:100`: Values that the "spu" slider will obtain.
+"""
 function interactive_abm(
         model, agent_step!, model_step!, params;
         ac = "#765db4",
@@ -20,6 +56,7 @@ function interactive_abm(
     )
 
     # initialize data collection stuff stuff
+    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
@@ -47,7 +84,7 @@ function interactive_abm(
     end
 
     # Initialize ABM interactive platform + parameter sliders
-    scatter!(abmax, pos;
+    scatter!(abmax.scene, pos;
     color = colors, markersize = sizes, marker = markers)
     controllayout = layout[1, 2] = GridLayout(tellheight = false)
     slidervals, run, update, spuslider, sleslider = make_abm_controls =
@@ -129,9 +166,7 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         lines!(ax, N, val, color = c)
         scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c)
     end
-    # Link axis
     if La+Lm > 1
-        linkxaxes!(axs...)
         for ax in @view(axs[1:end-1]); hidexdecorations!(ax, grid = false); end
     end
     axs[end].xlabel = "step"
