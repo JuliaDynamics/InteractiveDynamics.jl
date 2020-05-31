@@ -198,7 +198,7 @@ function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, 
 end
 
 function update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
-    if nagents(model) == 0
+    if Agents.nagents(model) == 0
         @warn "The model has no agents, we can't plot anymore!"
         error("The model has no agents, we can't plot anymore!")
     end
