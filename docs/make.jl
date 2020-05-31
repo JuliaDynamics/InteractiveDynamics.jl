@@ -5,6 +5,7 @@ CI = get(ENV, "CI", nothing) == "true" || get(ENV, "GITHUB_TOKEN", nothing) !== 
 CI && Pkg.instantiate()
 
 using InteractiveChaos
+using DynamicalSystems, DynamicalBilliards, Agents
 using Documenter
 using DocumenterTools: Themes
 
@@ -24,7 +25,7 @@ Themes.compile(joinpath(@__DIR__, "juliadynamics-light.scss"), joinpath(@__DIR__
 Themes.compile(joinpath(@__DIR__, "juliadynamics-dark.scss"), joinpath(@__DIR__, "src/assets/themes/documenter-dark.css"))
 
 makedocs(
-modules=[InteractiveChaos],
+modules=[InteractiveChaos, DynamicalSystems, DynamicalBilliards, Agents],
 doctest=false,
 sitename= "InteractiveChaos",
 root = @__DIR__,

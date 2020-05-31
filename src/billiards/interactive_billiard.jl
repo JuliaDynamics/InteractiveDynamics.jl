@@ -8,9 +8,10 @@ export interactive_billiard, interactive_billiard_bmap, billiard_video
 
 Launch an interactive application that evolves particles in a dynamical billiard `bd`, using
 [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/).
+Requires `DynamicalBilliards`.
+
 You can either specify exactly the particles that will be used `ps` or provide
 some initial conditions `x,y,φ,ω`, which by default are random in the billiard.
-
 The particles are evolved in real time instead of being pre-calculated,
 so the application can be left to run for infinite time.
 

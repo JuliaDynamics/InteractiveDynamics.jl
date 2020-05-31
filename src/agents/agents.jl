@@ -65,7 +65,7 @@ function interactive_abm(
     s = 0 # current step
 
     # Initialize main layout and abm axis
-    scene, layout = layoutscene(resolution = (1200, 600 + L*100), backgroundcolor = DEFAULT_BG))
+    scene, layout = layoutscene(resolution = (1200, 600 + L*100), backgroundcolor = DEFAULT_BG)
     abmax = layout[1,1] = LAxis(scene)
     xlims!(abmax, 0, model.space.extend[1])
     ylims!(abmax, 0, model.space.extend[2])
