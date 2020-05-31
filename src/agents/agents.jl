@@ -10,7 +10,7 @@ The application evolves an ABM interactively and plots its evolution, while allo
 changing any of the model parameters interactively and also
 showing the evolution of collected data over time (if any are asked for, see keywords).
 
-`model, agent_step!, model_step!` are the same arguments that `step` or `run!` from
+`model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
 `Agents` accept. The extra argument `params` is a dictionary and decides which
 parameters of the model will be configurable from the interactive application.
 Each entry of `params` is a pair of `Symbol` to an `AbstractVector`, and provides a range

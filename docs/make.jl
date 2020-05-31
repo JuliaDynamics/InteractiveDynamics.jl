@@ -40,7 +40,8 @@ pages = [
     "Orbit Diagram" => "od.md",
     "Poincaré Surface of Section" => "psos.md",
     "Trajectory Highlighter" => "highlight.md",
-    "Interactive Billiards" => "billiards.md",
+    "Billiards" => "billiards.md",
+    "Agent based models" => "agents.md",
 ],
 )
 
