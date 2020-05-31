@@ -10,16 +10,18 @@ The application evolves an ABM interactively and plots its evolution, while allo
 changing any of the model parameters interactively and also
 showing the evolution of collected data over time (if any are asked for, see keywords).
 
+Buttons and sliders on the right-hand-side allow running/pausing the application.
+The slider `sleep` controls how much sleep time should occur after each plot update.
+The slider `spu` is the steps-per-update, i.e. how many times to step the model before
+updating the plot.
+
 `model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
 `Agents` accept. The extra argument `params` is a dictionary and decides which
 parameters of the model will be configurable from the interactive application.
 Each entry of `params` is a pair of `Symbol` to an `AbstractVector`, and provides a range
 of possible values for the parameter named after the given symbol.
-
-Buttons and sliders on the right-hand-side allow running/pausing the application.
-The slider `sleep` controls how much sleep time should occur after each plot update.
-The slider `spu` is the steps-per-update, i.e. how many times to step the model before
-updating the plot.
+Changing a value in the parameter slides is only updated into the actual model when
+pressing the "update" button.
 
 Calling `interactive_abm` returns: `scene, agent_df, model_df`. So you can save the
 scene, but you can also access the collected data (if any).
