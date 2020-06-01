@@ -81,7 +81,7 @@ according to a colormap.
 function plot_histogram(hist::StatsBase.Histogram, cmap)
     c = to_colormap(cmap, length(hist.weights))
     hist_αs = [Observable(1.) for i in c]
-    bincolor(αs...) = RGBAf0.(color.(c), αs)
+    bincolor(αs...) = RGBAf0.(c, αs)
     colors = lift(bincolor, hist_αs...)
     hist_scene = plot(hist, color=colors)
     return hist_scene, hist_αs
@@ -103,9 +103,10 @@ end
 Get the index of the `selected_plot` in `scene`.
 """
 function get_series_idx(selected_plot, scene)
-    # TODO: There is probably a better or more efficient way of doing this.
-    plot_idx = findfirst(map(p->selected_plot === p, scene.plots))
-    plot_idx
+    # TODO: Find a less kacky way of doing this
+    # Note that the first index will be for the axis
+    plot_idx = findfirst(p->selected_plot === p, scene.plots)
+    return isnothing(plot_idx) ? nothing : plot_idx - 1
 end
 
 """
@@ -118,7 +119,7 @@ function setup_click(scene, idx=1)
     selection = Observable{Any}(0)
     on(scene.events.mousebuttons) do buttons
         if ispressed(scene, Mouse.left) && AbstractPlotting.is_mouseinside(scene)
-            plt, click_idx = AbstractPlotting.mouse_selection(scene)
+            plt, click_idx = mouse_selection(scene)
             selection[] = (plt, click_idx)[idx]
         end
     end
@@ -160,9 +161,9 @@ function select_series(scene, selected_plot, data_αs,
     series_idx = map(get_series_idx, selected_plot, scene)
     on(series_idx) do i
         if !isa(i, Nothing)
-            data_αs[i - 1][] = 1.0
-            change_α(data_αs, setdiff(axes(data_αs, 1), i - 1), α)
-            selected_bin = bin_with_val(data[i-1], hist)
+            data_αs[i][] = 1.0
+            change_α(data_αs, setdiff(axes(data_αs, 1), i), α)
+            selected_bin = bin_with_val(data[i], hist)
             hist_αs[selected_bin][] = 1.0
             change_α(hist_αs, setdiff(axes(hist_αs, 1), selected_bin), hα)
         else
