@@ -69,8 +69,9 @@ function interactive_abm(
     # Initialize main layout and abm axis
     scene, layout = layoutscene(resolution = (1200, 600 + L*100), backgroundcolor = DEFAULT_BG)
     abmax = layout[1,1] = LAxis(scene)
-    xlims!(abmax, 0, model.space.extend[1])
-    ylims!(abmax, 0, model.space.extend[2])
+    mlims = modellims(model)
+    xlims!(abmax, 0, mlims[1])
+    ylims!(abmax, 0, mlims[2])
     equalaspect && (abmax.aspect = AxisAspect(1))
 
     # initialize abm plot stuff
@@ -133,6 +134,8 @@ function interactive_abm(
     display(scene)
     return scene, df_agent, df_model
 end
+
+modellims(model) = model.space isa Agents.ContinuousSpace ? model.space.extend : size(model.space)
 
 function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     Agents.collect_agent_data!(df_agent, model, adata, 0)
