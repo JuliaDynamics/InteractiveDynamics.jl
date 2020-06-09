@@ -57,6 +57,9 @@ function interactive_abm(
     )
 
     # initialize data collection stuff
+    model0 = deepcopy(model)
+    modelobs = Observable(model)
+
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
@@ -67,7 +70,7 @@ function interactive_abm(
     s = 0 # current step
 
     # Initialize main layout and abm axis
-    scene, layout = layoutscene(resolution = (1200, 600 + L*100), backgroundcolor = DEFAULT_BG)
+    scene, layout = layoutscene(resolution = (1200, 600 + L*200), backgroundcolor = DEFAULT_BG)
     abmax = layout[1,1] = LAxis(scene)
     mlims = modellims(model)
     xlims!(abmax, 0, mlims[1])
@@ -89,7 +92,7 @@ function interactive_abm(
     scatter!(abmax.scene, pos;
     color = colors, markersize = sizes, marker = markers)
     controllayout = layout[1, 2] = GridLayout(tellheight = false)
-    slidervals, run, update, spuslider, sleslider = make_abm_controls =
+    slidervals, run, update, spuslider, sleslider, reset = make_abm_controls =
     make_abm_controls!(scene, controllayout, model, params, spu)
 
     # Initialize data plots
@@ -103,6 +106,7 @@ function interactive_abm(
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
         @async while isrunning[]
+            model = modelobs[]
             n = spuslider[]
             Agents.step!(model, agent_step!, model_step!, n)
             if L > 0
@@ -122,6 +126,7 @@ function interactive_abm(
 
     # Clicking the update button:
     on(update) do clicks
+        model = modelobs[]
         if isrunning[]
             isrunning[] = false
             update_abm_parameters!(model, params, slidervals)
@@ -129,6 +134,13 @@ function interactive_abm(
         else
             update_abm_parameters!(model, params, slidervals)
         end
+    end
+
+    # Clicking the reset button
+    on(reset) do clicks
+        modelobs[] = model0
+        update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
+        update[] = update[] + 1 # also trigger parameter updates
     end
 
     display(scene)
@@ -231,6 +243,8 @@ function make_abm_controls!(scene, controllayout, model, params, spu)
     slesl = labelslider!(scene, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     firstrow[1, 2] = spusl.layout
     firstrow[2, 2] = slesl.layout
+    reset = LButton(scene, label = "reset")
+    firstrow[3, :] = reset
 
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
@@ -239,7 +253,7 @@ function make_abm_controls!(scene, controllayout, model, params, spu)
         slidervals[l] = sll.slider.value # directly add the observable
         controllayout[i+2, :] = sll.layout
     end
-    return slidervals, run.clicks, update.clicks, spusl.slider.value, slesl.slider.value
+    return slidervals, run.clicks, update.clicks, spusl.slider.value, slesl.slider.value, reset.clicks
 end
 
 function update_abm_parameters!(model, params, slidervals)

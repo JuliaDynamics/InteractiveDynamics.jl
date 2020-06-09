@@ -38,7 +38,7 @@ function forest_step!(forest)
     end
 end
 
-function model_initiation(; f = 0.02, d = 0.8, p = 0.01, griddims = (100, 100), seed = 111)
+function model_initiation(; f = 0.02, d = 0.8, p = 0.01, griddims = (50, 50), seed = 111)
     Random.seed!(seed)
     space = GridSpace(griddims, moore = true)
     properties = Dict(:f => f, :d => d, :p => p)
