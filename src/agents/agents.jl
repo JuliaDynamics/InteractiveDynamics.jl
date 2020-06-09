@@ -223,7 +223,12 @@ function make_abm_controls!(scene, controllayout, model, params, spu)
     firstrow[1, 1] = run
     firstrow[2, 1] = update
     spusl = labelslider!(scene, "spu =", spu)
-    slesl = labelslider!(scene, "sleep =", 0:0.01:2)
+    if model.space isa Agents.ContinuousSpace
+        _s, _v = 0:0.01:1, 0
+    else
+        _s, _v = 0:0.1:10, 1
+    end
+    slesl = labelslider!(scene, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     firstrow[1, 2] = spusl.layout
     firstrow[2, 2] = slesl.layout
 
