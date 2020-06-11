@@ -1,5 +1,8 @@
 export interactive_abm
 
+# TODO: Might be possible to use t = time(); t = time() - t to estimate run time
+# and subtract this time from the `sleep` time, to ensure smoother update rates for
+# discrete systems.
 # TODO: Make run button togglable
 # TODO: Add a version without any controls, just animation
 
@@ -151,7 +154,7 @@ function interactive_abm(
 
     # Clicking the reset button
     on(reset) do clicks
-        modelobs[] = model0
+        modelobs[] = deepcopy(model0)
         update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
         update[] = update[] + 1 # also trigger parameter updates
     end
