@@ -34,7 +34,8 @@ Changing a value in the parameter slides is only updated into the actual model w
 pressing the "update" button.
 
 The "reset" button resets the model to its original agent and space state but it updates
-it to the currently selected parameter values.
+it to the currently selected parameter values. A red vertical line is displayed in the
+data plots when resetting, for visual guidance.
 
 ## Keywords
 
@@ -132,7 +133,6 @@ function interactive_abm(
                     update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
                 end
             end
-
             ids = scheduler(model)
             update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
             sleslider[] == 0 ? yield() : sleep(sleslider[])
@@ -156,6 +156,7 @@ function interactive_abm(
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
+        add_reset_line!(axs, s)
         update[] = update[] + 1 # also trigger parameter updates
     end
 
@@ -273,5 +274,20 @@ function update_abm_parameters!(model, params, slidervals)
     for l in keys(slidervals)
         v = slidervals[l][]
         model.properties[l] = v
+    end
+end
+
+function vline!(ax, x; kwargs...)
+    linepoints = lift(ax.limits, x) do lims, x
+        ymin = minimum(lims)[2]
+        ymax = maximum(lims)[2]
+        Point2f0.([x, x], [ymin, ymax])
+    end
+    lines!(ax, linepoints; yautolimits = false, kwargs...)
+end
+
+function add_reset_line!(axs, s)
+    for ax in axs
+        vline!(ax, s; color = "#c41818")
     end
 end
