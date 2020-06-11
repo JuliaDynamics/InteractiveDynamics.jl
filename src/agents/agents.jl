@@ -1,37 +1,50 @@
 export interactive_abm
 
 # TODO: Make run button togglable
+# TODO: Add a version without any controls, just animation
 
 """
-    interactive_abm(model::ABM, agent_step!, model_step!, params; kwargs...)
+    interactive_abm(model::ABM, agent_step!, model_step!, params=Dict(); kwargs...)
 Open an interactive application for exploring an Agent-Based-Model. Requires `Agents`.
 
 The application evolves an ABM interactively and plots its evolution, while allowing
 changing any of the model parameters interactively and also
-showing the evolution of collected data over time (if any are asked for, see keywords).
+showing the evolution of collected data over time (if any are asked for, see below).
 
+`model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
+`Agents` accept.
+
+Calling `interactive_abm` returns: `scene, agent_df, model_df`. So you can save the
+scene, but you can also access the collected data (if any).
+
+## Interaction
 Buttons and sliders on the right-hand-side allow running/pausing the application.
 The slider `sleep` controls how much sleep time should occur after each plot update.
 The slider `spu` is the steps-per-update, i.e. how many times to step the model before
 updating the plot.
 
-`model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
-`Agents` accept. The extra argument `params` is a dictionary and decides which
+The final argument `params` is a dictionary and decides which
 parameters of the model will be configurable from the interactive application.
 Each entry of `params` is a pair of `Symbol` to an `AbstractVector`, and provides a range
 of possible values for the parameter named after the given symbol.
 Changing a value in the parameter slides is only updated into the actual model when
 pressing the "update" button.
 
-Calling `interactive_abm` returns: `scene, agent_df, model_df`. So you can save the
-scene, but you can also access the collected data (if any).
+The "reset" button resets the model to its original agent and space state but it updates
+it to the currently selected parameter values.
 
 ## Keywords
 
-* `ac, as, am, scheduler, offset`: Same as in the function `plotabm` of Agents.jl, and
-  decide how the ABM scatterplot will look like.
+* `ac, as, am`: either constants, or functions each accepting an agent
+  and outputting a valid value for the agent color, shape, or size.
+* `scheduler = model.scheduler`: decides the plotting order of agents
+  (which matters only if there is overlap).
+* `offset = nothing`: Can be a function accepting an agent and returning an offset position
+  that adjusts the agent's position when plotted (which matters only if there is overlap).
 * `adata, mdata`: Same as the keyword arguments of `Agents.run!`, and decide which data of the
-  model/agents will be collected and plotted below the interactive plot.
+  model/agents will be collected and plotted below the interactive plot. Notice that
+  data collection can only occur on plotted steps (and thus steps not plotted due to
+  `spu` are also not data-collected).
 * `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
   the corresponding plots have a y-label named after the collected data. Instead, you can
   give `alabels, mlabels` (vectors of strings with exactly same length as `adata, mdata`),
@@ -41,18 +54,18 @@ scene, but you can also access the collected data (if any).
 * `spu = 1:100`: Values that the "spu" slider will obtain.
 """
 function interactive_abm(
-        model, agent_step!, model_step!, params;
+        model, agent_step!, model_step!, params = Dict();
         ac = "#765db4",
         as = 1,
         am = :circle,
         scheduler = model.scheduler,
         offset = nothing,
-        spu = 1:100,
         mdata = nothing,
         adata = nothing,
         alabels = nothing,
         mlabels = nothing,
         when = true,
+        spu = 1:100,
         equalaspect = true,
     )
 
@@ -229,29 +242,26 @@ function update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, o
 end
 
 function make_abm_controls!(scene, controllayout, model, params, spu)
-    firstrow = controllayout[1, :] = GridLayout(tellheight = false, tellwidth=false)
-    run = LButton(scene, label = "run")
-    update = LButton(scene, label = "update")
-    firstrow[1, 1] = run
-    firstrow[2, 1] = update
-    spusl = labelslider!(scene, "spu =", spu)
+    spusl = labelslider!(scene, "spu =", spu; tellwidth = true)
     if model.space isa Agents.ContinuousSpace
         _s, _v = 0:0.01:1, 0
     else
         _s, _v = 0:0.1:10, 1
     end
     slesl = labelslider!(scene, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
-    firstrow[1, 2] = spusl.layout
-    firstrow[2, 2] = slesl.layout
+    controllayout[1, :] = spusl.layout
+    controllayout[2, :] = slesl.layout
+    run = LButton(scene, label = "run")
+    update = LButton(scene, label = "update")
     reset = LButton(scene, label = "reset")
-    firstrow[3, :] = reset
+    controllayout[3, :] = MakieLayout.hbox!(run, update, reset, tellwidth = false)
 
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
         startvalue = get(model.properties, l, vals[1])
         sll = labelslider!(scene, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
-        controllayout[i+2, :] = sll.layout
+        controllayout[i+4, :] = sll.layout
     end
     return slidervals, run.clicks, update.clicks, spusl.slider.value, slesl.slider.value, reset.clicks
 end

@@ -38,10 +38,14 @@ function forest_step!(forest)
     end
 end
 
+struct Oak end
+struct Pine end
+struct Birch end
+
 function model_initiation(; f = 0.02, d = 0.8, p = 0.01, griddims = (50, 50), seed = 111)
     Random.seed!(seed)
     space = GridSpace(griddims, moore = true)
-    properties = Dict(:f => f, :d => d, :p => p)
+    properties = Dict(:f => f, :d => d, :p => p, :treetype => Oak(), :bool => true)
     forest = AgentBasedModel(Tree, space; properties = properties)
 
     ## create and add trees to each node with probability d,
@@ -58,8 +62,9 @@ model = model_initiation()
 
 params = Dict(
     :f => 0.02:0.001:1.0,
-    :d => 0:0.01:1.0,
-    :p => 0.01:0.01:2.0
+    :p => 0.01:0.01:2.0,
+    :treetype => [Oak(), Pine(), Birch()],
+    :bool => [true, false],
 )
 
 alive(model) = count(a.status for a in allagents(model))
