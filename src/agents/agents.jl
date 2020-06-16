@@ -87,7 +87,7 @@ function interactive_abm(
     s = 0 # current step
 
     # Initialize main layout and abm axis
-    scene, layout = layoutscene(resolution = (1200, 600 + L*200), backgroundcolor = DEFAULT_BG)
+    scene, layout = layoutscene(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
     abmax = layout[1,1] = LAxis(scene)
     mlims = modellims(model)
     xlims!(abmax, 0, mlims[1])
@@ -143,13 +143,7 @@ function interactive_abm(
     # Clicking the update button:
     on(update) do clicks
         model = modelobs[]
-        if isrunning[]
-            isrunning[] = false
-            update_abm_parameters!(model, params, slidervals)
-            run[] = run[] + 1
-        else
-            update_abm_parameters!(model, params, slidervals)
-        end
+        update_abm_parameters!(model, params, slidervals)
     end
 
     # Clicking the reset button
