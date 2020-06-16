@@ -1,6 +1,4 @@
-using DynamicalBilliards, AbstractPlotting, MakieLayout
 export interactive_billiard, interactive_billiard_bmap, billiard_video
-
 
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
@@ -42,13 +40,13 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
   This makes the application faster (you cannot show them again with the button).
 """
 interactive_billiard(bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
-interactive_billiard(bd::Billiard, randominside_xyφ(bd)..., ω; kwargs...)
+interactive_billiard(bd::Billiard, DynamicalBilliards.randominside_xyφ(bd)..., ω; kwargs...)
 
 function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = nothing;
     kwargs...)
     N = get(kwargs, :N, 100)
     dx = get(kwargs, :dx, 0.01)
-    ps = particlebeam(x, y, φ, N, dx, ω, Float32)
+    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, Float32)
     interactive_billiard(bd::Billiard, ps; kwargs...)
 end
 
@@ -68,7 +66,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
     N = length(ps)
     p0s = deepcopy(ps) # deep is necessary because vector of mutables
-    ω0 = ismagnetic(ps[1]) ? ps[1].ω : nothing
+    ω0 = DynamicalBilliards.ismagnetic(ps[1]) ? ps[1].ω : nothing
 
     # Initialized inside process
     cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
@@ -208,7 +206,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             pos = val[1]
             dir = val[2] - val[1]
             φ = atan(dir[2], dir[1])
-            p0s .= particlebeam(pos..., φ, N, dx, ω0, Float32)
+            p0s .= DynamicalBilliards.particlebeam(pos..., φ, N, dx, ω0, Float32)
             resetbutton.clicks[] += 1
         end
 
@@ -245,13 +243,13 @@ interaction; the result is saved directly as a video in `file` (no buttons are s
   the billiard aspect ratio is estimated. Otherwise pass a 2-tuple.
 """
 billiard_video(file::String, bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
-billiard_video(file::String, bd::Billiard, randominside_xyφ(bd)..., ω; kwargs...)
+billiard_video(file::String, bd::Billiard, DynamicalBilliards.randominside_xyφ(bd)..., ω; kwargs...)
 
 function billiard_video(file::String, bd::Billiard, x::Real, y::Real, φ::Real, ω = nothing;
     kwargs...)
     N = get(kwargs, :N, 500)
     dx = get(kwargs, :dx, 0.01)
-    ps = particlebeam(x, y, φ, N, dx, ω, Float32)
+    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, Float32)
     billiard_video(file, bd, ps; kwargs...)
 end
 
@@ -321,7 +319,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     newcolor = randomcolor, ms = 12, lock = true,
     kwargs...)
 
-    intervals = arcintervals(bd)
+    intervals = DynamicalBilliards.arcintervals(bd)
     scene, layout, allparobs, resetbutton, p0s, sline = interactive_billiard(
         bd, ω; kwargs..., N = 1, intervals = intervals, res = (1600, 800)
     )
@@ -373,10 +371,10 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         if !(intervals[1] ≤ ξ ≤ intervals[end])
             error("selected point is outside the boundary map")
         end
-        pos, vel = from_bcoords(ξsin..., bd, intervals)
+        pos, vel = DynamicalBilliards.from_bcoords(ξsin..., bd, intervals)
         current_color[] = newcolor(pos, vel, ξsin...)
-        p0s[1] = ω ≠ nothing ? MagneticParticle(pos, vel, ω) : Particle(pos, vel)
-        propagate!(p0s[1], 10eps(Float32)) # ensure no bad behavior with boundary
+        p0s[1] = ω ≠ nothing ? DynamicalBilliards.MagneticParticle(pos, vel, ω) : DynamicalBilliards.Particle(pos, vel)
+        DynamicalBilliards.propagate!(p0s[1], 10eps(Float32)) # ensure no bad behavior with boundary
         rebind_partobs!(parobs, p0s[1], bd, ξsin)
         resetbutton.clicks[] += 1 # reset main billiard
     end
@@ -448,12 +446,12 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     )
 
     N = length(ps)
-    intervals = arcintervals(bd)
+    intervals = DynamicalBilliards.arcintervals(bd)
     scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
         kwargs..., dt = dt, add_controls =false, plot_particles=plot_particles,
         intervals = intervals, res = (1600, 800), colors = colors
     )
-    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, 1.0, N) : colors
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? InteractiveChaos.colors_from_map(colors, 1.0, N) : colors
 
     sublayout = GridLayout()
     bmapax = sublayout[1,1] = LAxis(scene)

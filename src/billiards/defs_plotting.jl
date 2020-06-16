@@ -1,36 +1,36 @@
 # DynamicalBilliards.jl constants
-using DynamicalBilliards, AbstractPlotting, Observables
-using DynamicalBilliards: SV
+SV = DynamicalBilliards.SV
+Obstacle, Billiard, AbstractParticle = DynamicalBilliards.Obstacle, DynamicalBilliards.Billiard, DynamicalBilliards.AbstractParticle
 using AbstractPlotting: RGBf0, RGBAf0
 
 obcolor(::Obstacle) = RGBf0(0,0.6,0)
-obcolor(::Union{RandomWall, RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
-obcolor(::Union{SplitterWall, Antidot, Ellipse}) = RGBf0(0.8,0.0,0)
-obcolor(::PeriodicWall) = RGBf0(0.8,0.8,0)
-obfill(o::Obstacle) = RGBAf0(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
-obfill(o::Union{Antidot, Ellipse}) = RGBAf0(obcolor(o), 0.1)
+obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
+obcolor(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBf0(0.8,0.0,0)
+obcolor(::DynamicalBilliards.PeriodicWall) = RGBf0(0.8,0.8,0)
+obfill(o::DynamicalBilliards.Obstacle) = RGBAf0(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
+obfill(o::Union{DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBAf0(obcolor(o), 0.1)
 obls(::Obstacle) = nothing
-obls(::Union{SplitterWall, Antidot, Ellipse}) = :dash
-obls(::PeriodicWall) = :dotted
+obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = :dash
+obls(::DynamicalBilliards.PeriodicWall) = :dotted
 oblw(::Obstacle) = 2.0
 
 function bdplot!(ax, o::T; kwargs...) where {T}
     error("Element of type $T does not have a plotting definition yet.")
 end
 
-function bdplot!(ax, s::Semicircle; kwargs...)
+function bdplot!(ax, s::DynamicalBilliards.Semicircle; kwargs...)
     θ1 = atan(s.facedir[2], s.facedir[1]) + π/2 # start of semicircle
     θ2 = θ1 + π
     arc!(ax, Point2f0(s.c...), s.r, θ1, θ2; color = obcolor(s), linewidth = oblw(s),
          scale_plot=false, kwargs...)
 end
 
-function bdplot!(ax, w::Wall; kwargs...)
+function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
     lines!(ax, Float32[w.sp[1],w.ep[1]], Float32[w.sp[2],w.ep[2]];
     color = obcolor(w), linewidth = oblw(w), scale_plot=false, kwargs...)
 end
 
-function bdplot!(ax, o::Circular; kwargs...)
+function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
     c = Circle(Point2f0(o.c...), Float32(o.r))
     poly!(ax, c; color = obfill(o), scale_plot=false, kwargs...)
     lines!(ax, c; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
