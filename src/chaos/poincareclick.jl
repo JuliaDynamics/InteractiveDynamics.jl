@@ -25,7 +25,7 @@ an observable containing the latest initial `state`.
 * `color` : A **function** of the system's initial condition, that returns a color to
   plot the new points with. The color must be `RGBf0/RGBAf0`.
    A random color is chosen by default.
-* `labels = ("u₁" , "u₂")` : Axis labels (you can change them youself `ax.xlabel = ...`)
+* `labels = ("u₁" , "u₂")` : Scatter plot labels.
 * `scatterkwargs = ()`: Named tuple of keywords passed to `scatter`.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
