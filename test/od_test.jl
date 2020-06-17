@@ -1,3 +1,6 @@
+using InteractiveChaos, Observables, Test
+using DynamicalSystems
+
 ds = Systems.standardmap()
 p_index = 1
 

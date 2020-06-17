@@ -40,5 +40,5 @@ speed = 8, backgroundcolor = :black, colors = colors)
 
 # %% static plot of boundary map and billiard (several particles, same color)
 ps = [randominside(bd) for i in 1:N]
-scene = billiard_bmap_plot(bd, ps; colors = colors, backgroundcolor = RGBf0(1,1,1))
-Makie.save("static_billiard_plot.png", scene, dpi = 600)
+scene, bmapax = billiard_bmap_plot(bd, ps; colors = colors, backgroundcolor = RGBf0(1,1,1))
+Makie.save("static_billiard_plot.png", scene)

@@ -1,5 +1,3 @@
-using DynamicalSystems
-using AbstractPlotting, MakieLayout
 export interactive_orbitdiagram, scaleod
 
 function observable_slider!(layout, i, j, scene, ltext, r;
@@ -67,8 +65,8 @@ end
     interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
                              u0 = get_state(ds), parname = "p", title = "")
 
-Open an interactive application for exploring orbit diagrams (ODs) of
-discrete systems. The functionality works for _any_ discrete system of _any_ dimensionality.
+Open an interactive application for exploring orbit diagrams (ODs) of discrete
+dynamical systems. Requires `DynamicalSystems`.
 
 Keywords control the name of the parameter, the initial state (used for _any_ parameter)
 or whether to add a title above the orbit diagram.
@@ -108,8 +106,8 @@ oddata = interactive_orbitdiagram(...)
 ps, us = scaleod(oddata)
 ```
 """
-function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p_max, i0 = 1;
-    u0 = get_state(ds), parname = "p", title = "")
+function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
+    u0 = DynamicalSystems.get_state(ds), parname = "p", title = "")
 
     scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
     display(scene)
@@ -126,10 +124,10 @@ function interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, p_min, p
 
     nslider, Tslider, dslider, n, Ttr, d, α, i,
     ▢update, ▢back, ▢reset, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ =
-    add_controls!(controllayout, scene, dimension(ds), parname, i0)
+    add_controls!(controllayout, scene, DynamicalSystems.dimension(ds), parname, i0)
 
     # Initial Orbit diagram data
-    integ = integrator(ds, u0)
+    integ = DynamicalSystems.integrator(ds, u0)
     p₋, p₊ = p_min, p_max
     odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, p₋, p₊, d[], n[], Ttr[], u0)
     od_obs = Observable(odinit)

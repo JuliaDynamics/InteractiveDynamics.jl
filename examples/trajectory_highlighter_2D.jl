@@ -1,4 +1,7 @@
 using InteractiveChaos, DynamicalSystems, Makie
+using OrdinaryDiffEq
+diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
+
 ds = Systems.qbh()
 # Grid of initial conditions at given energy:
 energy(x,y,px,py) = 0.5(px^2 + py^2) + potential(x,y)
@@ -27,7 +30,7 @@ tλ = 5000
 ttr = 200.0
 ics = generate_ics(120.0, density)
 
-tinteg = tangent_integrator(ds, 1)
+tinteg = tangent_integrator(ds, 1; diffeq...)
 λ = Float64[]; psos = Dataset{2, Float64}[]
 trs = Dataset{3, Float64}[]
 

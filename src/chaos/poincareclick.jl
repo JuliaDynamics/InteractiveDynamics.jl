@@ -1,10 +1,10 @@
-using DynamicalSystems, MakieLayout
 export interactive_poincaresos
+ChaosTools = DynamicalSystems.ChaosTools
 
 """
     interactive_poincaresos(cds, plane, idxs, complete; kwargs...)
 Launch an interactive application for exploring a Poincaré surface of section (PSOS)
-of the continuous dynamical system `cds` using `poincaresos` from DynamicalSystems.jl.
+of the continuous dynamical system `cds`. Requires `DynamicalSystems`.
 
 The `plane` can only be the `Tuple` type accepted by `DynamicalSystems.poincaresos`,
 i.e. `(i, r)` for the `i`th variable crossing the value `r`. `idxs` gives the two
@@ -15,8 +15,8 @@ that `plane[1] ∉ idxs` must be true.
 `complete` is a three-argument **function** that completes the new initial state
 during interactive use, see below.
 
-The function returns: an observable containing the latest initial `state`
-and the scene.
+The function returns: `scene, laststate` with the latter being
+an observable containing the latest initial `state`.
 
 ## Keyword Arguments
 * `direction, rootkw` : Same use as in `DynamicalSystems.poincaresos`.
@@ -25,7 +25,7 @@ and the scene.
 * `color` : A **function** of the system's initial condition, that returns a color to
   plot the new points with. The color must be `RGBf0/RGBAf0`.
    A random color is chosen by default.
-* `labels = ("u₁" , "u₂")` : Axis labels (you can change them youself `ax.xlabel = ...`)
+* `labels = ("u₁" , "u₂")` : Scatter plot labels.
 * `scatterkwargs = ()`: Named tuple of keywords passed to `scatter`.
 * `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
 
@@ -51,7 +51,7 @@ This will be properly handled instead of breaking the application.
 This `newstate` is also given to the function `color` that
 gets a new color for the new points.
 """
-function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane, idxs, complete;
+function interactive_poincaresos(ds, plane, idxs, complete;
          # PSOS kwargs:
          direction = -1,
          tfinal = (1000.0, 10.0^4),
@@ -61,27 +61,27 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
          scatterkwargs = (),
          labels = ("u₁" , "u₂"),
          # DiffEq kwargs:
-         diffeq...) where {IIP, S, D}
+         diffeq...)
 
     @assert typeof(plane) <: Tuple
     @assert length(idxs) == 2
     @assert eltype(idxs) == Int
     @assert plane[1] ∉ idxs
-    u0 = get_state(ds)
+    u0 = DynamicalSystems.get_state(ds)
 
     # This is the low-level call of poincaresos:
-    ChaosTools._check_plane(plane, D)
-    integ = integrator(ds, u0; diffeq...)
-    planecrossing = PlaneCrossing(plane, direction > 0)
-    i = SVector{2, Int}(idxs)
+    ChaosTools._check_plane(plane, DynamicalSystems.dimension(ds))
+    integ = DynamicalSystems.integrator(ds, u0; diffeq...)
+    planecrossing = ChaosTools.PlaneCrossing(plane, direction > 0)
+    i = DynamicalSystems.SVector{2, Int}(idxs)
 
-    scene, layout = layoutscene(resolution = (1000, 800))
+    scene, layout = layoutscene(resolution = (1000, 800), backgroundcolor = DEFAULT_BG)
 
     T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal)
     ax = layout[0, :] = LAxis(scene)
 
     # Initial Section
-    data = poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
+    data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
     length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 
     positions_node = Observable(data)
@@ -106,8 +106,8 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
            return
         end
 
-        reinit!(integ, newstate)
-        data = poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
+        DynamicalSystems.reinit!(integ, newstate)
+        data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
         positions = positions_node[]; colors = colors_node[]
         append!(positions, data)
         c = color(newstate)
@@ -116,7 +116,7 @@ function interactive_poincaresos(ds::ContinuousDynamicalSystem{IIP, S, D}, plane
         positions_node[], colors_node[], laststate[] = positions, colors, newstate
     end
     display(scene)
-    return laststate, scene
+    return scene, laststate
 end
 
 function _add_psos_controls!(scene, layout, tfinal)
