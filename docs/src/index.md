@@ -36,26 +36,26 @@ Here are some examples of what you can do with `InteractiveChaos`:
 
 ## Description
 
-`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, re-using code from JuliaDynamics and taking advantage of the interactive plotting that Makie and MakieLayout provide.
+`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, re-using code from JuliaDynamics and taking advantage of the interactive plotting that [Makie] provides.
 
 The combination of the following properties make `InteractiveChaos` a truly unique software (to our knowledge).
 
-* **General purpose**. There are thousands "logistic map orbit diagrams" applications in our world, many of which even look better than the example shown in the introduction. Yet, there is not a single one (to our knowledge) that can work for any dynamical system. Arguably the most unique feature of `InteractiveChaos` is that every application it offers works for _any_ dynamical system (for the class it targets). The first app shown in the introduction works for any discrete system (of any dimensions), the second app works for any 2D billiard of any shape, the third app works for any 2D agent based model (regardless if it has discrete or continuous space).
+* **General purpose**. Arguably the most unique feature of `InteractiveChaos` is that every application it offers works for _any_ dynamical system (for the class it targets). The first app shown in the introduction works for any discrete system (of any dimensions), the second app works for any 2D billiard of any shape, the third app works for any 2D agent based model (regardless if it has discrete or continuous space).
 
 * **Fast**. Because internally some of the fastest dynamical systems software and some of the fastest plotting software are used, this makes our applications extremely fast, given the amount of computations and plotted data they handle.
 
-* **Real data at real time.** Everything that is plotted is _real_. For example, many "orbit diagram plotters" don't actually plot an orbit diagram. Instead, they only plot pixels where an orbit diagram may exist. That is not the case here, the true orbit diagram is plotted (which means that the alpha value is actually the value of the natural density). Since real-data are computed, they are also returned to the user. This means that if the user finds something interesting at e.g. some parameter combination or at any stage of interacting with the application, they can immediately analyze the results in a more thorough and scientific manner.
+* **Real data.** Everything that is plotted is _real_. For example, the first application shown plots the true orbit diagram (which means that the alpha value is actually the value of the natural density), instead of a pixelated short-hand that allows faster plotting. Since real-data are computed, they are also returned to the user. This means that if the user finds something interesting at any stage of interacting with the application, they can immediately analyze the results in a more thorough and rigorous manner.
 
 **In real time.**  Most applications of `InteractiveChaso` calculate everything in real-time. This allows true real time interactivity: at any point some model parameter may change and this change will be immediately reflected into the visualizations. Another important consequence of doing calculations in real time is that all applications of `InteractiveChaos` can evolve dynamical systems potentially forever.
 
 * **Interfacing high quality software for dynamical systems**. There is no implementation for what is a "billiard" or a "continuous system" in `InteractiveChaos`. Instead, it interfaces high quality software from [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/). This means that you can re-use the system that you analyze scientifically and explore it interactively. But most importantly, it means that actually launching the applications typically requires 5-10 new lines of code (since you have may have already written code to e.g. create and analyze a `DynamicalSystem` with DynamicalSystems.jl, you can re-use the identically same instance of that `DynamicalSystem` in e.g. the orbit diagram interactive application).
 
-* **Small source code** The entire source code for e.g. the orbit diagram plot is 200 lines of code, all very clear to understand, allowing one to expand the existing apps to more specialized ones.
+* **Small source code** The entire source code for e.g. the orbit diagram plot is 200 lines of code, all very clear to understand, allowing one to expand the existing apps, or to make more specialized versions.
 
 ## Usage
 Using `InteractiveChaos` is straightforward, and the documentation strings of the exported functions describe in detail their purpose (see the individual pages of the sidebar).
 
-Each application rely on a package of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/), and thus it _requires_ it to run. For example, if you want to use the function [`interactive_orbitdiagram`](@ref), then you must also load `DynamicalSystems` besides `InteractiveChaos`, e.g.
+Each application relies on a package of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/), and thus it _requires_ it to run. For example, if you want to use the function [`interactive_orbitdiagram`](@ref), then you must also load `DynamicalSystems` besides `InteractiveChaos`, e.g.
 ```julia
 using DynamicalSystems, InteractiveChaos, Makie
 
