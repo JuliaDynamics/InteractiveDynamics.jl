@@ -1,4 +1,4 @@
-using DynamicalSystems: Dataset
+Dataset = DynamicalSystems.Dataset
 
 plot_dataset(args...; kwargs...) = plot_dataset!(Scene(), args...; kwargs...)
 function plot_dataset!(scene, data::Dataset{2}, color = :black; kwargs...)
