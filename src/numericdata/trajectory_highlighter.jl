@@ -120,11 +120,17 @@ function setup_click(scene, idx=1)
     on(scene.events.mousebuttons) do buttons
         if ispressed(scene, Mouse.left) && AbstractPlotting.is_mouseinside(scene)
             plt, click_idx = mouse_selection(scene)
+            if toplevelparent(plt) isa BarPlot
+                click_idx = (click_idx + 1) ÷ 4
+            end
             selection[] = (plt, click_idx)[idx]
         end
     end
     return selection
 end
+
+toplevelparent(plt) = isa(plt.parent, Scene) ? plt : toplevelparent(plt.parent)
+toplevelparent(::Nothing) = nothing
 
 """
     bin_with_val(val, hist)
