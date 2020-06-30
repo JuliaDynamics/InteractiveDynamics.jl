@@ -8,15 +8,17 @@ const DEFAULT_α = 0.01
 """
     trajectory_highlighter(datasets, vals; kwargs...)
 Open an interactive application for highlighting specific datasets
-and properties of these datasets. `datasets` is a vector of _anything_ from
-**DynamicalSystems.jl** that supports `plot_dataset` (currently `Dataset`
-or `Matrix`). Each dataset corresponds to a specific value from `vals`
+and properties of these datasets. `datasets` is a vector of `Dataset` from
+**DynamicalSystems.jl**. Each dataset corresponds to a specific value from `vals`
 (a `Vector{<:Real}`). The value of `vals` gives each dataset
 a specific color based on a colormap.
 
 The application is composed of two scenes: the left scene plots the datasets,
 while the right scene plots the histogram of the `vals`. The function
 returns the two scenes `data_scene, hist_scene`.
+
+Two dimensional datasets are plotted as scatter plots (and are assumed to be discrete
+in nature), while three dimensional are plotted as lines (and are assummed continuous).
 
 ## Interaction
 Clicking on a bin of the histogram plot will "highlight" all data

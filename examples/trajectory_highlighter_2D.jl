@@ -42,6 +42,7 @@ trs = Dataset{3, Float64}[]
     tr = trajectory(ds, ttr, u)[:, SVector(3, 4, 2)]
     push!(trs, tr)
 end
+
 # %%
 trajectory_highlighter(psos, λ;
 markersize = 0.1, nbins = 10, α = 0.01, hname = "λ")
