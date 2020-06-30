@@ -1,7 +1,7 @@
 name = "InteractiveChaos"
 uuid = "81850811-659e-51ab-a7c2-5dd848ff4aa4"
 repo = "https://github.com/JuliaDynamics/InteractiveChaos.jl.git"
-version = "0.8.1"
+version = "0.9.0"
 
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
@@ -14,7 +14,7 @@ StatsMakie = "65254759-4cff-5aa5-8326-61ce017a8c70"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AbstractPlotting = "0.10.2"
+AbstractPlotting = "0.11.2"
 DataStructures = "0.17"
 MakieLayout = "0.7.1, 0.8, 0.9"
 Observables = "0.2, 0.3"
