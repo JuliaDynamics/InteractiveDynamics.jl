@@ -8,7 +8,7 @@ Here are some examples of what you can do with `InteractiveChaos`:
 **Discrete dynamical systems**
 
 ```@raw html
-<video width="100%" height="auto" controls autoplay loop>
+<video width="50%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/odhenon.mp4?raw=true" type="video/mp4">
 </video>
 ```
@@ -16,7 +16,7 @@ Here are some examples of what you can do with `InteractiveChaos`:
 **Billiards**
 
 ```@raw html
-<video width="100%" height="auto" controls autoplay loop>
+<video width="50%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/bmap.mp4?raw=true" type="video/mp4">
 </video>
 ```
@@ -24,7 +24,7 @@ Here are some examples of what you can do with `InteractiveChaos`:
 **Agent based models**
 
 ```@raw html
-<video width="100%" height="auto" controls autoplay loop>
+<video width="50%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/agents.mp4?raw=true" type="video/mp4">
 </video>
 ```
@@ -46,7 +46,7 @@ The combination of the following properties make `InteractiveChaos` a truly uniq
 
 * **Real data.** Everything that is plotted is _real_. For example, the first application shown plots the true orbit diagram (which means that the alpha value is actually the value of the natural density), instead of a pixelated short-hand that allows faster plotting. Since real-data are computed, they are also returned to the user. This means that if the user finds something interesting at any stage of interacting with the application, they can immediately analyze the results in a more thorough and rigorous manner.
 
-**In real time.**  Most applications of `InteractiveChaso` calculate everything in real-time. This allows true real time interactivity: at any point some model parameter may change and this change will be immediately reflected into the visualizations. Another important consequence of doing calculations in real time is that all applications of `InteractiveChaos` can evolve dynamical systems potentially forever.
+* **In real time.**  Most applications of `InteractiveChaso` calculate everything in real-time. This allows true real time interactivity: at any point some model parameter may change and this change will be immediately reflected into the visualizations. Another important consequence of doing calculations in real time is that all applications of `InteractiveChaos` can evolve dynamical systems potentially forever.
 
 * **Interfacing high quality software for dynamical systems**. There is no implementation for what is a "billiard" or a "continuous system" in `InteractiveChaos`. Instead, it interfaces high quality software from [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/). This means that you can re-use the system that you analyze scientifically and explore it interactively. But most importantly, it means that actually launching the applications typically requires 5-10 new lines of code (since you have may have already written code to e.g. create and analyze a `DynamicalSystem` with DynamicalSystems.jl, you can re-use the identically same instance of that `DynamicalSystem` in e.g. the orbit diagram interactive application).
 
