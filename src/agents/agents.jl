@@ -9,6 +9,7 @@ export interactive_abm
 """
     interactive_abm(model::ABM, agent_step!, model_step!, params=Dict(); kwargs...)
 Open an interactive application for exploring an Agent-Based-Model. Requires `Agents`.
+Currently only works for 2D `GridSpace` or `ContinuousSpace`.
 
 The application evolves an ABM interactively and plots its evolution, while allowing
 changing any of the model parameters interactively and also
