@@ -1,6 +1,7 @@
 module InteractiveChaos
 
-using AbstractPlotting, Observables, MakieLayout
+using AbstractPlotting, Observables
+using AbstractPlotting.MakieLayout
 
 """
     subscript(i::Int)
@@ -60,8 +61,8 @@ function darken_color(c, f = 1.2)
 end
 
 using Requires
-using AbstractPlotting, MakieLayout
 using Observables
+
 function __init__()
     @require DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634" begin
         include("numericdata/plot_dataset.jl")

@@ -6,7 +6,6 @@ version = "0.9.0"
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-MakieLayout = "5a521ce4-ebb9-4793-b5b7-b334dfe8393c"
 Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
@@ -14,9 +13,8 @@ StatsMakie = "65254759-4cff-5aa5-8326-61ce017a8c70"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-AbstractPlotting = "0.11.2"
+AbstractPlotting = "0.12"
 DataStructures = "0.17"
-MakieLayout = "0.7.1, 0.8, 0.9"
 Observables = "0.2, 0.3"
 Requires = "1"
 StatsBase = "0.32.0"
