@@ -151,7 +151,7 @@ function interactive_abm(
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
-        add_reset_line!(axs, s)
+        L > 0 && add_reset_line!(axs, s)
         update[] = update[] + 1 # also trigger parameter updates
     end
 

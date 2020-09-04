@@ -19,14 +19,14 @@ end
 plane = (1, 0.0) # first variable crossing 0
 
 # %% Interactive PSOS with random colors
-state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;
+scene, state = interactive_poincaresos(hh, plane, (2, 4), complete;
 labels = ("q₂" , "p₂"), diffeq...);
 
 # %% Coloring points using a custom function
 # Here I use the first momentum
 momentum(u) = RGBf0((0.5*u[3]^2 + 0.5*u[4]^2)/E, 0, 0)
 
-state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;
+scene, state = interactive_poincaresos(hh, plane, (2, 4), complete;
 labels = ("q₂" , "p₂"), color = momentum, diffeq...)
 
 # %% Coloring points using the Lyapunov exponent
@@ -36,5 +36,5 @@ function λcolor(u)
     return RGBf0(0, 0, clamp(λ/λmax, 0, 1))
 end
 
-state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;
+scene, state = interactive_poincaresos(hh, plane, (2, 4), complete;
 labels = ("q₂" , "p₂"),  color = λcolor, diffeq...)
