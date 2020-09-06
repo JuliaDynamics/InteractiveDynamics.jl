@@ -1,4 +1,5 @@
-using InteractiveChaos, Makie, DynamicalSystems
+using InteractiveChaos, Makie
+using DynamicalSystems
 
 i = 1
 p_index = 1
