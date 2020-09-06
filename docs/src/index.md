@@ -40,7 +40,7 @@ Here are some examples of what you can do with `InteractiveChaos`:
 
 The combination of the following properties make `InteractiveChaos` a truly unique software (to our knowledge).
 
-* **General purpose**. Arguably the most unique feature of `InteractiveChaos` is that every application it offers works for _any_ dynamical system (for the class it targets). The first app shown in the introduction works for any discrete system (of any dimensions), the second app works for any 2D billiard of any shape, the third app works for any 2D agent based model (regardless if it has discrete or continuous space).
+* **General purpose**. Arguably the most unique feature of `InteractiveChaos` is that every application it offers works for _any_ dynamical system (for the class it targets). The first app shown in the introduction works for any discrete system (of any dimensions), the second app works for any 2D billiard of any shape, the third app works for any 2D agent based model (in discrete or continuous space).
 
 * **Fast**. Because internally some of the fastest dynamical systems software and some of the fastest plotting software are used, this makes our applications extremely fast, given the amount of computations and plotted data they handle.
 

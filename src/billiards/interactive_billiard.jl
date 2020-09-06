@@ -333,8 +333,8 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     mcttext = LText(scene, mct, haligh = :left, tellwidth = false)
     sublayout[2, 2] = mcttext
     bmapax = sublayout[1,:] = LAxis(scene)
-    bmapax.xlabel = "arclength ξ"
-    bmapax.ylabel = "normal angle sin(θ)"
+    bmapax.xlabel = "arclength, ξ"
+    bmapax.ylabel = "sine of normal angle, sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
@@ -455,8 +455,8 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     sublayout = GridLayout()
     bmapax = sublayout[1,1] = LAxis(scene)
-    bmapax.xlabel = "arclength ξ"
-    bmapax.ylabel = "normal angle sin(θ)"
+    bmapax.xlabel = "arclength, ξ"
+    bmapax.ylabel = "sine of normal angle, sin(θ)"
     ylims!(bmapax, -1, 1)
     xlims!(bmapax, intervals[1], intervals[end])
     bmapax.xticklabelsize = 28
