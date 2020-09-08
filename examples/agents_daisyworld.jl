@@ -14,7 +14,7 @@ daisycolor(a::Land) = to_color(landcolor[(a.temperature+50)/150])
 daisyshape(a::Daisy) = '♣'
 daisysize(a::Daisy) = 10
 daisyshape(a::Land) = :rect
-daisysize(a::Land) = 10
+daisysize(a::Land) = 15
 
 params = Dict(
     :solar_change => -0.1:0.01:0.1,

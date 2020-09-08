@@ -17,7 +17,7 @@ params = Dict(
 )
 
 ac(a) = a.status ? "#1f851a" : "#67091b"
-am = :rect
+am = :utriangle
 
 p1 = interactive_abm(model, agent_step!, model_step!, params;
-ac = ac, as = 1, am = am, mdata = mdata, mlabels=mlabels)
+ac = ac, as = 5, am = am, mdata = mdata, mlabels=mlabels)

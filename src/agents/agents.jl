@@ -108,7 +108,7 @@ function interactive_abm(
 
     # Initialize ABM interactive platform + parameter sliders
     scatter!(abmax.scene, pos;
-    color = colors, markersize = sizes, marker = markers)
+    color = colors, markersize = sizes, marker = markers, strokewidth = 0.0)
     controllayout = layout[1, 2] = GridLayout(tellheight = false)
     slidervals, run, update, spuslider, sleslider, reset = make_abm_controls =
     make_abm_controls!(scene, controllayout, model, params, spu)
@@ -159,7 +159,14 @@ function interactive_abm(
     return scene, df_agent, df_model
 end
 
-modellims(model) = model.space isa Agents.ContinuousSpace ? model.space.extend : size(model.space)
+function modellims(model)
+    if model.space isa Agents.ContinuousSpace
+        model.space.extend
+    elseif model.space isa Agents.DiscreteSpace
+        size(model.space) .+ 1
+    end
+end
+
 
 function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     Agents.collect_agent_data!(df_agent, model, adata, 0)
@@ -181,7 +188,8 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c,
+                 strokewidth = 0.5)
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
@@ -192,7 +200,8 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c,
+                 strokewidth = 0.5)
     end
     if La+Lm > 1
         for ax in @view(axs[1:end-1]); hidexdecorations!(ax, grid = false); end
