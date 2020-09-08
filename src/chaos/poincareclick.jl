@@ -89,7 +89,8 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     colors_node = Observable(colors)
     scplot = scatter!(
         ax, positions_node, color = colors_node,
-        markersize = lift(o -> o*px, m_slider), marker = MARKER, scatterkwargs...
+        markersize = lift(o -> o*px, m_slider), marker = MARKER,
+        strokewidth = 0.0, scatterkwargs...
     )
 
     ax.xlabel, ax.ylabel = labels
@@ -123,7 +124,7 @@ function _add_psos_controls!(scene, layout, tfinal)
     T_slider = LSlider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
     T_text_prev = LText(scene, "T =", halign = :right)
     T_text_after = LText(scene, lift(a -> "$(round(a))", T_slider.value), halign = :left)
-    m_slider = LSlider(scene, range = 10.0 .^ range(-1, 2, length = 100), startvalue = 10)
+    m_slider = LSlider(scene, range = 10.0 .^ range(0, 2, length = 100), startvalue = 10)
     m_text_prev = LText(scene, "ms =", halign=:right)
     sublayout = GridLayout()
     layout[1, :] = sublayout
