@@ -69,6 +69,7 @@ function __init__()
         # include("numericdata/trajectory_highlighter.jl")
         include("chaos/orbitdiagram.jl")
         include("chaos/poincareclick.jl")
+        include("chaos/trajanim.jl")
     end
     @require DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5" begin
         include("billiards/defs_plotting.jl")

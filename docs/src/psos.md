@@ -12,7 +12,7 @@ interactive_poincaresos
 ---
 
 To generate the above video run
-```
+```julia
 using InteractiveChaos, Makie, OrdinaryDiffEq, DynamicalSystems
 diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
 

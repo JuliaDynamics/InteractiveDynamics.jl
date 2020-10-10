@@ -3,9 +3,9 @@
 ## Introduction
 `InteractiveChaos` is a package that provides applications for interactively exploring dynamical systems. It _extends_ various packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/).
 
-Here are some examples of what you can do with `InteractiveChaos`:
+Here are some examples of what you can do with `InteractiveChaos` (see [Index](@ref) below, or the various pages of the side bar for full list of applications)
 
-**Discrete dynamical systems**
+**Dynamical systems**
 
 ```@raw html
 <video width="50%" height="auto" controls autoplay loop>
@@ -36,7 +36,8 @@ Here are some examples of what you can do with `InteractiveChaos`:
 
 ## Description
 
-`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, re-using code from JuliaDynamics and taking advantage of the interactive plotting that [Makie] provides.
+`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, taking advantage of the interactive plotting that [Makie.jl](http://makie.juliaplots.org/stable/) provides.
+`InteractiveChaos` is great for teaching and demonstrations, but we believe that it can also be taken advantage of in research.
 
 The combination of the following properties make `InteractiveChaos` a truly unique software (to our knowledge).
 
@@ -48,9 +49,9 @@ The combination of the following properties make `InteractiveChaos` a truly uniq
 
 * **In real time.**  Most applications of `InteractiveChaso` calculate everything in real-time. This allows true real time interactivity: at any point some model parameter may change and this change will be immediately reflected into the visualizations. Another important consequence of doing calculations in real time is that all applications of `InteractiveChaos` can evolve dynamical systems potentially forever.
 
-* **Interfacing high quality software for dynamical systems**. There is no implementation for what is a "billiard" or a "continuous system" in `InteractiveChaos`. Instead, it interfaces high quality software from [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/). This means that you can re-use the system that you analyze scientifically and explore it interactively. But most importantly, it means that actually launching the applications typically requires 5-10 new lines of code (since you have may have already written code to e.g. create and analyze a `DynamicalSystem` with DynamicalSystems.jl, you can re-use the identically same instance of that `DynamicalSystem` in e.g. the orbit diagram interactive application).
+* **Interfacing existing software for dynamical systems**. There is no implementation for what is a "billiard" or a "continuous dynamical system" in `InteractiveChaos`. Instead, it interfaces software from [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/). This means that you can re-use the system that you analyze scientifically and explore it interactively. But most importantly, it means that actually launching the applications typically requires 5-10 new lines of code (since you have may have already written code to e.g. create and analyze a `DynamicalSystem` with DynamicalSystems.jl, you can re-use the identically same instance of that `DynamicalSystem` in e.g. the orbit diagram interactive application).
 
-* **Small source code** The entire source code for e.g. the orbit diagram plot is 200 lines of code, all very clear to understand, allowing one to expand the existing apps, or to make more specialized versions.
+* **Small source code** The entire source code for e.g. the orbit diagram plot is 200 lines of code, all clear to understand (we hope), allowing one to expand the existing apps, or to make more specialized versions.
 
 ## Usage
 Using `InteractiveChaos` is straightforward, and the documentation strings of the exported functions describe in detail their purpose (see the individual pages of the sidebar).
@@ -67,6 +68,8 @@ interactive_psos(ds, ...)
 ## Installation
 
 To install do `]add InteractiveChaos Makie`. `Makie` is necessary for providing a plotting backend, since `InteractiveChaos` does not install one by default. You could instead install `GLMakie, CairoMakie`, etc.
+
+It is expected that you have the latest (stable) versions installed for the library you want to use, e.g. `DynamicalSystems`.
 
 ## Index
 ```@index
