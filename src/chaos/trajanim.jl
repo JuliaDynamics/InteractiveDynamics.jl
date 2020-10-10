@@ -14,7 +14,9 @@ The application can run forever (trajectories are computed on demand).
 ## Keywords
 * `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
 * `colors` : The color for each trajectory. Random colors are chosen by default.
-* `lims = nothing` : A tuple of tuples (min, max) for the axis limits.
+* `lims` : A tuple of tuples (min, max) for the axis limits. If not given, they are
+  automatically deduced by evolving each of `u0s` 1000 units and picking most extreme
+  values (limits cannot be adjust after application is launched).
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the plotting function (`lines` for continuous, `scatter` for discrete systems).
 * `tail = 100` : Length of plotted trajectory (in step units).
@@ -28,11 +30,13 @@ The application can run forever (trajectories are computed on demand).
   ```
 """
 function interactive_evolution(
-    ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
-    idxs = 1:min(DynamicalSystems.dimension(ds), 3),
-    colors = [randomcolor() for i in 1:length(u0s)],
-    tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-    lims = nothing, plotkwargs = NamedTuple()) where {IIP}
+        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
+        idxs = 1:min(DynamicalSystems.dimension(ds), 3),
+        colors = [randomcolor() for i in 1:length(u0s)],
+        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        lims = traj_lim_estimator(ds, u0s, diffeq, idxs),
+        plotkwargs = NamedTuple(),
+    ) where {IIP}
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
@@ -97,7 +101,7 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
     for (i, ob) in enumerate(obs)
         if ds isa DynamicalSystems.ContinuousDynamicalSystem
             AbstractPlotting.lines!(main, ob;
-                color = colors[i], linewidth = 2.0, plotkwargs...
+                color = colors[i], linewidth = 4.0, plotkwargs...
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
@@ -111,8 +115,8 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
         ylims!(object_to_adjust, lims[2])
         if length(idxs) > 2
             zlims!(object_to_adjust, lims[3])
-            m = maximum(abs(-(x...)) for x in lims)
-            a = [m/abs(-(x...)) for x in lims]
+            m = maximum(abs(x[2] - x[1]) for x in lims)
+            a = [m/abs(x[2] - x[1]) for x in lims]
             scale!(object_to_adjust, a...)
         end
     end
@@ -129,4 +133,23 @@ function trajectory_plot_controls(scene, layout)
     format = x -> "$(round(x; digits = 5))")
     controllayout[1, 2] = slesl.layout
     return run.clicks, slesl.slider.value
+end
+
+
+function traj_lim_estimator(ds, u0s, diffeq, idxs)
+    tr = DynamicalSystems.trajectory(ds, 1000, u0s[1]; dt = 1, diffeq...)
+    _mi, _ma = DynamicalSystems.minmaxima(tr)
+    mi, ma = _mi[idxs], _ma[idxs]
+    for i in 2:length(u0s)
+        tr = DynamicalSystems.trajectory(ds, 1000, u0s[1]; dt = 1, diffeq...)
+        _mii, _maa = DynamicalSystems.minmaxima(tr)
+        mii, maa = _mii[idxs], _maa[idxs]
+        mi = min.(mii, mi)
+        ma = max.(maa, ma)
+    end
+    # Alright, now we just have to put them into limits and increase by 10%
+    mi = mi .- 0.05mi
+    ma = ma .+ 0.05ma
+    lims = [(mi[i], ma[i]) for i in 1:length(idxs)]
+    lims = (lims...,)
 end
