@@ -14,27 +14,32 @@ The application can run forever (trajectories are computed on demand).
 ## Keywords
 * `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
 * `colors` : The color for each trajectory. Random colors are chosen by default.
-* `tail = 100` : Length of plotted trajectory (in step units).
-* `dtmax = 0.01`: Maximum value for step size `dt` (valid for continuous systems).
-* `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
-  the solvers of DifferentialEquations.jl (for continuous systems).
 * `lims = nothing` : A tuple of tuples (min, max) for the axis limits.
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the plotting function (`lines` for continuous, `scatter` for discrete systems).
+* `tail = 100` : Length of plotted trajectory (in step units).
+* `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
+  the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
+  are not pre-computed and interpolated, it is recommended to use a combination of
+  arguments that limit maximum stepsize, to ensure smooth curves. For example:
+  ```julia
+  using OrdinaryDiffEq
+  diffeq = (alg = Tsit5(), dtmax = 0.01)
+  ```
 """
 function interactive_evolution(
-    ds, u0s;
+    ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
     idxs = 1:min(DynamicalSystems.dimension(ds), 3),
-    colors = [randomcolor() for i in 1:length(idxs)],
-    dtmax = 0.01, tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-    lims = nothing, plotkwargs = NamedTuple())
+    colors = [randomcolor() for i in 1:length(u0s)],
+    tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+    lims = nothing, plotkwargs = NamedTuple()) where {IIP}
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
     idxs = DynamicalSystems.SVector(idxs...)
     scene, layout = layoutscene()
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; dtmax = dtmax, diffeq...)
-    obs = init_trajectory_observables(pinteg, tail, idxs)
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs)
 
     # Initialize main plot with correct dimensionality
     main = layout[1,1] = init_main_trajectory_plot(
@@ -48,9 +53,13 @@ function interactive_evolution(
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
         @async while isrunning[]
+        # while isrunning[]
             DynamicalSystems.step!(pinteg)
-            for (i, ob) in enumerate(obs)
-                ob[] = push!(ob[], pinteg.u[i][idxs]) # push and trigger update with `=`
+            for i in 1:length(u0s)
+                ob = obs[i]
+                # topush = iipcds ? @view(pinteg.u[:, i])[idxs] : pinteg.u[i][idxs]
+                topush = DynamicalSystems.get_state(pinteg, i)[idxs]
+                ob[] = push!(ob[], topush) # push and trigger update with `=`
             end
             sleslider[] == 0 ? yield() : sleep(sleslider[])
             isopen(scene) || break # crucial, ensures computations stop if closed window
@@ -60,12 +69,12 @@ function interactive_evolution(
     scene, obs
 end
 
-function init_trajectory_observables(pinteg, tail, idxs)
+function init_trajectory_observables(L, pinteg, tail, idxs)
     obs = Observable[]
     T = length(idxs) == 2 ? Point2f0 : Point3f0
-    for u in pinteg.u
+    for i in 1:L
         cb = CircularBuffer{T}(tail)
-        fill!(cb, T(u[idxs]))
+        fill!(cb, T(DynamicalSystems.get_state(pinteg, i)[idxs]))
         # append!(cb, rand(T, tail))
         push!(obs, Observable(cb))
     end
@@ -92,7 +101,7 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
-                markersize = 5, markerstrokewidth = 0.0, plotkwargs...
+                markersize = 5, strokewidth = 0.0, plotkwargs...
             )
         end
     end
