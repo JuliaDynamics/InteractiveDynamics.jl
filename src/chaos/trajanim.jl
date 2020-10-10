@@ -1,3 +1,4 @@
+using DataStructures
 export interactive_evolution
 
 # TODO: Estimate limits from dynamical system trajectories.
@@ -23,13 +24,14 @@ The application can run forever (trajectories are computed on demand).
 """
 function interactive_evolution(
     ds, u0s;
-    colors = COLORSCHEME, idxs = 1:min(DynamicalSystems.dimension(ds), 3),
+    idxs = 1:min(DynamicalSystems.dimension(ds), 3),
+    colors = [randomcolor() for i in 1:length(idxs)],
     dtmax = 0.01, tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
     lims = nothing, plotkwargs = NamedTuple())
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
-    idxs = SVector(idxs...)
+    idxs = DynamicalSystems.SVector(idxs...)
     scene, layout = layoutscene()
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; dtmax = dtmax, diffeq...)
     obs = init_trajectory_observables(pinteg, tail, idxs)
@@ -71,7 +73,7 @@ function init_trajectory_observables(pinteg, tail, idxs)
 end
 trajectory_plot_type(::DynamicalSystems.ContinuousDynamicalSystem) = AbstractPlotting.lines!
 trajectory_plot_type(::DynamicalSystems.DiscreteDynamicalSystem) = AbstractPlotting.scatter!
-function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, plotkwrags)
+function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs)
     main = if (length(idxs) == 2)
         LAxis(scene)
     else
@@ -84,8 +86,10 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
         end
     end
     for (i, ob) in enumerate(obs)
-        if ds isa ContinuousDynamicalSystem
-            AbstractPlotting.lines!(main, ob; color = colors[i], plotkwargs...)
+        if ds isa DynamicalSystems.ContinuousDynamicalSystem
+            AbstractPlotting.lines!(main, ob;
+                color = colors[i], linewidth = 2.0, plotkwargs...
+            )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
                 markersize = 5, markerstrokewidth = 0.0, plotkwargs...
