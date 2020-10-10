@@ -1,8 +1,6 @@
 using DataStructures
 export interactive_evolution
 
-# TODO: Estimate limits from dynamical system trajectories.
-
 """
     interactive_evolution(ds::DynamicalSystem, u0s; kwargs...)
 Launch an interactive application that can evolve the initial conditions `u0s`
@@ -10,6 +8,11 @@ Launch an interactive application that can evolve the initial conditions `u0s`
 All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
+
+The function returns `scene, main, obs`. `scene` is the overarching scene
+(the entire GUI) and can be recoreded. `main` is the actual plot of the trajectory,
+that allows adding additional plot elements or controlling labels, ticks, etc.
+`obs` is a vector of observables, each containing the current state of the trajectory.
 
 ## Keywords
 * `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
@@ -34,14 +37,14 @@ function interactive_evolution(
         idxs = 1:min(DynamicalSystems.dimension(ds), 3),
         colors = [randomcolor() for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-        lims = traj_lim_estimator(ds, u0s, diffeq, idxs),
+        lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...)),
         plotkwargs = NamedTuple(),
     ) where {IIP}
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
     idxs = DynamicalSystems.SVector(idxs...)
-    scene, layout = layoutscene()
+    scene, layout = layoutscene(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs)
 
@@ -70,7 +73,7 @@ function interactive_evolution(
         end
     end
     display(scene)
-    scene, obs
+    scene, main, obs
 end
 
 function init_trajectory_observables(L, pinteg, tail, idxs)
