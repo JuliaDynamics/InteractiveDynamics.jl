@@ -9,7 +9,6 @@ DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-# StatsMakie = "65254759-4cff-5aa5-8326-61ce017a8c70"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
@@ -18,7 +17,6 @@ DataStructures = "0.17, 0.18"
 Observables = "0.2, 0.3"
 Requires = "1"
 StatsBase = "0.32.0, 0.33"
-# StatsMakie = "0.2"
 julia = "1.0"
 
 [extras]
