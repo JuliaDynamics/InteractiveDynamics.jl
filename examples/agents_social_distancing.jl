@@ -14,9 +14,9 @@ mdata = [nagents]
 mlabels = ["N"]
 
 sir_colors(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
-# sir_sizes(a) = 0.01*randn()
-# sir_sizes(a) = 0.005*(mod1(a.id, 3)+1)
-sir_sizes = 0.01
+# sir_sizes(a) = 10*randn()
+# sir_sizes(a) = 5*(mod1(a.id, 3)+1)
+sir_sizes = 5
 
 # sir_shape(a) = rand(('🐑', '🐺', '🌳'))
 # sir_shape(a) = rand(('😹', '🐺', '🌳'))

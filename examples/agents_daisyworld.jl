@@ -1,29 +1,33 @@
 using InteractiveChaos, Makie
-Random.seed!(165) # hide
-model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+using Agents
+using Random, Statistics
 
-# Thankfully, we have already defined the necessary `adata, mdata` as well as the agent
-# color/shape/size functions, and we can re-use them for the interactive application.
-# Unfortunately, because `InteractiveChaos` uses a different plotting package, Makie.jl, we have
-# to redefine the plotting functions. However, in the near future where AgentsPlots.jl
-# will move to Makie.jl, this will not be necessary.
+Random.seed!(165) # hide
+model, agent_step!, model_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+Daisy, Land = Agents.Models.Daisy, Agents.Models.Land
+
 using AbstractPlotting: to_color
 daisycolor(a::Daisy) = RGBAf0(to_color(a.breed))
 const landcolor = cgrad(:thermal)
 daisycolor(a::Land) = to_color(landcolor[(a.temperature+50)/150])
 
 daisyshape(a::Daisy) = '♣'
-daisysize(a::Daisy) = 1.0
+daisysize(a::Daisy) = 10
 daisyshape(a::Land) = :rect
-daisysize(a::Land) = 1
-
-# The only difference is that we make a parameter container for surface albedo and
-# for the rate of change of solar luminosity, and add some labels for clarity.
+daisysize(a::Land) = 15
 
 params = Dict(
     :solar_change => -0.1:0.01:0.1,
     :surface_albedo => 0:0.01:1,
 )
+
+black(y) = count(x -> x == :black, y)
+white(y) = count(x -> x == :white, y)
+breed(a) = a isa Daisy ? a.breed : :land
+gettemperature(a) = a isa Land ? a.temperature : missing
+meantemperature(x) = mean(skipmissing(x))
+adata = [(breed, black), (breed, white), (gettemperature, meantemperature)]
+mdata = [:solar_luminosity]
 
 alabels = ["black", "white", "T"]
 mlabels = ["L"]

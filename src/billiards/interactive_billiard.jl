@@ -57,6 +57,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         backgroundcolor = DEFAULT_BG,
         vr = _estimate_vr(bd),
         add_controls = true,
+        displayscene = true,
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -91,9 +92,14 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
-            scatter!(ax, balls; color = darken_color.(cs), marker = MARKER, markersize = 12AbstractPlotting.px),
-            arrows!(ax, balls, vels; arrowcolor = darken_color.(cs), linecolor = darken_color.(cs),
-                normalize = false, arrowsize = 0.02AbstractPlotting.px,
+            scatter!(
+                ax, balls; color = darken_color.(cs),
+                marker = MARKER, markersize = 8AbstractPlotting.px
+            ),
+            arrows!(
+                ax, balls, vels; arrowcolor = darken_color.(cs),
+                linecolor = darken_color.(cs),
+                normalize = false, arrowsize = 0.04AbstractPlotting.px,
                 linewidth  = 4,
             )
         )
@@ -212,7 +218,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     end # adding controls blocks
 
-    display(scene)
+    displayscene && display(scene)
     if add_controls
         return scene, layout, allparobs, resetbutton, p0s, sline
     elseif plot_particles
@@ -235,10 +241,10 @@ interaction; the result is saved directly as a video in `file` (no buttons are s
 ## Keywords
 * `N, dt, tail, dx, colors, plot_particles, fade`: same as `interactive_billiard`, but
   with a bit "denser" defaults. `plot_particles` is `false` by default here.
-* `speed = 4`: Animation "speed" (how many `dt` steps are taken before a frame is recorded)
+* `speed = 5`: Animation "speed" (how many `dt` steps are taken before a frame is recorded)
 * `frames = 1000`: amount of frames to record.
 * `framerate = 60`: exported framerate.
-* `backgroundcolor = RGBf0(0.99, 0.99, 0.99)`.
+* `backgroundcolor = :white`.
 * `res = nothing`: resolution of the frames. If nothing, a resolution matching the
   the billiard aspect ratio is estimated. Otherwise pass a 2-tuple.
 """
@@ -255,7 +261,7 @@ end
 
 function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticle};
         plot_particles = false, res = nothing, dt = 0.001,
-        speed = 4, frames = 1000, framerate = 60, kwargs...
+        speed = 5, frames = 1000, framerate = 60, kwargs...
     )
 
     if res == nothing
@@ -265,10 +271,12 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
     end
 
     scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
-        res = res, plot_particles=plot_particles, kwargs..., add_controls =false
+        res = res, plot_particles=plot_particles, kwargs..., add_controls =false,
+        displayscene = false
     )
     N = length(ps)
 
+    AbstractPlotting.inline!(true) # to not display scene while recording
     record(scene, file, 1:frames; framerate = framerate) do j
         for i in 1:N
             p = ps[i]
@@ -291,6 +299,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
             end
         end
     end
+    AbstractPlotting.inline!(false)
     return
 end
 
@@ -316,7 +325,7 @@ The mean collision time "m.c.t." of the particle is shown as well.
 * `dt, tail, sleept, fade` : propagated to `interactive_billiard`.
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
-    newcolor = randomcolor, ms = 12, lock = true,
+    newcolor = randomcolor, ms = 10, lock = true,
     kwargs...)
 
     intervals = DynamicalBilliards.arcintervals(bd)
