@@ -1,10 +1,31 @@
 export interactive_evolution
 
+# TODO: Estimate limits from dynamical system trajectories.
+
+"""
+    interactive_evolution(ds::DynamicalSystem, u0s; kwargs...)
+Launch an interactive application that can evolve the initial conditions `u0s`
+(vector of vectors) of the given dynamical system.
+All initial conditions are evolved in parallel and at exactly the same time.
+Two controls allow you to pause/resume the evolution and to adjust the speed.
+The application can run forever (trajectories are computed on demand).
+
+## Keywords
+* `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
+* `colors` : The color for each trajectory. Random colors are chosen by default.
+* `tail = 100` : Length of plotted trajectory (in step units).
+* `dtmax = 0.01`: Maximum value for step size `dt` (valid for continuous systems).
+* `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
+  the solvers of DifferentialEquations.jl (for continuous systems).
+* `lims = nothing` : A tuple of tuples (min, max) for the axis limits.
+* `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
+  the plotting function (`lines` for continuous, `scatter` for discrete systems).
+"""
 function interactive_evolution(
     ds, u0s;
-    colors = COLORSCHEME, idxs = SVector(1:min(dimension(ds), 3)...),
-    dtmax = 0.1, tail = 100, diffeq = DynamicalSystems.CDS_KWARGS,
-    lims = nothing)
+    colors = COLORSCHEME, idxs = 1:min(DynamicalSystems.dimension(ds), 3),
+    dtmax = 0.01, tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+    lims = nothing, plotkwargs = NamedTuple())
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
@@ -14,7 +35,9 @@ function interactive_evolution(
     obs = init_trajectory_observables(pinteg, tail, idxs)
 
     # Initialize main plot with correct dimensionality
-    main = layout[1,1] = init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs)
+    main = layout[1,1] = init_main_trajectory_plot(
+        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs
+    )
 
     # here we define the main updating functionality
     run, sleslider = trajectory_plot_controls(scene, layout)
@@ -48,7 +71,7 @@ function init_trajectory_observables(pinteg, tail, idxs)
 end
 trajectory_plot_type(::DynamicalSystems.ContinuousDynamicalSystem) = AbstractPlotting.lines!
 trajectory_plot_type(::DynamicalSystems.DiscreteDynamicalSystem) = AbstractPlotting.scatter!
-function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs)
+function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, plotkwrags)
     main = if (length(idxs) == 2)
         LAxis(scene)
     else
@@ -62,10 +85,10 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs)
     end
     for (i, ob) in enumerate(obs)
         if ds isa ContinuousDynamicalSystem
-            AbstractPlotting.lines!(main, ob; color = colors[i])
+            AbstractPlotting.lines!(main, ob; color = colors[i], plotkwargs...)
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
-                markersize = 5, markerstrokewidth = 0.0
+                markersize = 5, markerstrokewidth = 0.0, plotkwargs...
             )
         end
     end
