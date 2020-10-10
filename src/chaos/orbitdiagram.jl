@@ -1,66 +1,5 @@
 export interactive_orbitdiagram, scaleod
 
-function observable_slider!(layout, i, j, scene, ltext, r;
-    wl = 40, wr = nothing, startvalue = r[1])
-    slider = LSlider(scene, range = r, startvalue = startvalue)
-    text_prev = LText(scene, "$ltext =", halign = :right)
-    text_after = LText(scene, lift(a -> "$(string(a))", slider.value),
-    halign = :left)
-    layout[i, j] = hbox!(text_prev, slider, text_after)
-    return slider
-end
-
-function od_sliders!(scene, controllayout)
-    sliders = []
-    for (i, (l, vals)) in enumerate(zip(("n =", "t =", "d =", "α ="),
-                         (1000:100:100000, 1000:1000:100000, 100:100:10000, 0.001:0.001:1)))
-
-        startvalue = l[1] == 'α' ? 0.1 : l[1] == 'd' ? 1000 : vals[1]
-        sll = labelslider!(scene, l, vals; sliderkw = Dict(:startvalue => startvalue))
-        push!(sliders, sll.slider)
-        controllayout[i, :] = sll.layout
-    end
-    return sliders
-end
-
-
-function add_controls!(controllayout, scene, D, parname, i0)
-    # Sliders
-    # nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
-    # Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
-    # dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
-    # αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
-    nslider, Tslider, dslider, αslider = od_sliders!(scene, controllayout)
-    # Buttons (incl. variable chooser)
-    ▢update = LButton(scene, label = "update")
-    ▢back = LButton(scene, label = "← back")
-    ▢reset = LButton(scene, label = "reset")
-    imenu = LMenu(scene, options = [string(j) for j in 1:D], width = 60)
-    imenu.i_selected = i0
-    controllayout[5, 1] = hbox!(
-        ▢update, ▢back, ▢reset,
-        LText(scene, "variable:"), imenu, width = Auto(false)
-    )
-    # Limit boxes. Unfortunately can't be made observables yet...
-    ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
-    tsize = 16
-    text_p₋ = LText(scene, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
-        halign = :left, width = Auto(false), textsize = tsize)
-    text_p₊ = LText(scene, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
-        halign = :left, width = Auto(false), textsize = tsize)
-    text_u₋ = LText(scene, lift(o -> "u₋ = $(o)", ⬜u₋),
-        halign = :left, width = Auto(false), textsize = tsize)
-    text_u₊ = LText(scene, lift(o -> "u₊ = $(o)", ⬜u₊),
-        halign = :left, width = Auto(false), textsize = tsize)
-    controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
-    ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
-    return nslider, Tslider, dslider,
-           nslider.value, Tslider.value, dslider.value, αslider.value,
-           imenu.i_selected, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
-           ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
-end
-
-
 """
     interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
                              u0 = get_state(ds), parname = "p", title = "")
@@ -330,3 +269,63 @@ function scaleod(od, p₋, p₊, u₋, u₊)
 end
 
 # TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
+
+function observable_slider!(layout, i, j, scene, ltext, r;
+    wl = 40, wr = nothing, startvalue = r[1])
+    slider = LSlider(scene, range = r, startvalue = startvalue)
+    text_prev = LText(scene, "$ltext =", halign = :right)
+    text_after = LText(scene, lift(a -> "$(string(a))", slider.value),
+    halign = :left)
+    layout[i, j] = hbox!(text_prev, slider, text_after)
+    return slider
+end
+
+function od_sliders!(scene, controllayout)
+    sliders = []
+    for (i, (l, vals)) in enumerate(zip(("n =", "t =", "d =", "α ="),
+                         (1000:100:100000, 1000:1000:100000, 100:100:10000, 0.001:0.001:1)))
+
+        startvalue = l[1] == 'α' ? 0.1 : l[1] == 'd' ? 1000 : vals[1]
+        sll = labelslider!(scene, l, vals; sliderkw = Dict(:startvalue => startvalue))
+        push!(sliders, sll.slider)
+        controllayout[i, :] = sll.layout
+    end
+    return sliders
+end
+
+
+function add_controls!(controllayout, scene, D, parname, i0)
+    # Sliders
+    # nslider = observable_slider!(controllayout, 1, :, scene, "n", 1000:100:100000)
+    # Tslider = observable_slider!(controllayout, 2, :, scene, "t", 1000:1000:100000)
+    # dslider = observable_slider!(controllayout, 3, :, scene, "d", 100:100:10000; startvalue = 1000)
+    # αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
+    nslider, Tslider, dslider, αslider = od_sliders!(scene, controllayout)
+    # Buttons (incl. variable chooser)
+    ▢update = LButton(scene, label = "update")
+    ▢back = LButton(scene, label = "← back")
+    ▢reset = LButton(scene, label = "reset")
+    imenu = LMenu(scene, options = [string(j) for j in 1:D], width = 60)
+    imenu.i_selected = i0
+    controllayout[5, 1] = hbox!(
+        ▢update, ▢back, ▢reset,
+        LText(scene, "variable:"), imenu, width = Auto(false)
+    )
+    # Limit boxes. Unfortunately can't be made observables yet...
+    ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
+    tsize = 16
+    text_p₋ = LText(scene, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_p₊ = LText(scene, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_u₋ = LText(scene, lift(o -> "u₋ = $(o)", ⬜u₋),
+        halign = :left, width = Auto(false), textsize = tsize)
+    text_u₊ = LText(scene, lift(o -> "u₊ = $(o)", ⬜u₊),
+        halign = :left, width = Auto(false), textsize = tsize)
+    controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
+    ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
+    return nslider, Tslider, dslider,
+           nslider.value, Tslider.value, dslider.value, αslider.value,
+           imenu.i_selected, ▢update.clicks, ▢back.clicks, ▢reset.clicks,
+           ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
+end
