@@ -9,9 +9,10 @@ All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
 
-The function returns `scene, main, obs`. `scene` is the overarching scene
-(the entire GUI) and can be recoreded. `main` is the actual plot of the trajectory,
+The function returns `scene, main, layout, obs`. `scene` is the overarching scene
+(the entire GUI) and can be recorded. `main` is the actual plot of the trajectory,
 that allows adding additional plot elements or controlling labels, ticks, etc.
+`layout` is the overarching layout, that can be used to add additional plot panels.
 `obs` is a vector of observables, each containing the current state of the trajectory.
 
 ## Keywords
@@ -22,7 +23,7 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
   values (limits cannot be adjust after application is launched).
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the plotting function (`lines` for continuous, `scatter` for discrete systems).
-* `tail = 100` : Length of plotted trajectory (in step units).
+* `tail = 1000` : Length of plotted trajectory (in step units).
 * `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
   the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
   are not pre-computed and interpolated, it is recommended to use a combination of
@@ -73,7 +74,7 @@ function interactive_evolution(
         end
     end
     display(scene)
-    scene, main, obs
+    scene, main, layout, obs
 end
 
 function init_trajectory_observables(L, pinteg, tail, idxs)

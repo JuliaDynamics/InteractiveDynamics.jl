@@ -12,10 +12,9 @@ u0s = [u1, u2, u3]
 
 diffeq = (alg = Tsit5(), dtmax = 0.01)
 
-somescene, someobs = interactive_evolution(
+scene, main, layout, obs = interactive_evolution(
     ds, u0s; idxs = SVector(1, 2, 3), tail = 10000, diffeq
 )
-
 
 # %% towel
 ds = Systems.towel()
@@ -24,7 +23,7 @@ u2 = rand(3)
 u3 = rand(3)
 u0s = [u1, u2, u3]
 
-somescene, someobs = interactive_evolution(
+scene, main, layout, obs = interactive_evolution(
     ds, u0s; idxs = SVector(1, 2, 3), tail = 100000,
 )
 
@@ -33,7 +32,7 @@ ds = Systems.standardmap()
 u0s = [[0.1, 0.1], [2.5, 0.4], [1.88, 3.25]]
 lims = ((0, 2π), (0, 2π))
 
-somescene, someobs = interactive_evolution(
+scene, main, layout, obs = interactive_evolution(
     ds, u0s; tail = 100000, lims
 )
 
@@ -49,7 +48,7 @@ diffeq = (alg = Vern9(), dtmax = 0.01)
 idxs = (1, 2, 4)
 colors = ["#233B43", "#499cbf", "#E84646"]
 
-scene, main, obs = interactive_evolution(
+scene, main, layout, obs = interactive_evolution(
     ds, u0s; idxs, tail = 10000, diffeq, colors
 )
 main.scene[Axis][:names, :axisnames] = ("q₁", "q₂", "p₂")
