@@ -14,7 +14,7 @@ or whether to add a title above the orbit diagram.
 The application is separated in the "OD plot" (left) and the "control panel" (right).
 On the OD plot you can interactively click
 and drag with the left mouse button to select a region in the OD. This region is then
-**re-computed** at a higher resolution (i.e. we don't "just zoom").
+**re-computed** at a higher resolution.
 
 The options at the control panel are straight-forward, with
 * `n` amount of steps recorded for the orbit diagram (not all are in the zoomed region!)
@@ -40,7 +40,7 @@ Internally we always scale the orbit diagram to [0,1]² (to allow `Float64` prec
 even though plotting is `Float32`-based). This however means that it is
 necessary to transform the data in real scale. This is done through the function
 [`scaleod`](@ref) which accepts the 5 arguments returned from the current function:
-```
+```julia
 oddata = interactive_orbitdiagram(...)
 ps, us = scaleod(oddata)
 ```
@@ -254,7 +254,7 @@ Given the return values of [`interactive_orbitdiagram`](@ref), produce
 orbit diagram data scaled correctly in data units. Return the data as a vector of
 parameter values and a vector of corresponding variable values.
 """
-scaleod(r) = scaleod(r...)
+scaleod(r::Tuple) = scaleod(r...)
 function scaleod(od, p₋, p₊, u₋, u₊)
     oddata = od[]; L = length(oddata);
     T = promote_type(typeof(u₋[]), Float32)
