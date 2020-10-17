@@ -44,6 +44,7 @@ function interactive_evolution(
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
+    @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     scene, layout = layoutscene(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
@@ -97,9 +98,9 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
         if isnothing(lims)
             LScene(scene, scenekw = (camera = cam3d!, raw = false))
         else
-            l = FRect3D((lims[1][1], lims[2][1], lims[3][1]), (lims[1][2], lims[2][2], lims[3][2]))
+            l = FRect3D((lims[1][1], lims[2][1], lims[3][1]),
+            (lims[1][2] - lims[1][1], lims[2][2] - lims[2][1], lims[3][2] - lims[3][1]))
             LScene(scene, scenekw = (camera = cam3d!, raw = false, limits = l))
-
         end
     end
     for (i, ob) in enumerate(obs)
