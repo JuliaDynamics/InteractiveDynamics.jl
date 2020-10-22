@@ -42,7 +42,7 @@ pages = [
     "Billiards" => "billiards.md",
     "Agent Based Models" => "agents.md",
     "Trajectory Evolution" => "trajectory.md",
-    "Trajectory Highlighter" => "highlight.md",
+    # "Trajectory Highlighter" => "highlight.md",
 ],
 )
 

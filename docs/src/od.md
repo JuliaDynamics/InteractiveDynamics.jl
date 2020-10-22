@@ -10,8 +10,7 @@ interactive_orbitdiagram
 scaleod
 ```
 
----
-running
+For example, running
 
 ```
 i = p_index = 1
@@ -24,7 +23,7 @@ oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
 ps, us = scaleod(oddata)
 ```
 
-gives
+will produce
 
 ```@raw html
 <video width="100%" height="auto" controls autoplay loop>

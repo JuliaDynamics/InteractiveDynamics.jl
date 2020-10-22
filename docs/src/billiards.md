@@ -4,6 +4,7 @@
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/bill2.mp4?raw=true" type="video/mp4">
 </video>
 ```
+(see the `examples/billiard.jl` file to generate every animation)
 
 ```@docs
 interactive_billiard
@@ -11,7 +12,7 @@ interactive_billiard
 
 ---
 
-Running
+For example, running
 ```
 using DynamicalBilliards, InteractiveChaos, Makie
 bd, = billiard_logo(T = Float32)

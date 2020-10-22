@@ -110,7 +110,7 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
-                markersize = 5, strokewidth = 0.0, plotkwargs...
+                markersize = 8, strokewidth = 0.0, plotkwargs...
             )
         end
     end
@@ -142,11 +142,11 @@ end
 
 
 function traj_lim_estimator(ds, u0s, diffeq, idxs)
-    tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; dt = 1.0, diffeq..., dtmax = Inf)
+    tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; dt = 1, diffeq..., dtmax = Inf)
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; dt = 1.0, diffeq..., dtmax = Inf)
+        tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; dt = 1, diffeq..., dtmax = Inf)
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
         mi = min.(mii, mi)

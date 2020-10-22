@@ -18,10 +18,7 @@ scene, main, layout, obs = interactive_evolution(
 
 # %% towel
 ds = Systems.towel()
-u1 = rand(3)
-u2 = rand(3)
-u3 = rand(3)
-u0s = [u1, u2, u3]
+u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
 
 scene, main, layout, obs = interactive_evolution(
     ds, u0s; idxs = SVector(1, 2, 3), tail = 100000,
