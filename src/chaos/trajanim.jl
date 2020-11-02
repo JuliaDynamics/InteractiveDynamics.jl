@@ -16,7 +16,10 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
 `obs` is a vector of observables, each containing the current state of the trajectory.
 
 ## Keywords
+* `transform = identity` : Transformation applied to the state of the dynamical system
+  before plotting. Can even return a vector that is of higher dimension than `ds`.
 * `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
+  Variables are selected after `transform` has been applied.
 * `colors` : The color for each trajectory. Random colors are chosen by default.
 * `lims` : A tuple of tuples (min, max) for the axis limits. If not given, they are
   automatically deduced by evolving each of `u0s` 1000 units and picking most extreme
@@ -38,17 +41,16 @@ function interactive_evolution(
         idxs = 1:min(DynamicalSystems.dimension(ds), 3),
         colors = [randomcolor() for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-        lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...)),
-        plotkwargs = NamedTuple(),
+        plotkwargs = NamedTuple(), transform = identity,
+        lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
     ) where {IIP}
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
-    isnothing(lims) && @warn "It is strongly recommended to give the `lims` keyword!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     scene, layout = layoutscene(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
-    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs)
+    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
 
     # Initialize main plot with correct dimensionality
     main = layout[1,1] = init_main_trajectory_plot(
@@ -67,7 +69,7 @@ function interactive_evolution(
             for i in 1:length(u0s)
                 ob = obs[i]
                 # topush = iipcds ? @view(pinteg.u[:, i])[idxs] : pinteg.u[i][idxs]
-                topush = DynamicalSystems.get_state(pinteg, i)[idxs]
+                topush = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
                 ob[] = push!(ob[], topush) # push and trigger update with `=`
             end
             sleslider[] == 0 ? yield() : sleep(sleslider[])
@@ -78,12 +80,12 @@ function interactive_evolution(
     scene, main, layout, obs
 end
 
-function init_trajectory_observables(L, pinteg, tail, idxs)
+function init_trajectory_observables(L, pinteg, tail, idxs, transform)
     obs = Observable[]
     T = length(idxs) == 2 ? Point2f0 : Point3f0
     for i in 1:L
         cb = CircularBuffer{T}(tail)
-        fill!(cb, T(DynamicalSystems.get_state(pinteg, i)[idxs]))
+        fill!(cb, T(transform(DynamicalSystems.get_state(pinteg, i))[idxs]))
         # append!(cb, rand(T, tail))
         push!(obs, Observable(cb))
     end
@@ -141,12 +143,14 @@ function trajectory_plot_controls(scene, layout)
 end
 
 
-function traj_lim_estimator(ds, u0s, diffeq, idxs)
-    tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; dt = 1, diffeq..., dtmax = Inf)
+function traj_lim_estimator(ds, u0s, diffeq, idxs, transform)
+    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; dt = 1, diffeq..., dtmax = Inf)
+    tr = DynamicalSystems.Dataset(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; dt = 1, diffeq..., dtmax = Inf)
+        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; dt = 1, diffeq..., dtmax = Inf)
+        tr = DynamicalSystems.Dataset(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
         mi = min.(mii, mi)
