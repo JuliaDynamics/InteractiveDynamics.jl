@@ -18,7 +18,7 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
 ## Keywords
 * `transform = identity` : Transformation applied to the state of the dynamical system
   before plotting. Can even return a vector that is of higher dimension than `ds`.
-* `idxs = 1:min(dimension(ds), 3)` : Which variables to plot (up to three can be chosen).
+* `idxs = 1:min(length(transform(ds.u0)), 3)` : Which variables to plot (up to three can be chosen).
   Variables are selected after `transform` has been applied.
 * `colors` : The color for each trajectory. Random colors are chosen by default.
 * `lims` : A tuple of tuples (min, max) for the axis limits. If not given, they are
@@ -38,7 +38,7 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
 """
 function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
-        idxs = 1:min(DynamicalSystems.dimension(ds), 3),
+        idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [randomcolor() for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), transform = identity,
