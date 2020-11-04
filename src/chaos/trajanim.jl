@@ -38,10 +38,10 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
 """
 function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
-        idxs = 1:min(length(transform(ds.u0)), 3),
+        transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [randomcolor() for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-        plotkwargs = NamedTuple(), transform = identity,
+        plotkwargs = NamedTuple(),
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
     ) where {IIP}
 
