@@ -26,6 +26,8 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
   values (limits cannot be adjust after application is launched).
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the plotting function (`lines` for continuous, `scatter` for discrete systems).
+  `plotkwargs` can also be a vector of named tuples, in which case each initial condition
+  gets different arguments.
 * `tail = 1000` : Length of plotted trajectory (in step units).
 * `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
   the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
@@ -106,13 +108,14 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
         end
     end
     for (i, ob) in enumerate(obs)
+        pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if ds isa DynamicalSystems.ContinuousDynamicalSystem
             AbstractPlotting.lines!(main, ob;
-                color = colors[i], linewidth = 4.0, plotkwargs...
+                color = colors[i], linewidth = 4.0, pk...
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
-                markersize = 8, strokewidth = 0.0, plotkwargs...
+                markersize = 8, strokewidth = 0.0, pk...
             )
         end
     end
