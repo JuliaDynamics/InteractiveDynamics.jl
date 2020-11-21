@@ -97,7 +97,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     laststate = Observable(u0)
 
     # Interactive clicking on the psos:
-    spoint = select_point(ax.scene)
+    spoint = select_point(ax)
     on(spoint) do pos
         x, y = pos; z = plane[2] # third variable comes from plane
         newstate = try

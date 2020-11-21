@@ -207,7 +207,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         end
 
         # Selecting new particles
-        sline = select_line(ax.scene)
+        sline = select_line(ax)
         on(sline) do val
             pos = val[1]
             dir = val[2] - val[1]
@@ -372,7 +372,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     end
 
     # Selecting a point on the boundary map:
-    spoint = select_point(bmapax.scene)
+    spoint = select_point(bmapax)
     on(spoint) do ξsin
         ξ, sφ = ξsin
         sφ = clamp(sφ, -1, 1)
