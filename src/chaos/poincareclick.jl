@@ -97,7 +97,8 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     laststate = Observable(u0)
 
     # Interactive clicking on the psos:
-    spoint = select_point(ax)
+    MakieLayout.deactivate_interaction!(ax, :rectanglezoom)
+    spoint = select_point(ax.scene)
     on(spoint) do pos
         x, y = pos; z = plane[2] # third variable comes from plane
         newstate = try

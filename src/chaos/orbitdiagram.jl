@@ -86,7 +86,8 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     odax.ylabel = "u"*subscript(i[])
     on(i) do o; odax.ylabel = "u"*subscript(o); end
     odax.xlabel = parname
-    rect = select_rectangle(odax)
+    MakieLayout.deactivate_interaction!(odax, :rectanglezoom)
+    rect = select_rectangle(odax.scene)
 
     # # Uppon interactively selecting a rectangle, with value `r` (in [0,1]²)
     on(rect) do r
