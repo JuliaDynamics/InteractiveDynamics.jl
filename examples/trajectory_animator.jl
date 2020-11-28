@@ -20,9 +20,10 @@ scene, main, layout, obs = interactive_evolution(
 # %% towel
 ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
+idxs = (1, 2, 3)
 
 scene, main, layout, obs = interactive_evolution(
-    ds, u0s; idxs = SVector(1, 2, 3), tail = 100000,
+    ds, u0s; idxs, tail = 10000,
 )
 
 # %% SM
@@ -44,9 +45,9 @@ u0s = [[0.0, -0.25, 0.42081, 0.0],
 
 diffeq = (alg = Vern9(), dtmax = 0.01)
 idxs = (1, 2, 4)
-colors = ["#233B43", "#499cbf", "#E84646"]
+colors = AbstractPlotting.to_color.(["#233B43", "#499cbf", "#E84646"])
 
 scene, main, layout, obs = interactive_evolution(
-    ds, u0s; idxs, tail = 10000, diffeq
+    ds, u0s; idxs, tail = 10000, colors, diffeq
 )
 # main.scene[Axis][:names, :axisnames] = ("q₁", "q₂", "p₂")
