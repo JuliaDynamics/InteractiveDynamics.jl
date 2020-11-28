@@ -53,10 +53,11 @@ function interactive_evolution(
     scene, layout = layoutscene(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
+    finalpoints = Observable([x[][end] for x in obs])
 
     # Initialize main plot with correct dimensionality
     main = layout[1,1] = init_main_trajectory_plot(
-        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs
+        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints
     )
 
     # here we define the main updating functionality
@@ -74,6 +75,7 @@ function interactive_evolution(
                 topush = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
                 ob[] = push!(ob[], topush) # push and trigger update with `=`
             end
+            finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
             isopen(scene) || break # crucial, ensures computations stop if closed window
         end
@@ -93,10 +95,14 @@ function init_trajectory_observables(L, pinteg, tail, idxs, transform)
     end
     return obs
 end
-trajectory_plot_type(::DynamicalSystems.ContinuousDynamicalSystem) = AbstractPlotting.lines!
-trajectory_plot_type(::DynamicalSystems.DiscreteDynamicalSystem) = AbstractPlotting.scatter!
-function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs)
-    main = if (length(idxs) == 2)
+
+function init_main_trajectory_plot(
+        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints
+    )
+    is3D = length(idxs) == 3
+    mm = maximum(abs(x[2] - x[1]) for x in lims)
+    ms = is3D ? 30mm : 10
+    main = if !is3D
         LAxis(scene)
     else
         if isnothing(lims)
@@ -107,6 +113,7 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
             LScene(scene, scenekw = (camera = cam3d!, raw = false, limits = l))
         end
     end
+    # Initialize trajectory plotted element
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if ds isa DynamicalSystems.ContinuousDynamicalSystem
@@ -115,10 +122,20 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
-                markersize = 8, strokewidth = 0.0, pk...
+                markersize = 2ms/3, strokewidth = 0.0, pk...
             )
         end
     end
+    # TODO: Text font size is tiny, needs fixing (open proper issue at Makie.jl)
+    # plot final points (also need to deduce scale)
+    finalargs = if ds isa DynamicalSystems.ContinuousDynamicalSystem
+        (marker = :circle, )
+    else
+        (marker = :diamond, )
+    end
+    AbstractPlotting.scatter!(main, finalpoints;
+        color = colors, markersize = ms, finalargs...
+    )
     if !isnothing(lims)
         object_to_adjust = length(idxs) == 2 ? main : main.scene
         xlims!(object_to_adjust, lims[1])
@@ -130,7 +147,6 @@ function init_main_trajectory_plot(ds, scene, idxs, lims, pinteg, colors, obs, p
             scale!(object_to_adjust, a...)
         end
     end
-    # TODO: Text font size is tiny, needs fixing (open proper issue at Makie.jl)
     return main
 end
 function trajectory_plot_controls(scene, layout)

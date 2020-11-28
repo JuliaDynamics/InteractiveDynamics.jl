@@ -10,10 +10,11 @@ u2 = [10,20,40.0 + 1e-3]
 u3 = [20,10,40.0]
 u0s = [u1, u2, u3]
 
+idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dtmax = 0.01)
 
 scene, main, layout, obs = interactive_evolution(
-    ds, u0s; idxs = SVector(1, 2, 3), tail = 10000, diffeq
+    ds, u0s; idxs, tail = 10000, diffeq
 )
 
 # %% towel
@@ -46,6 +47,6 @@ idxs = (1, 2, 4)
 colors = ["#233B43", "#499cbf", "#E84646"]
 
 scene, main, layout, obs = interactive_evolution(
-    ds, u0s; idxs, tail = 10000, diffeq, colors
+    ds, u0s; idxs, tail = 10000, diffeq
 )
-main.scene[Axis][:names, :axisnames] = ("q₁", "q₂", "p₂")
+# main.scene[Axis][:names, :axisnames] = ("q₁", "q₂", "p₂")
