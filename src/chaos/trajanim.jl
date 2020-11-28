@@ -24,6 +24,9 @@ that allows adding additional plot elements or controlling labels, ticks, etc.
 * `lims` : A tuple of tuples (min, max) for the axis limits. If not given, they are
   automatically deduced by evolving each of `u0s` 1000 units and picking most extreme
   values (limits cannot be adjust after application is launched).
+* `m = 1.0` : The trajectory endpoints have a marker. A heuristic is done to choose
+  appropriate marker size given the trajectory size. `m` is a multiplier that scales
+  the marker size.
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the plotting function (`lines` for continuous, `scatter` for discrete systems).
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
@@ -43,7 +46,7 @@ function interactive_evolution(
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [randomcolor() for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
-        plotkwargs = NamedTuple(),
+        plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
     ) where {IIP}
 
@@ -57,7 +60,7 @@ function interactive_evolution(
 
     # Initialize main plot with correct dimensionality
     main = layout[1,1] = init_main_trajectory_plot(
-        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints
+        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
 
     # here we define the main updating functionality
@@ -97,11 +100,11 @@ function init_trajectory_observables(L, pinteg, tail, idxs, transform)
 end
 
 function init_main_trajectory_plot(
-        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints
+        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
-    ms = is3D ? 30mm : 10
+    ms = m*(is3D ? 25mm : 15)
     main = if !is3D
         LAxis(scene)
     else
