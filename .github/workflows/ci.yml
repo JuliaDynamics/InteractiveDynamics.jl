@@ -15,8 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.5' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
-        os:  [ubuntu-latest, windows-latest, macos-latest] # adjust according to need, e.g. os: [ubuntu-latest] if testing only on linux
+          - '1' # Replace this with the minimum Julia version that your package supports. E.g. if your package requires Julia 1.5 or higher, change this to '1.5'.
+        os:  [ubuntu-latest] # adjust according to need, e.g. os: [ubuntu-latest] if testing only on linux
         arch:
           - x64
     steps:
@@ -70,19 +70,10 @@ jobs:
           julia --project=docs -e '
             using Pkg
             Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()
-            ENV["PYTHON"] = ""
-            Pkg.build("PyCall")
-            Pkg.add("PyPlot")'
+            Pkg.instantiate()'
       - name: Generate documentation and deploy
         env: # needed for pushing to gh-pages branch
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
         run:
           julia --project=docs docs/make.jl
-      - name: Doctests
-        run: |
-          julia --project=docs -e '
-            using Documenter: doctest
-            using Agents
-            doctest(Agents)'
