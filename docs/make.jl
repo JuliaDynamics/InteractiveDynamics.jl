@@ -37,11 +37,12 @@ format = Documenter.HTML(
     ),
 pages = [
     "Introduction" => "index.md",
+    "Trajectory Evolution" => "trajectory.md",
     "Orbit Diagram" => "od.md",
+    "Cobweb Diagram" => "cobweb.md",
     "Poincaré Surface of Section" => "psos.md",
     "Billiards" => "billiards.md",
     "Agent Based Models" => "agents.md",
-    "Trajectory Evolution" => "trajectory.md",
     # "Trajectory Highlighter" => "highlight.md",
 ],
 )
