@@ -1,8 +1,29 @@
 export interactive_cobweb
 
+"""
+    interactive_cobweb(ds::DiscreteDynamicalSystem, prange, O::Int = 3; kwargs...)
+Launch an interactive application for exploring cobweb diagrams of 1D discrete
+dynamical systems. Two slides control the length of the plotted trajectory and the
+current parameter value. The parameter values are obtained from the given `prange`.
+
+In the cobweb plot, higher order iterates of the dynamic rule `f` are plotted as well,
+starting from order 1 all the way to the given order `O`.
+Both the trajectory in the cobweb, as well as any iterate `f` can be turned off by
+using some of the buttons.
+
+## Keywords
+* `Ttr = 0`: transient amount of time to evolve before plotting
+* `fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O]`: plotting keywords
+  for each of the plotted iterates of `f`
+* `trajcolor = randomcolor()`: color of the trajectory
+* `pname = "p"`: name of the parameter slider
+* `pindex = 1`: parameter index
+* `xmin = 0, xmax = 1`: limits the state of the dynamical system can take
+* `Tmax = 1000`: maximum trajectory length
+"""
 function interactive_cobweb(
     ds, prange, O::Int = 3;
-    Ttr = 100,
+    Ttr = 0,
     fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O],
     trajcolor = randomcolor(),
     pname = "p",
@@ -10,7 +31,6 @@ function interactive_cobweb(
     xmax = 1.0,
     Tmax = 1000,
     pindex = 1,
-    u0 = ds.u0,
 )
 
 xs = range(xmin, xmax; length = 1000)
@@ -75,7 +95,7 @@ ccurve = lines!(axmap, cobs; color = trajcolor)
 
 # On trigger r-slider update all plots:
 on(r_observable) do r
-    DynamicalSystems.set_parameter!(ds, 1, r)
+    DynamicalSystems.set_parameter!(ds, pindex, r)
     x[] = DynamicalSystems.trajectory(ds, L[]; Ttr)
     fobs[1][] = ds.f.(xs, ds.p, 0)
     for order in 2:O
