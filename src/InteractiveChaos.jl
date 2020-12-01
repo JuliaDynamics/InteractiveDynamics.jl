@@ -35,11 +35,48 @@ function subscript(i::Int)
     end
 end
 
+"""
+    superscript(i::Int)
+Transform `i` to a string that has `i` as a superscript.
+"""
+function superscript(i::Int)
+    if i < 0
+        "₋"*superscript(-i)
+    elseif i == 1
+        "¹"
+    elseif i == 2
+        "²"
+    elseif i == 3
+        "³"
+    elseif i == 4
+        "⁴"
+    elseif i == 5
+        "⁵"
+    elseif i == 6
+        "⁶"
+    elseif i == 7
+        "⁷"
+    elseif i == 8
+        "⁸"
+    elseif i == 9
+        "⁹"
+    elseif i == 0
+        "⁰"
+    else
+        join(superscript.(digits(i)))
+    end
+end
+
 const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
 const DEFAULT_BG = RGBf0(1.0, 1.0, 1.0)
 using AbstractPlotting: px
+
+"""
+    randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
+"""
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
+export subscript, superscript, randomcolor
 
 # JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
 JULIADYNAMICS_COLORS = to_color.(["#7d53e7", "#202020", "#17c7cd"])
@@ -70,6 +107,7 @@ function __init__()
         include("chaos/orbitdiagram.jl")
         include("chaos/poincareclick.jl")
         include("chaos/trajanim.jl")
+        include("chaos/cobweb.jl")
     end
     @require DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5" begin
         include("billiards/defs_plotting.jl")
