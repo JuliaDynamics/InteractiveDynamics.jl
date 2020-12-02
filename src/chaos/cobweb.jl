@@ -33,6 +33,7 @@ function interactive_cobweb(
     pindex = 1,
 )
 
+@assert O ≥ 1
 xs = range(xmin, xmax; length = 1000)
 
 scene, layout = layoutscene(resolution = (1000, 800))
@@ -63,9 +64,9 @@ ylims!(axts, xmin, xmax)
 # Cobweb diagram
 DynamicalSystems.set_parameter!(ds, pindex, prange[1])
 
-fobs = Any[Observable(ds.f.(xs, ds.p, 0))]
+fobs = Any[Observable(ds.f.(xs, Ref(ds.p), 0))]
 for order in 2:O
-    push!(fobs, Observable(ds.f.(fobs[end][], ds.p, 0)))
+    push!(fobs, Observable(ds.f.(fobs[end][], Ref(ds.p), 0)))
 end
 
 # plot diagonal and fⁿ
@@ -97,9 +98,9 @@ ccurve = lines!(axmap, cobs; color = trajcolor)
 on(r_observable) do r
     DynamicalSystems.set_parameter!(ds, pindex, r)
     x[] = DynamicalSystems.trajectory(ds, L[]; Ttr)
-    fobs[1][] = ds.f.(xs, ds.p, 0)
+    fobs[1][] = ds.f.(xs, Ref(ds.p), 0)
     for order in 2:O
-        fobs[order][] = ds.f.(fobs[order-1][], ds.p, 0)
+        fobs[order][] = ds.f.(fobs[order-1][], Ref(ds.p), 0)
     end
 end
 
