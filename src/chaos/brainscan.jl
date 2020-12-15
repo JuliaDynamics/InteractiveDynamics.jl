@@ -7,7 +7,7 @@ like a "brain scan", where the plane that defines the section can be arbitrarily
 moved around via a slider. Return `scene, ax3D, ax2D`.
 
 The input dataset must be 3 dimensional, and here the crossing plane is always
-chosen to be when the `j`-th variable of the system crosses a predefined value.
+chosen to be when the `j`-th variable of the dataset crosses a predefined value.
 The slider automatically gets all possible values the `j`-th variable can obtain.
 
 The keywords `linekw, scatterkw` are named tuples that are propagated to the line
@@ -20,6 +20,7 @@ function brainscan_poincaresos(
 )
 
 @assert size(tr, 2) == 3
+@assert j ∈ 1:3
 mi, ma = DynamicalSystems.minmaxima(tr)
 otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
