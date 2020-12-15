@@ -108,6 +108,7 @@ function __init__()
         include("chaos/poincareclick.jl")
         include("chaos/trajanim.jl")
         include("chaos/cobweb.jl")
+        include("chaos/brainscan.jl")
     end
     @require DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5" begin
         include("billiards/defs_plotting.jl")
