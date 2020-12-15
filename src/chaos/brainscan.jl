@@ -1,10 +1,25 @@
 export brainscan_poincaresos
 
+"""
+    brainscan_poincaresos(A::Dataset, j::Int)
+Launch an interactive application for scanning a Poincare surface of section of `A`
+like a "brain scan", where the plane that defines the section can be arbitrarily
+moved around via a slider. Return `scene, ax3D, ax2D`.
+
+The input dataset must be 3 dimensional, and here the crossing plane is always
+chosen to be when the `j`-th variable of the system crosses a predefined value.
+The slider automatically gets all possible values the `j`-th variable can obtain.
+
+The keywords `linekw, scatterkw` are named tuples that are propagated to the line
+and scatter plot respectively, while the keyword `direction = -1` is propagated
+to the function `DyamicalSystems.poincaresos`.
+"""
 function brainscan_poincaresos(
     tr::DynamicalSystems.AbstractDataset, j::Int;
     linekw = (), scatterkw = (color = :red,), direction = -1,
 )
 
+@assert size(tr, 2) == 3
 mi, ma = DynamicalSystems.minmaxima(tr)
 otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
