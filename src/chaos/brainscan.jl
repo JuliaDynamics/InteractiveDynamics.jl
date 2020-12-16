@@ -10,7 +10,8 @@ The input dataset must be 3 dimensional, and here the crossing plane is always
 chosen to be when the `j`-th variable of the dataset crosses a predefined value.
 The slider automatically gets all possible values the `j`-th variable can obtain.
 
-The keywords `linekw, scatterkw` are named tuples that are propagated to the line
+The keywords `linekw, scatterkw` are named tuples or dictionaries that are propagated to
+as keyword arguments to the line
 and scatter plot respectively, while the keyword `direction = -1` is propagated
 to the function `DyamicalSystems.poincaresos`.
 """
@@ -29,7 +30,7 @@ display(scene)
 ax = layout[1, 1] = LScene(scene)
 axp = layout[1, 2] = LAxis(scene)
 sll = labelslider!(
-    scene, "p =", range(mi[j], ma[j]; length = 100);
+    scene, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
     sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
 )
 layout[2, :] = sll.layout
