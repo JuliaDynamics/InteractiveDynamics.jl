@@ -41,7 +41,7 @@ Transform `i` to a string that has `i` as a superscript.
 """
 function superscript(i::Int)
     if i < 0
-        "₋"*superscript(-i)
+        "⁻"*superscript(-i)
     elseif i == 1
         "¹"
     elseif i == 2
