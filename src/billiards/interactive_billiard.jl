@@ -63,7 +63,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
         error("Only Float32 number type is possible for the billiard applications. "*
         "Please initialize billiards and particles by explicitly passing Float32 numbers "*
-        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`)")
+        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`).")
     end
     N = length(ps)
     p0s = deepcopy(ps) # deep is necessary because vector of mutables
@@ -84,7 +84,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         if fade
             x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
         end
-        lines!(ax, p.tail, color = x)
+        lines!(ax, p.tail; color = x)
     end
 
     # Plot particles
@@ -105,7 +105,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         )
     end
 
-    # Controls:
+    # Controls
     if add_controls
         resetbutton = LButton(scene, label = "reset",
             buttoncolor = RGBf0(0.8, 0.8, 0.8),

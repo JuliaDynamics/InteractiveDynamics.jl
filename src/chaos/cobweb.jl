@@ -34,7 +34,7 @@ function interactive_cobweb(
 )
 
 @assert O ≥ 1
-xs = range(xmin, xmax; length = 1000)
+xs = range(xmin, xmax; length = 5000)
 
 scene, layout = layoutscene(resolution = (1000, 800))
 axts = layout[1, :] = LAxis(scene)

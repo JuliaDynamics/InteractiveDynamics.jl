@@ -1,4 +1,4 @@
-using InteractiveChaos, Makie
+using InteractiveChaos, GLMakie
 using DynamicalSystems
 
 i = 1

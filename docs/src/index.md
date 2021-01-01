@@ -35,7 +35,7 @@ Here are some examples of what you can do with `InteractiveChaos` (see [Index](@
 
 ## Description
 
-`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, taking advantage of the interactive plotting that [Makie.jl](http://makie.juliaplots.org/stable/) provides.
+`InteractiveChaos` is a Julia package that builds on top of the packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/) to create interactive applications for dynamical systems of all kinds. It is written exclusively in Julia, taking advantage of the interactive plotting that [GLMakie.jl](http://makie.juliaplots.org/stable/) provides.
 `InteractiveChaos` is great for teaching and demonstrations, but we believe that it can also be taken advantage of in research.
 
 The combination of the following properties make `InteractiveChaos` a truly unique software (to our knowledge).
@@ -57,7 +57,7 @@ Using `InteractiveChaos` is straightforward, and the documentation strings of th
 
 Each application relies on a package of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/), and thus it _requires_ it to run. For example, if you want to use the function [`interactive_orbitdiagram`](@ref), then you must also load `DynamicalSystems` besides `InteractiveChaos`, e.g.
 ```julia
-using DynamicalSystems, InteractiveChaos, Makie
+using DynamicalSystems, InteractiveChaos, GLMakie
 
 ds = Systems.some_example_system()
 
@@ -66,7 +66,7 @@ interactive_psos(ds, ...)
 
 ## Installation
 
-To install do `]add InteractiveChaos Makie`. `Makie` is necessary for providing a plotting backend, since `InteractiveChaos` does not install one by default.
+To install do `]add InteractiveChaos GLMakie`. `GLMakie` is necessary for providing a plotting backend, since `InteractiveChaos` does not install one by default.
 
 It is expected that you have the latest (stable) versions installed for the library you want to use, e.g. `DynamicalSystems`.
 

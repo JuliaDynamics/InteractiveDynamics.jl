@@ -13,7 +13,7 @@ interactive_poincaresos
 
 To generate the video at the start of this page you can run
 ```julia
-using InteractiveChaos, Makie, OrdinaryDiffEq, DynamicalSystems
+using InteractiveChaos, GLMakie, OrdinaryDiffEq, DynamicalSystems
 diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
 
 hh = Systems.henonheiles()

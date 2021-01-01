@@ -15,7 +15,7 @@ To generate the video at the start of this page run
 
 ```julia
 using InteractiveChaos
-using DynamicalSystems, Makie
+using DynamicalSystems, GLMakie
 using OrdinaryDiffEq
 
 ds = Systems.henonheiles()  # 4D chaotic/regular continuous system
@@ -36,7 +36,7 @@ scene, main, obs = interactive_evolution(
 And here is another version for a discrete system:
 ```julia
 using InteractiveChaos
-using DynamicalSystems, Makie
+using DynamicalSystems, GLMakie
 
 ds = Systems.towel() # 3D chaotic discrete system
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]

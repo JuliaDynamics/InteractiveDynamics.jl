@@ -1,5 +1,5 @@
 using InteractiveChaos
-using DynamicalSystems, Makie
+using DynamicalSystems, GLMakie
 using OrdinaryDiffEq
 
 # Lorenz

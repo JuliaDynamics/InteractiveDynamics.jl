@@ -12,7 +12,7 @@ interactive_abm
 The animation at the start of this page was done with:
 ```julia
 using Agents, Random
-using Makie
+using GLMakie
 using InteractiveChaos
 
 cd(@__DIR__)

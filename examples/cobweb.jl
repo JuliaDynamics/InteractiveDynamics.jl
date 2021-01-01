@@ -1,4 +1,4 @@
-using InteractiveChaos, Makie, DynamicalSystems
+using InteractiveChaos, GLMakie, DynamicalSystems
 
 # the second range is a convenience for intermittency example of logistic
 rrange = 1:0.001:4.0

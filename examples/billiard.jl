@@ -1,8 +1,8 @@
-using DynamicalBilliards, InteractiveChaos, Makie
+using DynamicalBilliards, InteractiveChaos, GLMakie
 
 N = 100
 colors = :dense
-colors = [Makie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
+colors = [GLMakie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 
 # Uncomment any of the following to get the billiard you want:
 # bd = billiard_stadium(1.0f0, 1.0f0)

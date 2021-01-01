@@ -1,5 +1,5 @@
 using Agents, Random
-using Makie
+using GLMakie
 using InteractiveChaos
 
 cd(@__DIR__)
