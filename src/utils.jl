@@ -70,7 +70,7 @@ end
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
 function colors_from_map(cmap, α, N)
-    N == 1 && return [RGBAf0(0, 0, 0, 1)]
+    N == 1 && return [AbstractPlotting.to_colormap(cmap, 2)[1]]
     cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]
 end
 

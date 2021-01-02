@@ -33,11 +33,13 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
 * `colors = JULIADYNAMICS_COLORS` : If a symbol (colormap name) each particle gets
   a color from the map. If Vector of length `N`, each particle gets a color form the vector.
   If Vector with length < `N`, linear interpolation across contained colors is done.
+* `tailwidth = 1` : Linewidth of the particle tail.
 * `fade = true` : Whether to add fadeout to the particle tail.
 * `sleept = nothing` : If the slowest speed of the animation is already too fast,
   give a small number to `sleept`.
 * `plot_particles = true` : If false, the particles are not plotted (as balls and arrows).
   This makes the application faster (you cannot show them again with the button).
+* `particle_size = 1.0` A multiplier for the size of the particles.
 """
 interactive_billiard(bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
 interactive_billiard(bd::Billiard, DynamicalBilliards.randominside_xyφ(bd)..., ω; kwargs...)
@@ -58,6 +60,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         vr = _estimate_vr(bd),
         add_controls = true,
         displayscene = true,
+        tailwidth = 1,
+        particle_size = 1.0,
     )
 
     if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
@@ -70,13 +74,16 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     ω0 = DynamicalBilliards.ismagnetic(ps[1]) ? ps[1].ω : nothing
 
     # Initialized inside process
-    cs = (!(colors isa Vector) || length(colors) ≠ N) ? colors_from_map(colors, α, N) : colors
+    cs = if !(colors isa Vector) || length(colors) ≠ N
+        colors_from_map(colors, α, N)
+    else
+        to_color.(colors)
+    end
     scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
     ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
     ax.autolimitaspect = 1
     allparobs = [ParObs(p, bd, tail) for p in ps]
-    bdplot!(ax, bd)
 
     # Plot tails
     for (i, p) in enumerate(allparobs)
@@ -84,26 +91,29 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         if fade
             x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
         end
-        lines!(ax, p.tail; color = x)
+        lines!(ax, p.tail; color = x, linewidth = tailwidth)
     end
 
     # Plot particles
     if plot_particles
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-        vels = Observable([vr * Point2f0(p.p.vel) for p in allparobs])
+        vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
             scatter!(
                 ax, balls; color = darken_color.(cs),
-                marker = MARKER, markersize = 8AbstractPlotting.px
+                marker = MARKER, markersize = 8*particle_size*AbstractPlotting.px
             ),
             arrows!(
                 ax, balls, vels; arrowcolor = darken_color.(cs),
                 linecolor = darken_color.(cs),
-                normalize = false, arrowsize = 0.04AbstractPlotting.px,
-                linewidth  = 4,
+                normalize = false, arrowsize = particle_size*vr/3,
+                linewidth  = particle_size*4,
             )
         )
     end
+
+    # Plot billiard (after particles, so that obstacles hide the collision points)
+    bdplot!(ax, bd)
 
     # Controls
     if add_controls
@@ -233,15 +243,15 @@ end
 
 
 """
-    billiard(file, bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
-    billiard(file, bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
+    billiard_video(file, bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
+    billiard_video(file, bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
 
 Perform the same animation like in [`interactive_billiard`](@ref), but there is no
 interaction; the result is saved directly as a video in `file` (no buttons are shown).
 
 ## Keywords
-* `N, dt, tail, dx, colors, plot_particles, fade`: same as `interactive_billiard`, but
-  with a bit "denser" defaults. `plot_particles` is `false` by default here.
+* `N, dt, tail, dx, colors, plot_particles, fade, tailwidth`:
+  same as in `interactive_billiard`, but `plot_particles` is `false` by default here.
 * `speed = 5`: Animation "speed" (how many `dt` steps are taken before a frame is recorded)
 * `frames = 1000`: amount of frames to record.
 * `framerate = 60`: exported framerate.
@@ -268,7 +278,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
     if res == nothing
         xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
         aspect = (xmax - xmin)/(ymax-ymin)
-        res = (round(Int, aspect*800), 800)
+        res = (round(Int, aspect*1000), 1000)
     end
 
     scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;

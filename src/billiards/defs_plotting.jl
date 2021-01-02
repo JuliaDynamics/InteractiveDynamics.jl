@@ -18,11 +18,13 @@ function bdplot!(ax, o::T; kwargs...) where {T}
     error("Element of type $T does not have a plotting definition yet.")
 end
 
-function bdplot!(ax, s::DynamicalBilliards.Semicircle; kwargs...)
-    θ1 = atan(s.facedir[2], s.facedir[1]) + π/2 # start of semicircle
+function bdplot!(ax, o::DynamicalBilliards.Semicircle; kwargs...)
+    θ1 = atan(o.facedir[2], o.facedir[1]) + π/2 # start of semicircle
     θ2 = θ1 + π
-    arc!(ax, Point2f0(s.c...), s.r, θ1, θ2; color = obcolor(s), linewidth = oblw(s),
-         scale_plot=false, kwargs...)
+    θ = range(θ1, θ2; length = 200)
+    p = [Point2f0(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
+    lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
+    scale_plot=false, kwargs...)
 end
 
 function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
@@ -31,9 +33,10 @@ function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
 end
 
 function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
-    c = Circle(Point2f0(o.c...), Float32(o.r))
-    poly!(ax, c; color = obfill(o), scale_plot=false, kwargs...)
-    lines!(ax, c; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
+    θ = 0:0.01:2π
+    p = [Point2f0(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
+    poly!(ax, p; color = obfill(o), scale_plot=false, kwargs...)
+    lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
     scale_plot=false, kwargs...)
 end
 
