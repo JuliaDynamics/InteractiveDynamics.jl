@@ -15,7 +15,7 @@ that `plane[1] ∉ idxs` must be true.
 `complete` is a three-argument **function** that completes the new initial state
 during interactive use, see below.
 
-The function returns: `scene, laststate` with the latter being
+The function returns: `figure, laststate` with the latter being
 an observable containing the latest initial `state`.
 
 ## Keyword Arguments
@@ -75,10 +75,10 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     planecrossing = ChaosTools.PlaneCrossing(plane, direction > 0)
     i = DynamicalSystems.SVector{2, Int}(idxs)
 
-    scene, layout = layoutscene(resolution = (1000, 800), backgroundcolor = DEFAULT_BG)
+    figure = Figure(resolution = (1000, 800), backgroundcolor = DEFAULT_BG)
 
-    T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal)
-    ax = layout[0, :] = LAxis(scene)
+    T_slider, m_slider = _add_psos_controls!(figure, tfinal)
+    ax = figure[0, :] = Axis(figure)
 
     # Initial Section
     data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
@@ -87,7 +87,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     positions_node = Observable(data)
     colors = (c = color(u0); [c for i in 1:length(data)])
     colors_node = Observable(colors)
-    scplot = scatter!(
+    scatter!(
         ax, positions_node, color = colors_node,
         markersize = lift(o -> o*px, m_slider), marker = MARKER,
         strokewidth = 0.0, scatterkwargs...
@@ -117,21 +117,20 @@ function interactive_poincaresos(ds, plane, idxs, complete;
         # update all the observables with Array as value:
         positions_node[], colors_node[], laststate[] = positions, colors, newstate
     end
-    display(scene)
-    return scene, laststate
+    display(figure)
+    return figure, laststate
 end
 
-function _add_psos_controls!(scene, layout, tfinal)
-    T_slider = LSlider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
-    T_text_prev = LText(scene, "T =", halign = :right)
-    T_text_after = LText(scene, lift(a -> "$(round(a))", T_slider.value), halign = :left)
-    m_slider = LSlider(scene, range = 10.0 .^ range(0, 2, length = 100), startvalue = 10)
-    m_text_prev = LText(scene, "ms =", halign=:right)
-    sublayout = GridLayout()
-    layout[1, :] = sublayout
-    sublayout[:h] = [T_text_prev, T_slider, T_text_after, LText(scene, "   "),
-                    m_text_prev, m_slider]
-
-    colsize!(sublayout, 6, Auto(0.5))
-    return T_slider.value, m_slider.value
+function _add_psos_controls!(figure, tfinal)
+    Tsln = labelslider!(
+        figure, "T =", range(tfinal[1], tfinal[2], length = 1000);
+        width = Auto(), format = x -> string(round(x)),
+    )
+    msln = labelslider!(
+        figure, "ms =", 10.0 .^ range(0, 2, length = 100);
+        sliderkw = Dict(:startvalue => 10), width = Auto(), format = x -> string(round(x)),
+    )
+    figure[1, :][1,1]=Tsln.layout
+    figure[1, :][1,2]=msln.layout
+    return Tsln.slider.value, msln.slider.value
 end

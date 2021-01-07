@@ -9,7 +9,7 @@ All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
 
-The function returns `scene, main, layout, obs`. `scene` is the overarching scene
+The function returns `figure, main, layout, obs`. `figure` is the overarching figure
 (the entire GUI) and can be recorded. `main` is the actual plot of the trajectory,
 that allows adding additional plot elements or controlling labels, ticks, etc.
 `layout` is the overarching layout, that can be used to add additional plot panels.
@@ -53,18 +53,18 @@ function interactive_evolution(
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
-    scene, layout = layoutscene(resolution = (1000, 800), )
+    figure = Figure(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     finalpoints = Observable([x[][end] for x in obs])
 
     # Initialize main plot with correct dimensionality
-    main = layout[1,1] = init_main_trajectory_plot(
-        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+    main = figure[1,1] = init_main_trajectory_plot(
+        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
 
     # here we define the main updating functionality
-    run, sleslider = trajectory_plot_controls(scene, layout)
+    run, sleslider = trajectory_plot_controls(figure)
 
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -80,11 +80,11 @@ function interactive_evolution(
             end
             finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
-            isopen(scene) || break # crucial, ensures computations stop if closed window
+            isopen(figure.scene) || break # crucial, ensures computations stop if closed window
         end
     end
-    display(scene)
-    scene, main, layout, obs
+    display(figure)
+    figure, main, obs
 end
 
 function init_trajectory_observables(L, pinteg, tail, idxs, transform)
@@ -100,20 +100,20 @@ function init_trajectory_observables(L, pinteg, tail, idxs, transform)
 end
 
 function init_main_trajectory_plot(
-        ds, scene, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 25mm : 15)
     main = if !is3D
-        LAxis(scene)
+        Axis(figure)
     else
         if isnothing(lims)
-            LScene(scene, scenekw = (camera = cam3d!, raw = false))
+            LScene(figure, scenekw = (camera = cam3d!, raw = false))
         else
             l = FRect3D((lims[1][1], lims[2][1], lims[3][1]),
             (lims[1][2] - lims[1][1], lims[2][2] - lims[2][1], lims[3][2] - lims[3][1]))
-            LScene(scene, scenekw = (camera = cam3d!, raw = false, limits = l))
+            LScene(figure, scenekw = (camera = cam3d!, raw = false, limits = l))
         end
     end
     # Initialize trajectory plotted element
@@ -129,7 +129,7 @@ function init_main_trajectory_plot(
             )
         end
     end
-    # TODO: Text font size is tiny, needs fixing (open proper issue at Makie.jl)
+    # TODO: Label font size is tiny, needs fixing (open proper issue at Makie.jl)
     # plot final points (also need to deduce scale)
     finalargs = if ds isa DynamicalSystems.ContinuousDynamicalSystem
         (marker = :circle, )
@@ -152,12 +152,12 @@ function init_main_trajectory_plot(
     end
     return main
 end
-function trajectory_plot_controls(scene, layout)
-    layout[2, 1] = controllayout = GridLayout(tellwidth = false)
-    run = controllayout[1, 1] = LButton(scene; label = "run")
+function trajectory_plot_controls(figure)
+    figure[2, 1] = controllayout = GridLayout(tellwidth = false)
+    run = controllayout[1, 1] = Button(figure; label = "run")
     _s, _v = 10.0 .^ (-5:0.1:0), 0.1
     pushfirst!(_s, 0.0)
-    slesl = labelslider!(scene, "sleep =", _s;
+    slesl = labelslider!(figure, "sleep =", _s;
     sliderkw = Dict(:startvalue => _v), valuekw = Dict(:width => 100),
     format = x -> "$(round(x; digits = 5))")
     controllayout[1, 2] = slesl.layout

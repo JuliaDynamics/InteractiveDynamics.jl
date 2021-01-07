@@ -79,8 +79,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     else
         to_color.(colors)
     end
-    scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
-    ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
+    figure = Figure(resolution = res, backgroundcolor = backgroundcolor)
+    ax = figure[1, 1] = Axis(figure, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
     ax.autolimitaspect = 1
     allparobs = [ParObs(p, bd, tail) for p in ps]
@@ -94,8 +94,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         lines!(ax, p.tail; color = x, linewidth = tailwidth)
     end
 
-    # Plot particles
-    if plot_particles
+    if plot_particles # plot ball and arrow as a particle
         balls = Observable([Point2f0(p.p.pos) for p in allparobs])
         vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
         particle_plots = (
@@ -117,11 +116,11 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     # Controls
     if add_controls
-        resetbutton = LButton(scene, label = "reset",
-            buttoncolor = RGBf0(0.8, 0.8, 0.8),
+        resetbutton = Button(figure;
+            label = "reset", buttoncolor = RGBf0(0.8, 0.8, 0.8),
             height = 40, width = 80
         )
-        runbutton = LButton(scene, label = Observable("run"),
+        runbutton = Button(figure; label = Observable("run"),
             buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
             buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
             buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
@@ -129,10 +128,10 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             labelcolor_active = Observable((RGBf0(1,1,1))),
             height = 40, width = 70,
         )
-        nslider = LSlider(scene, range = 0:50, startvalue=0)
-        controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
+        nslider = Slider(figure, range = 0:50, startvalue=0)
+        controls = [resetbutton, runbutton, Label(figure, "speed:"), nslider]
         if plot_particles
-            particlebutton = LButton(scene, label = "particles",
+            particlebutton = Button(figure, label = "particles",
                 buttoncolor = RGBf0(0.8, 0.8, 0.8),
                 height = 40, width = 100
             )
@@ -145,16 +144,14 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             t = runbutton.label[] == "run" ? "stop" : "run"
             runbutton.label[] = t
             for (s1, s2) in ((:buttoncolor, :buttoncolor_active), (:labelcolor, :labelcolor_active))
-            getproperty(runbutton, s1)[], getproperty(runbutton, s2)[] =
-                getproperty(runbutton, s2)[], getproperty(runbutton, s1)[]
+                getproperty(runbutton, s1)[], getproperty(runbutton, s2)[] =
+                    getproperty(runbutton, s2)[], getproperty(runbutton, s1)[]
             end
             runbutton.labelcolor_hover[] = runbutton.labelcolor[]
         end
 
         # Create the "control panel"
-        layout[2, 1] = grid!(hcat(
-            controls...,
-        ), tellwidth = false, tellheight = true)
+        figure[2, 1] = grid!(hcat(controls...,), tellwidth = false, tellheight = true)
 
         # Play/stop
         on(runbutton.clicks) do nclicks
@@ -184,7 +181,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
                 else
                     sleep(sleept)
                 end
-                isopen(scene) || break
+                isopen(figure.scene) || break
             end
         end
 
@@ -229,13 +226,13 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     end # adding controls blocks
 
-    displayscene && display(scene)
+    displayscene && display(figure)
     if add_controls
-        return scene, layout, allparobs, resetbutton, p0s, sline
+        return figure, allparobs, resetbutton, p0s, sline
     elseif plot_particles
-        return scene, layout, allparobs, balls, vels, vr
+        return figure, allparobs, balls, vels, vr
     else
-        return scene, layout, allparobs, nothing, nothing, nothing
+        return figure, allparobs, nothing, nothing, nothing
     end
 end
 
@@ -281,14 +278,14 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
         res = (round(Int, aspect*1000), 1000)
     end
 
-    scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
+    figure, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
         res = res, plot_particles=plot_particles, kwargs..., add_controls =false,
         displayscene = false
     )
     N = length(ps)
 
-    AbstractPlotting.inline!(true) # to not display scene while recording
-    record(scene, file, 1:frames; framerate = framerate) do j
+    AbstractPlotting.inline!(true) # to not display figure while recording
+    record(figure, file, 1:frames; framerate = framerate) do j
         for i in 1:N
             p = ps[i]
             parobs = allparobs[i]
@@ -336,23 +333,23 @@ The mean collision time "m.c.t." of the particle is shown as well.
 * `dt, tail, sleept, fade` : propagated to `interactive_billiard`.
 """
 function interactive_billiard_bmap(bd::Billiard, ω=nothing;
-    newcolor = randomcolor, ms = 10, lock = true,
-    kwargs...)
+        newcolor = randomcolor, ms = 10, lock = true,
+        kwargs...
+    )
 
     intervals = DynamicalBilliards.arcintervals(bd)
-    scene, layout, allparobs, resetbutton, p0s, sline = interactive_billiard(
+    figure, allparobs, resetbutton, p0s, sline = interactive_billiard(
         bd, ω; kwargs..., N = 1, intervals = intervals, res = (1600, 800)
     )
     parobs = allparobs[1] # only one exists.
 
-
     sublayout = GridLayout()
-    cleanbutton = LButton(scene, label = "clean", tellwidth = false)
+    cleanbutton = Button(figure, label = "clean", tellwidth = false)
     sublayout[2, 1] = cleanbutton
     mct = Observable("m.c.t. = 0.0")
-    mcttext = LText(scene, mct, haligh = :left, tellwidth = false)
+    mcttext = Label(figure, mct, haligh = :left, tellwidth = false)
     sublayout[2, 2] = mcttext
-    bmapax = sublayout[1,:] = LAxis(scene)
+    bmapax = sublayout[1,:] = Axis(figure)
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
@@ -367,7 +364,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
     # Make obstacle axis, add info about where each obstacle terminates
     if length(intervals) > 2 # at least 2 obstacles
-        add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
+        add_obstacle_axis!(figure, sublayout, intervals, bmapax, lock)
     end
 
     # Obtain new color when selecting line in main plot
@@ -414,12 +411,12 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         bmapax.yzoomlock = true
     end
 
-    layout[:, 2] = sublayout
-    display(scene)
-    return scene, layout, parobs
+    figure[:, 2] = sublayout
+    display(figure)
+    return figure, parobs
 end
 
-function add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
+function add_obstacle_axis!(figure, sublayout, intervals, bmapax, lock)
     ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
     bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
     for (i, ξ) in enumerate(intervals[2:end-1])
@@ -432,7 +429,7 @@ function add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
         push!(obstacle_ticklabels, string(i))
     end
 
-    obax = sublayout[1,:] = LAxis(scene)
+    obax = sublayout[1,:] = Axis(figure)
     obax.xticks = (obstacle_ticks, obstacle_ticklabels)
     obax.xaxisposition = :top
     obax.xticklabelalign = (:center, :bottom)
@@ -454,7 +451,7 @@ export billiard_bmap_plot
 
 """
     billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
-Return a static scene which has particles plotted on both the real billiard as well
+Return a static figure which has particles plotted on both the real billiard as well
 the boundary map, each with its own color (keyword `colors`), and the same color is used
 for the corresponding scatter points in the boundary map.
 
@@ -468,14 +465,14 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     N = length(ps)
     intervals = DynamicalBilliards.arcintervals(bd)
-    scene, layout, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
+    figure, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
         kwargs..., dt = dt, add_controls =false, plot_particles=plot_particles,
         intervals = intervals, res = (1600, 800), colors = colors
     )
     cs = (!(colors isa Vector) || length(colors) ≠ N) ? InteractiveChaos.colors_from_map(colors, 1.0, N) : colors
 
     sublayout = GridLayout()
-    bmapax = sublayout[1,1] = LAxis(scene)
+    bmapax = sublayout[1,1] = Axis(figure)
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     ylims!(bmapax, -1, 1)
@@ -486,14 +483,13 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     bmapax.ylabelsize = 36
     bmapax.ylabelpadding = 20
     if length(intervals) > 2 # at least 2 obstacles
-        obax = add_obstacle_axis!(scene, sublayout, intervals, bmapax, false)
+        obax = add_obstacle_axis!(figure, sublayout, intervals, bmapax, false)
         obax.xticklabelsize = 28
         obax.yticklabelsize = 28
         obax.xlabelsize = 36
         obax.ylabelsize = 36
         obax.ylabelpadding = 20
     end
-
 
     # create listeners that update boundary map points
     all_bmap_scatters = [Point2f0[] for i in 1:N]
@@ -538,6 +534,6 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
     ylims!(bmapax, -1, 1)
     xlims!(bmapax, intervals[1], intervals[end])
-    layout[:, 2] = sublayout
-    return scene, bmapax
+    figure[:, 2] = sublayout
+    return figure, bmapax
 end

@@ -15,6 +15,8 @@ include("utils.jl")
 using Requires
 using Observables
 
+Label = AbstractPlotting.Label
+
 function __init__()
     @require DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634" begin
         # include("numericdata/plot_dataset.jl")

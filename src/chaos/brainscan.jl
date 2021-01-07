@@ -1,10 +1,12 @@
 export brainscan_poincaresos
 
+# TODO: Would be nice to extend this to have multiple datasets...
+
 """
     brainscan_poincaresos(A::Dataset, j::Int)
 Launch an interactive application for scanning a Poincare surface of section of `A`
 like a "brain scan", where the plane that defines the section can be arbitrarily
-moved around via a slider. Return `scene, ax3D, ax2D`.
+moved around via a slider. Return `figure, ax3D, ax2D`.
 
 The input dataset must be 3 dimensional, and here the crossing plane is always
 chosen to be when the `j`-th variable of the dataset crosses a predefined value.
@@ -25,15 +27,15 @@ function brainscan_poincaresos(
 mi, ma = DynamicalSystems.minmaxima(tr)
 otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
-scene, layout = layoutscene(resolution = (2000, 800))
-display(scene)
-ax = layout[1, 1] = LScene(scene)
-axp = layout[1, 2] = LAxis(scene)
+figure = Figure(resolution = (2000, 800))
+display(figure)
+ax = figure[1, 1] = LScene(figure)
+axp = figure[1, 2] = Axis(figure)
 sll = labelslider!(
-    scene, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
+    figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
     sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
 )
-layout[2, :] = sll.layout
+figure[2, :] = sll.layout
 y = sll.slider.value
 
 # plot 3D trajectory
@@ -71,6 +73,6 @@ AbstractPlotting.scatter!(ax, psos3d; markersize = ms, scatterkw...)
 xlims!(axp, mi[otheridxs[1]], ma[otheridxs[1]])
 ylims!(axp, mi[otheridxs[2]], ma[otheridxs[2]])
 
-return scene, ax, axp
+return figure, ax, axp
 
 end

@@ -50,7 +50,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
 
     scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
     display(scene)
-    odax = layout[1,1] = LAxis(scene)
+    odax = layout[1,1] = Axis(scene)
     for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
         setproperty!(odax, z, true)
     end
@@ -165,7 +165,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     end
 
     if title ≠ ""
-        layout[0, 1] = LText(scene, title, textsize = 30)
+        layout[0, 1] = Label(scene, title, textsize = 30)
     end
     MakieLayout.trim!(layout)
 
@@ -271,11 +271,11 @@ end
 
 # TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
 
-function observable_slider!(layout, i, j, scene, ltext, r;
+function observable_slider!(layout, i, j, scene, Label, r;
     wl = 40, wr = nothing, startvalue = r[1])
-    slider = LSlider(scene, range = r, startvalue = startvalue)
-    text_prev = LText(scene, "$ltext =", halign = :right)
-    text_after = LText(scene, lift(a -> "$(string(a))", slider.value),
+    slider = Slider(scene, range = r, startvalue = startvalue)
+    text_prev = Label(scene, "$Label =", halign = :right)
+    text_after = Label(scene, lift(a -> "$(string(a))", slider.value),
     halign = :left)
     layout[i, j] = hbox!(text_prev, slider, text_after)
     return slider
@@ -303,25 +303,25 @@ function add_controls!(controllayout, scene, D, parname, i0)
     # αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
     nslider, Tslider, dslider, αslider = od_sliders!(scene, controllayout)
     # Buttons (incl. variable chooser)
-    ▢update = LButton(scene, label = "update")
-    ▢back = LButton(scene, label = "← back")
-    ▢reset = LButton(scene, label = "reset")
-    imenu = LMenu(scene, options = [string(j) for j in 1:D], width = 60)
+    ▢update = Button(scene, label = "update")
+    ▢back = Button(scene, label = "← back")
+    ▢reset = Button(scene, label = "reset")
+    imenu = Menu(scene, options = [string(j) for j in 1:D], width = 60)
     imenu.i_selected = i0
     controllayout[5, 1] = hbox!(
         ▢update, ▢back, ▢reset,
-        LText(scene, "variable:"), imenu, width = Auto(false)
+        Label(scene, "variable:"), imenu, width = Auto(false)
     )
     # Limit boxes. Unfortunately can't be made observables yet...
     ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
     tsize = 16
-    text_p₋ = LText(scene, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
+    text_p₋ = Label(scene, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
         halign = :left, width = Auto(false), textsize = tsize)
-    text_p₊ = LText(scene, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
+    text_p₊ = Label(scene, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
         halign = :left, width = Auto(false), textsize = tsize)
-    text_u₋ = LText(scene, lift(o -> "u₋ = $(o)", ⬜u₋),
+    text_u₋ = Label(scene, lift(o -> "u₋ = $(o)", ⬜u₋),
         halign = :left, width = Auto(false), textsize = tsize)
-    text_u₊ = LText(scene, lift(o -> "u₊ = $(o)", ⬜u₊),
+    text_u₊ = Label(scene, lift(o -> "u₊ = $(o)", ⬜u₊),
         halign = :left, width = Auto(false), textsize = tsize)
     controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
     ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)

@@ -8,7 +8,7 @@ Daisy, Land = Agents.Models.Daisy, Agents.Models.Land
 
 using AbstractPlotting: to_color
 daisycolor(a::Daisy) = RGBAf0(to_color(a.breed))
-const landcolor = cgrad(:thermal)
+landcolor = cgrad(:thermal)
 daisycolor(a::Land) = to_color(landcolor[(a.temperature+50)/150])
 
 daisyshape(a::Daisy) = '♣'
@@ -21,12 +21,11 @@ params = Dict(
     :surface_albedo => 0:0.01:1,
 )
 
-black(y) = count(x -> x == :black, y)
-white(y) = count(x -> x == :white, y)
-breed(a) = a isa Daisy ? a.breed : :land
-gettemperature(a) = a isa Land ? a.temperature : missing
-meantemperature(x) = mean(skipmissing(x))
-adata = [(breed, black), (breed, white), (gettemperature, meantemperature)]
+black(a) = a.breed == :black
+white(a) = a.breed == :white
+daisies(a) = a isa Daisy
+land(a) = a isa Land
+adata = [(black, count, daisies), (white, count, daisies), (:temperature, mean, land)]
 mdata = [:solar_luminosity]
 
 alabels = ["black", "white", "T"]
@@ -37,6 +36,6 @@ landfirst = by_type((Land, Daisy), false)
 scene, agent_df, model_def = interactive_abm(
     model, agent_step!, model_step!, params;
     ac = daisycolor, am = daisyshape, as = daisysize,
-    mdata = mdata, adata = adata, alabels = alabels, mlabels = mlabels,
+    mdata, adata, alabels, mlabels,
     scheduler = landfirst # crucial to change model scheduler!
 )
