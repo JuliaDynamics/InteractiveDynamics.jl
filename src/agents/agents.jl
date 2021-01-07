@@ -89,7 +89,7 @@ function interactive_abm(
 
     # Initialize main layout and abm axis
     scene, layout = layoutscene(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
-    abmax = layout[1,1] = LAxis(scene)
+    abmax = layout[1,1] = Axis(scene)
     mlims = modellims(model)
     xlims!(abmax, 0, mlims[1])
     ylims!(abmax, 0, mlims[2])
@@ -183,7 +183,7 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         x = Agents.aggname(adata[i])
         val = Observable([df_agent[end, x]])
         push!(data, val)
-        ax = datalayout[i, :] = LAxis(scene)
+        ax = datalayout[i, :] = Axis(scene)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
@@ -195,7 +195,7 @@ function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata
         x = Agents.aggname(mdata[i])
         val = Observable([df_model[end, x]])
         push!(data, val)
-        ax = datalayout[i+La, :] = LAxis(scene)
+        ax = datalayout[i+La, :] = Axis(scene)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
@@ -259,9 +259,9 @@ function make_abm_controls!(scene, controllayout, model, params, spu)
     slesl = labelslider!(scene, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
     controllayout[2, :] = slesl.layout
-    run = LButton(scene, label = "run")
-    update = LButton(scene, label = "update")
-    reset = LButton(scene, label = "reset")
+    run = Button(scene, label = "run")
+    update = Button(scene, label = "update")
+    reset = Button(scene, label = "reset")
     controllayout[3, :] = MakieLayout.hbox!(run, update, reset, tellwidth = false)
 
     slidervals = Dict{Symbol, Observable}()

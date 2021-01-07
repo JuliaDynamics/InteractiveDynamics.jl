@@ -28,7 +28,7 @@ otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 scene, layout = layoutscene(resolution = (2000, 800))
 display(scene)
 ax = layout[1, 1] = LScene(scene)
-axp = layout[1, 2] = LAxis(scene)
+axp = layout[1, 2] = Axis(scene)
 sll = labelslider!(
     scene, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
     sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)

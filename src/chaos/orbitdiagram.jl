@@ -50,7 +50,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
 
     scene, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
     display(scene)
-    odax = layout[1,1] = LAxis(scene)
+    odax = layout[1,1] = Axis(scene)
     for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
         setproperty!(odax, z, true)
     end
@@ -273,7 +273,7 @@ end
 
 function observable_slider!(layout, i, j, scene, ltext, r;
     wl = 40, wr = nothing, startvalue = r[1])
-    slider = LSlider(scene, range = r, startvalue = startvalue)
+    slider = Slider(scene, range = r, startvalue = startvalue)
     text_prev = LText(scene, "$ltext =", halign = :right)
     text_after = LText(scene, lift(a -> "$(string(a))", slider.value),
     halign = :left)
@@ -303,10 +303,10 @@ function add_controls!(controllayout, scene, D, parname, i0)
     # αslider = observable_slider!(controllayout, 4, :, scene, "α", 0.001:0.001:1; startvalue = 0.1)
     nslider, Tslider, dslider, αslider = od_sliders!(scene, controllayout)
     # Buttons (incl. variable chooser)
-    ▢update = LButton(scene, label = "update")
-    ▢back = LButton(scene, label = "← back")
-    ▢reset = LButton(scene, label = "reset")
-    imenu = LMenu(scene, options = [string(j) for j in 1:D], width = 60)
+    ▢update = Button(scene, label = "update")
+    ▢back = Button(scene, label = "← back")
+    ▢reset = Button(scene, label = "reset")
+    imenu = Menu(scene, options = [string(j) for j in 1:D], width = 60)
     imenu.i_selected = i0
     controllayout[5, 1] = hbox!(
         ▢update, ▢back, ▢reset,

@@ -106,7 +106,7 @@ function init_main_trajectory_plot(
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 25mm : 15)
     main = if !is3D
-        LAxis(scene)
+        Axis(scene)
     else
         if isnothing(lims)
             LScene(scene, scenekw = (camera = cam3d!, raw = false))
@@ -154,7 +154,7 @@ function init_main_trajectory_plot(
 end
 function trajectory_plot_controls(scene, layout)
     layout[2, 1] = controllayout = GridLayout(tellwidth = false)
-    run = controllayout[1, 1] = LButton(scene; label = "run")
+    run = controllayout[1, 1] = Button(scene; label = "run")
     _s, _v = 10.0 .^ (-5:0.1:0), 0.1
     pushfirst!(_s, 0.0)
     slesl = labelslider!(scene, "sleep =", _s;

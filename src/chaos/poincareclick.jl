@@ -78,7 +78,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     scene, layout = layoutscene(resolution = (1000, 800), backgroundcolor = DEFAULT_BG)
 
     T_slider, m_slider = _add_psos_controls!(scene, layout, tfinal)
-    ax = layout[0, :] = LAxis(scene)
+    ax = layout[0, :] = Axis(scene)
 
     # Initial Section
     data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
@@ -122,10 +122,10 @@ function interactive_poincaresos(ds, plane, idxs, complete;
 end
 
 function _add_psos_controls!(scene, layout, tfinal)
-    T_slider = LSlider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
+    T_slider = Slider(scene, range = range(tfinal[1], tfinal[2], length = 1000))
     T_text_prev = LText(scene, "T =", halign = :right)
     T_text_after = LText(scene, lift(a -> "$(round(a))", T_slider.value), halign = :left)
-    m_slider = LSlider(scene, range = 10.0 .^ range(0, 2, length = 100), startvalue = 10)
+    m_slider = Slider(scene, range = 10.0 .^ range(0, 2, length = 100), startvalue = 10)
     m_text_prev = LText(scene, "ms =", halign=:right)
     sublayout = GridLayout()
     layout[1, :] = sublayout

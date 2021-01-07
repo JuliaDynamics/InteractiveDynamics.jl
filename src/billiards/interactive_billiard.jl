@@ -80,7 +80,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         to_color.(colors)
     end
     scene, layout = layoutscene(resolution = res, backgroundcolor = backgroundcolor)
-    ax = layout[1, 1] = LAxis(scene, backgroundcolor = backgroundcolor)
+    ax = layout[1, 1] = Axis(scene, backgroundcolor = backgroundcolor)
     tight_ticklabel_spacing!(ax)
     ax.autolimitaspect = 1
     allparobs = [ParObs(p, bd, tail) for p in ps]
@@ -117,11 +117,11 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
 
     # Controls
     if add_controls
-        resetbutton = LButton(scene, label = "reset",
+        resetbutton = Button(scene, label = "reset",
             buttoncolor = RGBf0(0.8, 0.8, 0.8),
             height = 40, width = 80
         )
-        runbutton = LButton(scene, label = Observable("run"),
+        runbutton = Button(scene, label = Observable("run"),
             buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
             buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
             buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
@@ -129,10 +129,10 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             labelcolor_active = Observable((RGBf0(1,1,1))),
             height = 40, width = 70,
         )
-        nslider = LSlider(scene, range = 0:50, startvalue=0)
+        nslider = Slider(scene, range = 0:50, startvalue=0)
         controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
         if plot_particles
-            particlebutton = LButton(scene, label = "particles",
+            particlebutton = Button(scene, label = "particles",
                 buttoncolor = RGBf0(0.8, 0.8, 0.8),
                 height = 40, width = 100
             )
@@ -347,12 +347,12 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
 
     sublayout = GridLayout()
-    cleanbutton = LButton(scene, label = "clean", tellwidth = false)
+    cleanbutton = Button(scene, label = "clean", tellwidth = false)
     sublayout[2, 1] = cleanbutton
     mct = Observable("m.c.t. = 0.0")
     mcttext = LText(scene, mct, haligh = :left, tellwidth = false)
     sublayout[2, 2] = mcttext
-    bmapax = sublayout[1,:] = LAxis(scene)
+    bmapax = sublayout[1,:] = Axis(scene)
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
@@ -432,7 +432,7 @@ function add_obstacle_axis!(scene, sublayout, intervals, bmapax, lock)
         push!(obstacle_ticklabels, string(i))
     end
 
-    obax = sublayout[1,:] = LAxis(scene)
+    obax = sublayout[1,:] = Axis(scene)
     obax.xticks = (obstacle_ticks, obstacle_ticklabels)
     obax.xaxisposition = :top
     obax.xticklabelalign = (:center, :bottom)
@@ -475,7 +475,7 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     cs = (!(colors isa Vector) || length(colors) ≠ N) ? InteractiveChaos.colors_from_map(colors, 1.0, N) : colors
 
     sublayout = GridLayout()
-    bmapax = sublayout[1,1] = LAxis(scene)
+    bmapax = sublayout[1,1] = Axis(scene)
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     ylims!(bmapax, -1, 1)

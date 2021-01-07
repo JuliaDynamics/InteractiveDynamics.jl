@@ -37,8 +37,8 @@ function interactive_cobweb(
 xs = range(xmin, xmax; length = 5000)
 
 scene, layout = layoutscene(resolution = (1000, 800))
-axts = layout[1, :] = LAxis(scene)
-axmap = layout[2, :] = LAxis(scene)
+axts = layout[1, :] = Axis(scene)
+axmap = layout[2, :] = Axis(scene)
 
 slr = labelslider!(scene, "$pname =", prange)
 layout[3, :] = slr.layout
@@ -110,10 +110,10 @@ on(L) do l
 end
 
 # Finally add buttons to hide/show elements of the plot
-cbutton = LButton(scene; label = "cobweb")
+cbutton = Button(scene; label = "cobweb")
 fbuttons = Any[]
 for i in 1:O
-    _b = LButton(scene; label = "f$(superscript(i))")
+    _b = Button(scene; label = "f$(superscript(i))")
     push!(fbuttons, _b)
 end
 layout[5, :] = buttonlayout = GridLayout(tellwidth = false)
