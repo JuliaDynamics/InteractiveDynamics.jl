@@ -129,7 +129,7 @@ function init_main_trajectory_plot(
             )
         end
     end
-    # TODO: Text font size is tiny, needs fixing (open proper issue at Makie.jl)
+    # TODO: Label font size is tiny, needs fixing (open proper issue at Makie.jl)
     # plot final points (also need to deduce scale)
     finalargs = if ds isa DynamicalSystems.ContinuousDynamicalSystem
         (marker = :circle, )

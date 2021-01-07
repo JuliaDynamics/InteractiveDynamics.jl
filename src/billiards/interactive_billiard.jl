@@ -130,7 +130,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             height = 40, width = 70,
         )
         nslider = Slider(scene, range = 0:50, startvalue=0)
-        controls = [resetbutton, runbutton, LText(scene, "speed:"), nslider]
+        controls = [resetbutton, runbutton, Label(scene, "speed:"), nslider]
         if plot_particles
             particlebutton = Button(scene, label = "particles",
                 buttoncolor = RGBf0(0.8, 0.8, 0.8),
@@ -350,7 +350,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     cleanbutton = Button(scene, label = "clean", tellwidth = false)
     sublayout[2, 1] = cleanbutton
     mct = Observable("m.c.t. = 0.0")
-    mcttext = LText(scene, mct, haligh = :left, tellwidth = false)
+    mcttext = Label(scene, mct, haligh = :left, tellwidth = false)
     sublayout[2, 2] = mcttext
     bmapax = sublayout[1,:] = Axis(scene)
     bmapax.xlabel = "arclength, ξ"
