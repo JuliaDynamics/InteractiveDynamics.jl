@@ -36,16 +36,16 @@ function interactive_cobweb(
 @assert O ≥ 1
 xs = range(xmin, xmax; length = 5000)
 
-scene, layout = layoutscene(resolution = (1000, 800))
-axts = layout[1, :] = Axis(scene)
-axmap = layout[2, :] = Axis(scene)
+figure = Figure(resolution = (1000, 800))
+axts = figure[1, :] = Axis(figure)
+axmap = figure[2, :] = Axis(figure)
 
-slr = labelslider!(scene, "$pname =", prange)
-layout[3, :] = slr.layout
+slr = labelslider!(figure, "$pname =", prange)
+figure[3, :] = slr.layout
 r_observable = slr.slider.value
 
-sln = labelslider!(scene, "n =", 1:Tmax; sliderkw = Dict(:startvalue => 20))
-layout[4, :] = sln.layout
+sln = labelslider!(figure, "n =", 1:Tmax; sliderkw = Dict(:startvalue => 20))
+figure[4, :] = sln.layout
 L = sln.slider.value
 
 # Timeseries plot
@@ -110,19 +110,19 @@ on(L) do l
 end
 
 # Finally add buttons to hide/show elements of the plot
-cbutton = Button(scene; label = "cobweb")
+cbutton = Button(figure; label = "cobweb")
 fbuttons = Any[]
 for i in 1:O
-    _b = Button(scene; label = "f$(superscript(i))")
+    _b = Button(figure; label = "f$(superscript(i))")
     push!(fbuttons, _b)
 end
-layout[5, :] = buttonlayout = GridLayout(tellwidth = false)
+figure[5, :] = buttonlayout = GridLayout(tellwidth = false)
 buttonlayout[:, 1:O+1] = [cbutton, fbuttons...]
 
 # And add triggering for buttons
 on(cbutton.clicks) do click
     ccurve.attributes.visible = !(ccurve.attributes.visible[])
-    cscatter.attributes.visible = !(cscatter.attributes.visible[])
+    # cscatter.attributes.visible = !(cscatter.attributes.visible[])
 end
 
 for i in 1:O
@@ -131,6 +131,6 @@ for i in 1:O
     end
 end
 
-display(scene)
+display(figure)
 return
 end
