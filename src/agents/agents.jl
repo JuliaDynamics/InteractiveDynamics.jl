@@ -163,7 +163,7 @@ end
 
 function modellims(model)
     if model.space isa Agents.ContinuousSpace
-        model.space.extend
+        model.space.extent
     elseif model.space isa Agents.DiscreteSpace
         size(model.space.s) .+ 1
     end
