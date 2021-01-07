@@ -18,8 +18,8 @@ showing the evolution of collected data over time (if any are asked for, see bel
 `model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
 `Agents` accept.
 
-Calling `interactive_abm` returns: `scene, agent_df, model_df`. So you can save the
-scene, but you can also access the collected data (if any).
+Calling `interactive_abm` returns: `figure, agent_df, model_df`. So you can save the
+figure, but you can also access the collected data (if any).
 
 ## Interaction
 Buttons and sliders on the right-hand-side allow running/pausing the application.
@@ -88,8 +88,8 @@ function interactive_abm(
     s = 0 # current step
 
     # Initialize main layout and abm axis
-    scene, layout = layoutscene(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
-    abmax = layout[1,1] = Axis(scene)
+    figure = Figure(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
+    abmax = figure[1,1] = Axis(figure)
     mlims = modellims(model)
     xlims!(abmax, 0, mlims[1])
     ylims!(abmax, 0, mlims[2])
@@ -107,16 +107,18 @@ function interactive_abm(
     end
 
     # Initialize ABM interactive platform + parameter sliders
-    scatter!(abmax.scene, pos;
-    color = colors, markersize = sizes, marker = markers, strokewidth = 0.0)
-    controllayout = layout[1, 2] = GridLayout(tellheight = false)
+    scatter!(
+        abmax, pos;
+        color = colors, markersize = sizes, marker = markers, strokewidth = 0.0
+    )
+    controllayout = figure[1, 2] = GridLayout(tellheight = false)
     slidervals, run, update, spuslider, sleslider, reset = make_abm_controls =
-    make_abm_controls!(scene, controllayout, model, params, spu)
+    make_abm_controls!(figure, controllayout, model, params, spu)
 
     # Initialize data plots
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
-        data, axs = init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
+        data, axs = init_data_plots!(figure, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     end
 
     # Running the simulation:
@@ -137,7 +139,7 @@ function interactive_abm(
             ids = scheduler(model)
             update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
             sleslider[] == 0 ? yield() : sleep(sleslider[])
-            isopen(scene) || break # crucial, ensures computations stop if closed window.
+            isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
 
@@ -155,47 +157,48 @@ function interactive_abm(
         update[] = update[] + 1 # also trigger parameter updates
     end
 
-    display(scene)
-    return scene, df_agent, df_model
+    display(figure)
+    return figure, df_agent, df_model
 end
 
 function modellims(model)
     if model.space isa Agents.ContinuousSpace
         model.space.extend
     elseif model.space isa Agents.DiscreteSpace
-        size(model.space) .+ 1
+        size(model.space.s) .+ 1
     end
 end
 
 
-function init_data_plots!(scene, layout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
+function init_data_plots!(figure, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
     Agents.collect_agent_data!(df_agent, model, adata, 0)
     Agents.collect_model_data!(df_model, model, mdata, 0)
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
     Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
     data, axs = [], []
-    datalayout = layout[2, :] = GridLayout()
+    datalayout = figure[2, :] = GridLayout()
 
     # Plot all quantities
     # TODO: make scatter+line plot 1.
-    # TODO: make markers in pixel units.
     for i in 1:La
         x = Agents.aggname(adata[i])
         val = Observable([df_agent[end, x]])
         push!(data, val)
-        ax = datalayout[i, :] = Axis(scene)
+        ax = datalayout[i, :] = Axis(figure)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c,
-                 strokewidth = 0.5)
+        scatter!(
+            ax, N, val; marker = MARKER, markersize = 5AbstractPlotting.px,
+            color = c, strokewidth = 0.5
+        )
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
         val = Observable([df_model[end, x]])
         push!(data, val)
-        ax = datalayout[i+La, :] = Axis(scene)
+        ax = datalayout[i+La, :] = Axis(figure)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
@@ -249,25 +252,25 @@ function update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, o
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
 end
 
-function make_abm_controls!(scene, controllayout, model, params, spu)
-    spusl = labelslider!(scene, "spu =", spu; tellwidth = true)
+function make_abm_controls!(figure, controllayout, model, params, spu)
+    spusl = labelslider!(figure, "spu =", spu; tellwidth = true)
     if model.space isa Agents.ContinuousSpace
         _s, _v = 0:0.01:1, 0
     else
         _s, _v = 0:0.1:10, 1
     end
-    slesl = labelslider!(scene, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
+    slesl = labelslider!(figure, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
     controllayout[2, :] = slesl.layout
-    run = Button(scene, label = "run")
-    update = Button(scene, label = "update")
-    reset = Button(scene, label = "reset")
+    run = Button(figure, label = "run")
+    update = Button(figure, label = "update")
+    reset = Button(figure, label = "reset")
     controllayout[3, :] = MakieLayout.hbox!(run, update, reset, tellwidth = false)
 
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
         startvalue = get(model.properties, l, vals[1])
-        sll = labelslider!(scene, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
+        sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
         controllayout[i+4, :] = sll.layout
     end

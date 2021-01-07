@@ -37,6 +37,6 @@ landfirst = by_type((Land, Daisy), false)
 scene, agent_df, model_def = interactive_abm(
     model, agent_step!, model_step!, params;
     ac = daisycolor, am = daisyshape, as = daisysize,
-    mdata = mdata, adata = adata, alabels = alabels, mlabels = mlabels,
+    mdata, adata, alabels, mlabels,
     scheduler = landfirst # crucial to change model scheduler!
 )
