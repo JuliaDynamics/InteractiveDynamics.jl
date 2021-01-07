@@ -19,17 +19,16 @@ ps = particlebeam(0.8, 0.6, π/4, N, 0.01, nothing, Float32)
 
 interactive_billiard(bd, 1f0, tail = 1000);
 
+# %% make it a video
+billiard_video("billiard.mp4", bd, 1f0; plot_particles=true, frames = 500);
 
 # %% also interact with boundary map
 interactive_billiard_bmap(bd);
 
-# %% make it a video
-billiard_video("billiard.mp4", bd, 1f0; plot_particles=false, framerate = 120);
-
 # %% static plot of boundary map and billiard (several particles, same color)
 ps = [randominside(bd) for i in 1:N]
 scene, bmapax = billiard_bmap_plot(bd, ps; colors = colors, backgroundcolor = RGBf0(1,1,1))
-Makie.save("static_billiard_plot.png", scene)
+save("static_billiard_plot.png", scene)
 
 # %% 3b1b style video:
 # Colors of 3b1b
