@@ -40,7 +40,6 @@ idxs = (1, 2, 3)
 figure, main, obs = interactive_evolution(
     ds, u0s; idxs, tail = 10000,
 )
-
 # %% SM
 ds = Systems.standardmap()
 u0s = [[0.1, 0.1], [2.5, 0.4], [1.88, 3.25]]

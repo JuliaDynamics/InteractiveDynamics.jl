@@ -193,7 +193,7 @@ Exactly like [`interactive_evolution`](@ref), but in addition to the state space
 a panel with the timeseries is also plotted and animated in real time.
 
 The following additional keywords apply:
-
+- `total_span` : How much the x-axis of the timeseries plots should span (in real time units)
 """
 function interactive_evolution_timeseries(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
@@ -202,6 +202,7 @@ function interactive_evolution_timeseries(
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
+        total_span = ds isa DynamicalSystems.DiscreteDynamicalSystem ? 100 : 10.0
     ) where {IIP}
 
     N = length(u0s)
@@ -212,6 +213,7 @@ function interactive_evolution_timeseries(
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     finalpoints = Observable([x[][end] for x in obs])
+    tdt = total_span/50
 
 
     # Initialize main plot with correct dimensionality
@@ -247,9 +249,15 @@ function interactive_evolution_timeseries(
         for j in 1:N
             lines!(ax, individual_ts[j]; color = colors[j])
         end
+        ax.ylabel = string(('x':'z')[i])
         ylims!(ax, lims[i])
     end
-    for i in 2:length(idxs); linkxaxes!(ts_axes[1], ts_axes[i]); end
+
+    # linkxaxes!(ts_axes[1], ts_axes[2:length(idxs)]...)
+    for i in 1:length(idxs)-1;
+        hidexdecorations!(ts_axes[i], grid = false)
+    end
+    for i in 1:length(idxs); xlims!(ts_axes[i], pinteg.t - tdt, total_span+tdt); end
 
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -267,6 +275,9 @@ function interactive_evolution_timeseries(
             end
             finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
+            t_current = pinteg.t
+            t_prev = max(0, t_current - total_span)
+            for i in 1:length(idxs); xlims!(ts_axes[i], t_prev-tdt, max(t_current, total_span)+tdt); end
             isopen(figure.scene) || break # crucial, ensures computations stop if closed window
         end
     end
