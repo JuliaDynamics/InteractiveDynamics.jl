@@ -80,7 +80,31 @@ function pushupdate!(o::Observable, v)
     return o
 end
 
+"""
+    darken_color(c, f = 1.2)
+Darken given color `c` by a factor `f`.
+If `f` is less than 1, the color is lightened instead.
+"""
 function darken_color(c, f = 1.2)
-    tc = to_color(c)
-    return RGBAf0(c.r/f, c.g/f, c.b/f, c.alpha)
+    c = to_color(c)
+    return RGBAf0(clamp.((c.r/f, c.g/f, c.b/f, c.alpha), 0, 1)...)
+end
+
+"""
+    lighten_color(c, f = 1.2)
+Lighten given color `c` by a factor `f`.
+If `f` is less than 1, the color is darkened instead.
+"""
+function lighten_color(c, f = 1.2)
+    c = to_color(c)
+    return RGBAf0(clamp.((c.r*f, c.g*f, c.b*f, c.alpha), 0, 1)...)
+end
+
+"""
+    to_alpha(c, α = 0.75)
+Create a color same as `c` but with given alpha channel.
+"""
+function to_alpha(c, α = 1.2)
+    c = to_color(c)
+    return RGBAf0(c.r, c.g, c.b, α)
 end

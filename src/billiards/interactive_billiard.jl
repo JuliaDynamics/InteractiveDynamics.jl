@@ -1,4 +1,5 @@
-export interactive_billiard, interactive_billiard_bmap, billiard_video
+export interactive_billiard, interactive_billiard_bmap,
+       billiard_video, billiard_video_timeseries
 
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
@@ -59,7 +60,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         backgroundcolor = DEFAULT_BG,
         vr = _estimate_vr(bd),
         add_controls = true,
-        displayscene = true,
+        displayfigure = true,
         tailwidth = 1,
         particle_size = 1.0,
     )
@@ -223,10 +224,9 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             p0s .= DynamicalBilliards.particlebeam(pos..., φ, N, dx, ω0, Float32)
             resetbutton.clicks[] += 1
         end
-
     end # adding controls blocks
 
-    displayscene && display(figure)
+    displayfigure && display(figure)
     if add_controls
         return figure, allparobs, resetbutton, p0s, sline
     elseif plot_particles
@@ -247,14 +247,20 @@ Perform the same animation like in [`interactive_billiard`](@ref), but there is 
 interaction; the result is saved directly as a video in `file` (no buttons are shown).
 
 ## Keywords
-* `N, dt, tail, dx, colors, plot_particles, fade, tailwidth`:
+* `N, dt, tail, dx, colors, plot_particles, fade, tailwidth, backgroundcolor`:
   same as in `interactive_billiard`, but `plot_particles` is `false` by default here.
 * `speed = 5`: Animation "speed" (how many `dt` steps are taken before a frame is recorded)
 * `frames = 1000`: amount of frames to record.
 * `framerate = 60`: exported framerate.
-* `backgroundcolor = :white`.
 * `res = nothing`: resolution of the frames. If nothing, a resolution matching the
   the billiard aspect ratio is estimated. Otherwise pass a 2-tuple.
+
+Notice that the animation performs an extra step for every `speed` steps and the
+first frame saved is always at time 0. Therefore the following holds:
+```julia
+total_time = (frames-1)*(speed+1)*dt
+time_covered_per_frame = (speed+1)*dt
+```
 """
 billiard_video(file::String, bd::Billiard, ω::Union{Nothing, Real} = nothing; kwargs...) =
 billiard_video(file::String, bd::Billiard, DynamicalBilliards.randominside_xyφ(bd)..., ω; kwargs...)
@@ -272,6 +278,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
         speed = 5, frames = 1000, framerate = 60, kwargs...
     )
 
+    dt = Float32(dt)
     if res == nothing
         xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
         aspect = (xmax - xmin)/(ymax-ymin)
@@ -279,8 +286,8 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
     end
 
     figure, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
-        res = res, plot_particles=plot_particles, kwargs..., add_controls =false,
-        displayscene = false
+        res = res, plot_particles=plot_particles, kwargs..., add_controls = false,
+        displayfigure = false
     )
     N = length(ps)
 
@@ -311,6 +318,110 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
     return
 end
 
+
+"""
+    billiard_video_timeseries(file, bd::Billiard, ps, f; kwargs...)
+
+Perform the same animation like in [`billiard_video`](@ref), but in addition show the
+timeseries of a chosen observable above the billiard. The observable is given using the
+**function** `f`, which takes as an input a particle and outputs the observable.
+E.g. `f(p) = p.pos[2]` or `f(p) = atan(p.vel[2], p.vel[1])`.
+The video is saved directly into `file`.
+
+## Keywords
+* `N, dt, tail, dx, colors, plot_particles, fade, tailwidth, backgroundcolor`:
+  same as in `interactive_billiard`.
+* `speed, frames, framerate, res`: As in `billiard_video`.
+* `total_span = 10.0`: Total span of the x-axis of the timeseries plot in real time units.
+* `ylim = (0, 1)`: Limits of the y-axis of the timeseries plot.
+* `ylabel = "f"`: Label of the y-axis of the timeseries plot.
+"""
+function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vector{<:AbstractParticle}, f;
+        plot_particles = true, dt = 0.001,
+        speed = 5, frames = 1000, framerate = 60,
+        total_span = 10.0, colors = JULIADYNAMICS_COLORS,
+        res = (800, 800), displayfigure = false, ylim = (0, 1),
+        ylabel = "f",
+        kwargs...
+    )
+
+    N = length(ps)
+    tdt = total_span/20
+    cs = if !(colors isa Vector) || length(colors) ≠ N
+        colors_from_map(colors, α, N)
+    else
+        to_color.(colors)
+    end
+    dt = Float32(dt)
+
+    figure, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
+        res, plot_particles, kwargs..., add_controls = false,
+        displayfigure, colors = cs,
+    )
+
+    # Add the axis on the top
+    tsax = figure[0, :] = Axis(figure; height = Relative(8/9))
+    # Make the axis occupy 1/3 instead of 1/2:
+    rowsize!(figure.layout, 1, Relative(1/3))
+    tsax.xlabel = "time"
+    tsax.ylabel = ylabel
+
+    all_ts = [Observable([Point2f0(0, f(p))]) for p in ps]
+    all_balls = [Observable(Point2f0(0, f(p))) for p in ps]
+
+    for i in 1:length(ps)
+        lines!(tsax, all_ts[i];
+            color = cs[i],
+            linewidth = 4,
+        )
+        scatter!(
+            tsax, all_balls[i];
+            markersize = 20*AbstractPlotting.px,
+            color = InteractiveChaos.to_alpha(cs[i], 0.75),
+        )
+    end
+    ylims!(tsax, ylim)
+    t_current = 0.0
+    xlims!(tsax, -tdt, total_span+tdt)
+
+    !displayfigure && AbstractPlotting.inline!(true)
+    record(figure, file, 1:frames; framerate = framerate) do j
+        # This loop propagates the particles for `speed` steps but doesn't update the plot
+        t_current += dt*speed
+        for _ in 1:speed
+            for i in 1:N
+                p = ps[i]
+                parobs = allparobs[i]
+                InteractiveChaos.animstep!(parobs, bd, dt, false)
+            end
+        end
+
+        # This loop propagates the particles for 1 step & updates the plots
+        t_current += dt
+        for i in 1:N
+            p = ps[i]
+            parobs = allparobs[i]
+            InteractiveChaos.animstep!(parobs, bd, dt, true)
+            # Update timeseries
+            current_point = Point2f0(t_current, f(p))
+            all_balls[i][] = current_point
+            InteractiveChaos.pushupdate!(all_ts[i], current_point)
+            if plot_particles
+                balls[][i] = parobs.p.pos
+                vels[][i] = vr * parobs.p.vel
+            end
+        end
+        if plot_particles
+            balls[] = balls[]
+            vels[] = vels[]
+        end
+
+        t_prev = max(0, t_current - total_span)
+        xlims!(tsax, t_prev-tdt, max(t_current, total_span)+tdt)
+    end
+    !displayfigure && AbstractPlotting.inline!(false)
+    return figure
+end
 
 
 """
