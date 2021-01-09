@@ -14,7 +14,22 @@ idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dtmax = 0.01)
 
 figure, main, obs = interactive_evolution(
-    ds, u0s; idxs, tail = 10000, diffeq
+    ds, u0s; idxs, tail = 1000, diffeq
+)
+
+# %% Lorenz with timeseries
+ds = Systems.lorenz()
+
+u1 = [10,20,40.0]
+u2 = [10,20,40.0 + 1e-3]
+u3 = [20,10,40.0]
+u0s = [u1, u2, u3]
+
+idxs = (1, 2, 3)
+diffeq = (alg = Tsit5(), dtmax = 0.01)
+
+figure, obs = interactive_evolution_timeseries(
+    ds, u0s; idxs, tail = 1000, diffeq
 )
 
 # %% towel

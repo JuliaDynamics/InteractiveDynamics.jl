@@ -1,5 +1,5 @@
 using DataStructures
-export interactive_evolution
+export interactive_evolution, interactive_evolution_timeseries
 
 """
     interactive_evolution(ds::DynamicalSystem, u0s; kwargs...)
@@ -74,9 +74,9 @@ function interactive_evolution(
             DynamicalSystems.step!(pinteg)
             for i in 1:length(u0s)
                 ob = obs[i]
-                # topush = iipcds ? @view(pinteg.u[:, i])[idxs] : pinteg.u[i][idxs]
-                topush = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
-                ob[] = push!(ob[], topush) # push and trigger update with `=`
+                # last_state = iipcds ? @view(pinteg.u[:, i])[idxs] : pinteg.u[i][idxs]
+                last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
+                ob[] = push!(ob[], last_state) # push and trigger update with `=`
             end
             finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
@@ -183,4 +183,93 @@ function traj_lim_estimator(ds, u0s, diffeq, idxs, transform)
     ma = ma .+ 0.05ma
     lims = [(mi[i], ma[i]) for i in 1:length(idxs)]
     lims = (lims...,)
+end
+
+
+
+"""
+    interactive_evolution_timeseries(args...; kwargs...)
+Exactly like [`interactive_evolution`](@ref), but in addition to the state space plot
+a panel with the timeseries is also plotted and animated in real time.
+
+The following additional keywords apply:
+
+"""
+function interactive_evolution_timeseries(
+        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
+        transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
+        colors = [randomcolor() for i in 1:length(u0s)],
+        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        plotkwargs = NamedTuple(), m = 1.0,
+        lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
+    ) where {IIP}
+
+    N = length(u0s)
+    @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
+    @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
+    idxs = DynamicalSystems.SVector(idxs...)
+    figure = Figure(resolution = (2000, 1000), )
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
+    finalpoints = Observable([x[][end] for x in obs])
+
+
+    # Initialize main plot with correct dimensionality
+    main = figure[1,1] = init_main_trajectory_plot(
+        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+    )
+
+    # Initialize timeseries data:
+    allts = [] # each entry is one timeseries plot, which contains N series
+    for i in 1:length(idxs)
+        individual_ts = Observable[]
+        for j in 1:N
+            cb = CircularBuffer{Point2f0}(tail)
+            fill!(cb, Point2f0(
+                pinteg.t, transform(DynamicalSystems.get_state(pinteg, i))[idxs][i])
+            )
+            push!(individual_ts, Observable(cb))
+        end
+        push!(allts, individual_ts)
+    end
+
+    # here we define the main updating functionality
+    run, sleslider = trajectory_plot_controls(figure)
+
+    # Initialize timeseries plots:
+    # tslayout = GridLayout(figure)
+    # figure[:, 2] = tslayout
+    ts_axes = []
+    for i in 1:length(idxs)
+        ax = figure[:, 2][i, 1] = Axis(figure)
+        push!(ts_axes, ax)
+        individual_ts = allts[i]
+        for j in 1:N
+            lines!(ax, individual_ts[j]; color = colors[j])
+        end
+        ylims!(ax, lims[i])
+    end
+    for i in 2:length(idxs); linkxaxes!(ts_axes[1], ts_axes[i]); end
+
+    isrunning = Observable(false)
+    on(run) do clicks; isrunning[] = !isrunning[]; end
+    on(run) do clicks
+        @async while isrunning[]
+        # while isrunning[]
+            DynamicalSystems.step!(pinteg)
+            for i in 1:N
+                ob = obs[i]
+                last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
+                pushupdate!(ob, last_state) # push and trigger update with `=`
+                for k in 1:length(idxs)
+                    pushupdate!(allts[k][i], Point2f0(pinteg.t, last_state[k]))
+                end
+            end
+            finalpoints[] = [x[][end] for x in obs]
+            sleslider[] == 0 ? yield() : sleep(sleslider[])
+            isopen(figure.scene) || break # crucial, ensures computations stop if closed window
+        end
+    end
+    display(figure)
+    figure, obs
 end
