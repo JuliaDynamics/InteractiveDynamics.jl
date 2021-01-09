@@ -9,10 +9,8 @@ All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
 
-The function returns `figure, main, layout, obs`. `figure` is the overarching figure
-(the entire GUI) and can be recorded. `main` is the actual plot of the trajectory,
-that allows adding additional plot elements or controlling labels, ticks, etc.
-`layout` is the overarching layout, that can be used to add additional plot panels.
+The function returns `figure, layout`. `figure` is the overarching figure
+(the entire GUI) and can be recorded.
 `obs` is a vector of observables, each containing the current state of the trajectory.
 
 ## Keywords
@@ -84,7 +82,7 @@ function interactive_evolution(
         end
     end
     display(figure)
-    figure, main, obs
+    figure, obs
 end
 
 function init_trajectory_observables(L, pinteg, tail, idxs, transform)
@@ -194,6 +192,7 @@ a panel with the timeseries is also plotted and animated in real time.
 
 The following additional keywords apply:
 - `total_span` : How much the x-axis of the timeseries plots should span (in real time units)
+- `linekwargs = NamedTuple()` : Extra keywords propagated to the timeseries plots.
 """
 function interactive_evolution_timeseries(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
@@ -202,7 +201,8 @@ function interactive_evolution_timeseries(
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
-        total_span = ds isa DynamicalSystems.DiscreteDynamicalSystem ? 100 : 10.0
+        total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
+        linekwargs = ds isa DynamicalSystems.ContinuousDynamicalSystem ? (linewidth = 4,) : ()
     ) where {IIP}
 
     N = length(u0s)
@@ -247,7 +247,10 @@ function interactive_evolution_timeseries(
         push!(ts_axes, ax)
         individual_ts = allts[i]
         for j in 1:N
-            lines!(ax, individual_ts[j]; color = colors[j])
+            lines!(ax, individual_ts[j]; color = colors[j], linekwargs...)
+            if ds isa DynamicalSystems.DiscreteDynamicalSystem
+                scatter!(ax, individual_ts[j]; color = colors[j])
+            end
         end
         ax.ylabel = string(('x':'z')[i])
         ylims!(ax, lims[i])
@@ -282,5 +285,5 @@ function interactive_evolution_timeseries(
         end
     end
     display(figure)
-    figure, obs
+    return figure, obs
 end

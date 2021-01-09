@@ -13,7 +13,7 @@ u0s = [u1, u2, u3]
 idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dtmax = 0.01)
 
-figure, main, obs = interactive_evolution(
+figure, obs = interactive_evolution(
     ds, u0s; idxs, tail = 1000, diffeq
 )
 
@@ -37,15 +37,16 @@ ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
 idxs = (1, 2, 3)
 
-figure, main, obs = interactive_evolution(
+figure, obs = interactive_evolution_timeseries(
     ds, u0s; idxs, tail = 10000,
 )
+
 # %% SM
 ds = Systems.standardmap()
 u0s = [[0.1, 0.1], [2.5, 0.4], [1.88, 3.25]]
 lims = ((0, 2π), (0, 2π))
 
-figure, main, obs = interactive_evolution(
+figure, obs = interactive_evolution(
     ds, u0s; tail = 100000, lims
 )
 
@@ -61,7 +62,7 @@ diffeq = (alg = Vern9(), dtmax = 0.01)
 idxs = (1, 2, 4)
 colors = AbstractPlotting.to_color.(["#233B43", "#499cbf", "#E84646"])
 
-figure, main, obs = interactive_evolution(
+figure, obs = interactive_evolution(
     ds, u0s; idxs, tail = 10000, colors, diffeq
 )
 # main.scene[Axis][:names, :axisnames] = ("q₁", "q₂", "p₂")
