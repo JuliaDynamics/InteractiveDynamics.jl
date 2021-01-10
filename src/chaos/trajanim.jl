@@ -209,7 +209,7 @@ function interactive_evolution_timeseries(
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
-    figure = Figure(resolution = (2000, 1000), )
+    figure = Figure(resolution = (1600, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     finalpoints = Observable([x[][end] for x in obs])

@@ -9,8 +9,6 @@
 interactive_evolution
 ```
 
----
-
 To generate the video at the start of this page run
 
 ```julia
@@ -28,7 +26,7 @@ diffeq = (alg = Vern9(), dtmax = 0.01)
 idxs = (1, 2, 4)
 colors = ["#233B43", "#499cbf", "#E84646"]
 
-scene, main, obs = interactive_evolution(
+figure, obs = interactive_evolution(
     ds, u0s; idxs, tail = 10000, diffeq, colors
 )
 ```
@@ -41,7 +39,7 @@ using DynamicalSystems, GLMakie
 ds = Systems.towel() # 3D chaotic discrete system
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
 
-scene, main, layout, obs = interactive_evolution(
+figure, obs = interactive_evolution(
     ds, u0s; idxs = SVector(1, 2, 3), tail = 100000,
 )
 ```
@@ -50,4 +48,18 @@ scene, main, layout, obs = interactive_evolution(
 <video width="100%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/towel_trajectory.mp4?raw=true" type="video/mp4">
 </video>
+```
+
+
+## With timeseries
+
+# Interactive trajectory evolution
+```@raw html
+<video width="100%" height="auto" controls autoplay loop>
+<source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/interactive_trajectory_timeseries.mp4?raw=true" type="video/mp4">
+</video>
+```
+
+```@docs
+interactive_evolution_timeseries
 ```
