@@ -1,4 +1,5 @@
 # Interactive trajectory evolution
+## Without timeseries
 ```@raw html
 <video width="100%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/interactive_trajectory.mp4?raw=true" type="video/mp4">
@@ -52,8 +53,6 @@ figure, obs = interactive_evolution(
 
 
 ## With timeseries
-
-# Interactive trajectory evolution
 ```@raw html
 <video width="100%" height="auto" controls autoplay loop>
 <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/interactive_trajectory_timeseries.mp4?raw=true" type="video/mp4">
