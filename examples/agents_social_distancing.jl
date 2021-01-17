@@ -2,8 +2,6 @@ using Agents, Random
 using GLMakie
 using InteractiveChaos
 
-cd(@__DIR__)
-
 model, agent_step!, model_step! = Models.social_distancing(isolated = 0.8)
 
 # Various possibilities for colors/sizes/markers
@@ -34,6 +32,11 @@ fig = abm_play(model, agent_step!, model_step!;
     ac = sir_colors, as = sir_sizes, am = sir_shape,
 )
 
+# %% same, but video
+fig = abm_video("socialdist.mp4", model, agent_step!, model_step!;
+    ac = sir_colors, as = sir_sizes, am = sir_shape,
+    spf = 2, frames = 100,
+)
 
 # %% Interactive data plot
 infected(x) = count(i == :I for i in x)

@@ -149,3 +149,28 @@ function update_abm_plot!(
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
 end
+
+function abm_video(file, model, agent_step!, model_step!;
+        spf = 1, framerate = 60, frames = 1000, kwargs...
+    )
+    figure = Figure(resolution = (800, 800), backgroundcolor = DEFAULT_BG)
+    # preinitialize a bunch of stuff
+    model0 = deepcopy(model)
+    modelobs = Observable(model) # only useful for resetting
+    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
+    as = get(kwargs, :as, 10)
+    am = get(kwargs, :am, :circle)
+    scheduler = get(kwargs, :scheduler, model.scheduler)
+    offset = get(kwargs, :offset, nothing)
+    # plot the abm
+    abmax = figure[1,1] = Axis(figure)
+    pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
+
+    record(figure, file, 1:frames; framerate = framerate) do j
+        abm_interactive_stepping(
+            model, agent_step!, model_step!, spf, scheduler,
+            pos, colors, sizes, markers, ac, as, am, offset
+        )
+    end
+    return nothing
+end
