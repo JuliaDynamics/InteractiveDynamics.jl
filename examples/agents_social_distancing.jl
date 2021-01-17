@@ -25,10 +25,14 @@ sir_shape(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
 #     poly(xs, ys)
 # end
 
-p1 = abm_plot(model;
+fig = abm_plot(model;
     ac = sir_colors, as = sir_sizes, am = sir_shape,
 )
 
+# %% same, but interactive
+fig = abm_play(model, agent_step!, model_step!;
+    ac = sir_colors, as = sir_sizes, am = sir_shape,
+)
 
 
 # %% Interactive data plot

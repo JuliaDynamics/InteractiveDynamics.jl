@@ -215,21 +215,6 @@ function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, 
     for ax in axs; autolimits!(ax); end
 end
 
-function update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
-    if Agents.nagents(model) == 0
-        @warn "The model has no agents, we can't plot anymore!"
-        error("The model has no agents, we can't plot anymore!")
-    end
-    if offset == nothing
-        pos[] = [model[i].pos for i in ids]
-    else
-        pos[] = [model[i].pos .+ offset(model[i]) for i in ids]
-    end
-    if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
-    if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
-    if am isa Function; markers[] = [am(model[i]) for i in ids]; end
-end
-
 function make_abm_controls!(figure, controllayout, model, params, spu)
     spusl = labelslider!(figure, "spu =", spu; tellwidth = true)
     if model.space isa Agents.ContinuousSpace
