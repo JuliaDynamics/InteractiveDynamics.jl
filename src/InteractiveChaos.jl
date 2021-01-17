@@ -33,7 +33,7 @@ function __init__()
         include("billiards/interactive_billiard.jl")
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
-        include("agents/agents.jl")
+        include("agents/abm.jl")
     end
 end
 

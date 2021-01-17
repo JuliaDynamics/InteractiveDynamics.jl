@@ -1,4 +1,5 @@
 export interactive_abm
+export abm_interactive_data
 
 # TODO: Might be possible to use t = time(); t = time() - t to estimate run time
 # and subtract this time from the `sleep` time, to ensure smoother update rates for
@@ -90,27 +91,12 @@ function interactive_abm(
     # Initialize main layout and abm axis
     figure = Figure(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
     abmax = figure[1,1] = Axis(figure)
-    mlims = modellims(model)
-    xlims!(abmax, 0, mlims[1])
-    ylims!(abmax, 0, mlims[2])
-    equalaspect && (abmax.aspect = AxisAspect(1))
 
     # initialize abm plot stuff
     ids = scheduler(model)
-    colors = ac isa Function ? Observable(to_color.([ac(model[i]) for i in ids])) : to_color(ac)
-    sizes  = as isa Function ? Observable([as(model[i]) for i in ids]) : as
-    markers= am isa Function ? Observable([am(model[i]) for i in ids]) : am
-    if offset == nothing
-        pos = Observable([model[i].pos for i in ids])
-    else
-        pos = Observable([model[i].pos .+ offset(model[i]) for i in ids])
-    end
+    pos = abm_plot!(abmax, model; write stuff here..., ids)
 
     # Initialize ABM interactive platform + parameter sliders
-    scatter!(
-        abmax, pos;
-        color = colors, markersize = sizes, marker = markers, strokewidth = 0.0
-    )
     controllayout = figure[1, 2] = GridLayout(tellheight = false)
     slidervals, run, update, spuslider, sleslider, reset = make_abm_controls =
     make_abm_controls!(figure, controllayout, model, params, spu)
@@ -159,14 +145,6 @@ function interactive_abm(
 
     display(figure)
     return figure, df_agent, df_model
-end
-
-function modellims(model)
-    if model.space isa Agents.ContinuousSpace
-        model.space.extent
-    elseif model.space isa Agents.DiscreteSpace
-        size(model.space.s) .+ 1
-    end
 end
 
 
