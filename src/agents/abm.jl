@@ -2,6 +2,35 @@ export abm_plot
 export abm_play
 export abm_video
 
+# TODO: Add `resolution` keyword
+
+
+"""
+    abm_plot(model::ABM; kwargs...)
+Plot an agent based model by plotting each individual agent as a marker and using
+the agent's position field as its location on the plot. Requires `Agents`.
+
+## Keywords
+* `ac, as, am`: These three keywords decided the color, size, and marker, that
+  each agent will be plotted as. They can each be either a constant or a *function*,
+  which takes as an input a single argument and ouputs the corresponding value.
+  For example:
+  ```julia
+  # ac = "#338c54"
+  ac(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
+  # as = 10
+  as(a) = 10*randn() + 1
+  # as = :diamond
+  as(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
+  ```
+* `scheduler = model.scheduler`: decides the plotting order of agents
+  (which matters only if there is overlap).
+* `offset = nothing`: If not `nothing`, it must be a function taking as an input an
+  agent and outputting an offset position vector to be added to the agent's position
+  (which matters only if there is overlap).
+* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
+* `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
+"""
 function abm_plot(model; kwargs...)
     figure = Figure()
     ax = figure[1,1] = Axis(figure)
@@ -54,6 +83,25 @@ function modellims(model)
     return o, e
 end
 
+
+"""
+    abm_play(model, agent_step!, model_step!; kwargs...)
+Launch an interactive application that plots an agent based model and can animate
+its evolution in real time. Requires `Agents`.
+
+The agents are plotted exactly like in [`abm_plot`](@ref), while the two functions
+`agent_step!, model_step!` decide how the model will evolve, as in the standard
+approach of Agents.jl and its `step!` function.
+
+The application has two buttons: "run" and "reset" which starts/stops the time evolution
+and resets the model to its original configuration.
+Two sliders control the animation speed: "spu" decides how many model steps should be done
+before the plot is updated, and "sleep" the `sleep()` time between updates.
+
+## Keywords
+* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
+* `spu = 1:100`: The values of the "spu" slider.
+"""
 function abm_play(model, agent_step!, model_step!; kwargs...)
     figure = Figure(resolution = (800, 800), backgroundcolor = DEFAULT_BG)
     abm_play!(figure, model, agent_step!, model_step!; kwargs...)
@@ -150,6 +198,19 @@ function update_abm_plot!(
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
 end
 
+
+"""
+    abm_play(file, model, agent_step!, model_step!; kwargs...)
+This function exports the animated time evolution of an agent based model into a video
+saved at given path `file`. The plotting is identical as in [`abm_plot`](@ref).
+
+## Keywords
+* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
+* `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
+  frame.
+* `framerate = 60`: The frame rate of the exported video.
+* `frames = 1000`: How many frames to record in total.
+"""
 function abm_video(file, model, agent_step!, model_step!;
         spf = 1, framerate = 60, frames = 1000, kwargs...
     )
