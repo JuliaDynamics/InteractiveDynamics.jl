@@ -1,4 +1,3 @@
-export interactive_abm
 export abm_data_exploration
 
 """
@@ -73,7 +72,7 @@ function abm_data_exploration(
     P = length(params)
 
     # Initialize main layout and abm axis
-    figure = Figure(resolution = (1600, 800), backgroundcolor = DEFAULT_BG)
+    figure = Figure(; resolution = (1600, 800), backgroundcolor = DEFAULT_BG)
     abmax = figure[1,1] = Axis(figure)
 
     # initialize the ABM plot stuff
@@ -215,16 +214,6 @@ function update_abm_parameters!(model, params, slidervals)
         v = slidervals[l][]
         model.properties[l] = v
     end
-end
-
-# TODO: Delete
-function vline!(ax, x; kwargs...)
-    linepoints = lift(ax.limits, x) do lims, x
-        ymin = minimum(lims)[2]
-        ymax = maximum(lims)[2]
-        Point2f0.([x, x], [ymin, ymax])
-    end
-    lines!(ax, linepoints; yautolimits = false, kwargs...)
 end
 
 function add_reset_line!(axs, s)

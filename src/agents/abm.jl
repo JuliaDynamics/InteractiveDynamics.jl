@@ -2,9 +2,6 @@ export abm_plot
 export abm_play
 export abm_video
 
-# TODO: Add `resolution` keyword
-
-
 """
     abm_plot(model::ABM; kwargs...) → figure
 Plot an agent based model by plotting each individual agent as a marker and using
@@ -30,9 +27,10 @@ the agent's position field as its location on the plot. Requires `Agents`.
   (which matters only if there is overlap).
 * `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
+* `resolution = (600, 600)`: Resolution of the figure.
 """
-function abm_plot(model; kwargs...)
-    figure = Figure()
+function abm_plot(model; resolution = (600, 600), kwargs...)
+    figure = Figure(; resolution)
     ax = figure[1,1] = Axis(figure)
     pos = abm_plot!(ax, model; kwargs...)
     return figure
@@ -107,7 +105,7 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; kwargs...)
-    figure = Figure(resolution = (800, 800), backgroundcolor = DEFAULT_BG)
+    figure = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
     abm_play!(figure, model, agent_step!, model_step!; kwargs...)
     return figure
 end
@@ -212,13 +210,15 @@ saved at given path `file`. The plotting is identical as in [`abm_plot`](@ref).
 * `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
-* `framerate = 60`: The frame rate of the exported video.
-* `frames = 1000`: How many frames to record in total.
+* `framerate = 30`: The frame rate of the exported video.
+* `frames = 300`: How many frames to record in total.
+* `resolution = (600, 600)`: Resolution of the figure.
 """
 function abm_video(file, model, agent_step!, model_step!;
-        spf = 1, framerate = 60, frames = 1000, kwargs...
+        spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
+        title = "", showstep = true, kwargs...
     )
-    figure = Figure(resolution = (800, 800), backgroundcolor = DEFAULT_BG)
+    figure = Figure(; resolution, backgroundcolor = DEFAULT_BG)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
@@ -227,15 +227,29 @@ function abm_video(file, model, agent_step!, model_step!;
     am = get(kwargs, :am, :circle)
     scheduler = get(kwargs, :scheduler, model.scheduler)
     offset = get(kwargs, :offset, nothing)
+
+    # add some title stuff
+    s = Observable(0) # counter of current step
+    if title ≠ "" && showstep
+        t = lift(x -> title*", step = "*string(x), s)
+    elseif showstep
+        t = lift(x -> "step = "*string(x))
+    else
+        t = title
+    end
+
     # plot the abm
-    abmax = figure[1,1] = Axis(figure)
+    abmax = figure[1,1] = Axis(figure; title = t, titlealign = :left)
     pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
 
-    record(figure, file, 1:frames; framerate = framerate) do j
+
+    record(figure, file, 1:frames; framerate) do j
         abm_interactive_stepping(
             model, agent_step!, model_step!, spf, scheduler,
             pos, colors, sizes, markers, ac, as, am, offset
         )
+        s[] += spf; s[] = s[]
+        # (title ≠ "" || showstep) && (abmax.title = titlef(s))
     end
     return nothing
 end

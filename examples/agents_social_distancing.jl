@@ -39,6 +39,8 @@ fig = abm_video("socialdist.mp4", model, agent_step!, model_step!;
 )
 
 # %% Interactive data plot
+model, agent_step!, model_step! = Models.social_distancing(isolated = 0.8)
+
 infected(x) = count(i == :I for i in x)
 recovered(x) = count(i == :R for i in x)
 adata = [(:status, infected), (:status, recovered)]
