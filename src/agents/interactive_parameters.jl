@@ -1,37 +1,27 @@
 export interactive_abm
-export abm_interactive_data
-
-# TODO: Might be possible to use t = time(); t = time() - t to estimate run time
-# and subtract this time from the `sleep` time, to ensure smoother update rates for
-# discrete systems.
-# TODO: Make run button togglable
-# TODO: Add a version without any controls, just animation
+export abm_data_exploration
 
 """
-    interactive_abm(model::ABM, agent_step!, model_step!, params=Dict(); kwargs...)
-Open an interactive application for exploring an Agent-Based-Model. Requires `Agents`.
-Currently only works for 2D `GridSpace` or `ContinuousSpace`.
+    abm_data_exploration(model::ABM, agent_step!, model_step!, params=Dict(); kwargs...)
+Open an interactive application for exploring an agent based model and
+the impact of changing parameters on the time evolution. Requires `Agents`.
 
 The application evolves an ABM interactively and plots its evolution, while allowing
 changing any of the model parameters interactively and also
 showing the evolution of collected data over time (if any are asked for, see below).
+The agent based model is plotted and animated exactly as in [`abm_play`](@ref),
+and the arguments `model, agent_step!, model_step!` are propagated there as-is.
 
-`model, agent_step!, model_step!` are the same arguments that `step!` or `run!` from
-`Agents` accept.
-
-Calling `interactive_abm` returns: `figure, agent_df, model_df`. So you can save the
+Calling `abm_data_exploration` returns: `figure, agent_df, model_df`. So you can save the
 figure, but you can also access the collected data (if any).
 
 ## Interaction
-Buttons and sliders on the right-hand-side allow running/pausing the application.
-The slider `sleep` controls how much sleep time should occur after each plot update.
-The slider `spu` is the steps-per-update, i.e. how many times to step the model before
-updating the plot.
-
-The final argument `params` is a dictionary and decides which
+Besides the basic time evolution interaction of [`abm_play`](@ref), additional
+functionality here allows changing model parameters in real time, based on the provided
+fourth argument `params`. This is a dictionary which decides which
 parameters of the model will be configurable from the interactive application.
 Each entry of `params` is a pair of `Symbol` to an `AbstractVector`, and provides a range
-of possible values for the parameter named after the given symbol.
+of possible values for the parameter named after the given symbol (see example online).
 Changing a value in the parameter slides is only updated into the actual model when
 pressing the "update" button.
 
@@ -41,45 +31,38 @@ data plots when resetting, for visual guidance.
 
 ## Keywords
 
-* `ac, as, am`: either constants, or functions each accepting an agent
-  and outputting a valid value for the agent color, shape, or size.
-* `scheduler = model.scheduler`: decides the plotting order of agents
-  (which matters only if there is overlap).
-* `offset = nothing`: Can be a function accepting an agent and returning an offset position
-  that adjusts the agent's position when plotted (which matters only if there is overlap).
+* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `adata, mdata`: Same as the keyword arguments of `Agents.run!`, and decide which data of the
   model/agents will be collected and plotted below the interactive plot. Notice that
   data collection can only occur on plotted steps (and thus steps not plotted due to
-  `spu` are also not data-collected).
+  "spu" are also not data-collected).
 * `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
   the corresponding plots have a y-label named after the collected data. Instead, you can
   give `alabels, mlabels` (vectors of strings with exactly same length as `adata, mdata`),
   and these labels will be used instead.
 * `when = true`: When to perform data collection, as in `Agents.run!`.
-* `equalaspect = true`: Set the ABM scatterplot's aspect ratio to equal.
 * `spu = 1:100`: Values that the "spu" slider will obtain.
 """
-function interactive_abm(
+function abm_data_exploration(
         model, agent_step!, model_step!, params = Dict();
-        ac = "#765db4",
-        as = 1,
-        am = :circle,
-        scheduler = model.scheduler,
-        offset = nothing,
         mdata = nothing,
         adata = nothing,
         alabels = nothing,
         mlabels = nothing,
         when = true,
         spu = 1:100,
-        equalaspect = true,
+        kwargs...
     )
 
-    # initialize data collection stuff
+    # preinitialize a bunch of stuff
     model0 = deepcopy(model)
-    modelobs = Observable(model)
+    modelobs = Observable(model) # only useful for resetting
+    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
+    as = get(kwargs, :as, 10)
+    am = get(kwargs, :am, :circle)
+    scheduler = get(kwargs, :scheduler, model.scheduler)
+    offset = get(kwargs, :offset, nothing)
 
-    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
@@ -87,24 +70,24 @@ function interactive_abm(
     df_model = Agents.init_model_dataframe(model, mdata)
     L = (isnothing(adata) ? 0 : size(df_agent)[2]-1) + (isnothing(mdata) ? 0 : size(df_model)[2]-1)
     s = 0 # current step
+    P = length(params)
 
     # Initialize main layout and abm axis
-    figure = Figure(resolution = (1000, 500 + L*100), backgroundcolor = DEFAULT_BG)
+    figure = Figure(resolution = (1600, 800), backgroundcolor = DEFAULT_BG)
     abmax = figure[1,1] = Axis(figure)
 
-    # initialize abm plot stuff
-    ids = scheduler(model)
-    pos = abm_plot!(abmax, model; write stuff here..., ids)
+    # initialize the ABM plot stuff
+    pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
+    speed, slep, run, reset, update = abm_controls_play!(figure, model, spu, true)
 
-    # Initialize ABM interactive platform + parameter sliders
-    controllayout = figure[1, 2] = GridLayout(tellheight = false)
-    slidervals, run, update, spuslider, sleslider, reset = make_abm_controls =
-    make_abm_controls!(figure, controllayout, model, params, spu)
-
-    # Initialize data plots
+    # Initialize parameter controls & data plots
+    datalayout = figure[:, 2] = GridLayout(tellheight = false)
+    slidervals = abm_param_controls!(figure, datalayout, model, params, L)
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
-        data, axs = init_data_plots!(figure, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
+        data, axs = init_abm_data_plots!(
+            figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+        )
     end
 
     # Running the simulation:
@@ -112,19 +95,20 @@ function interactive_abm(
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
         @async while isrunning[]
-            model = modelobs[]
-            n = spuslider[]
-            Agents.step!(model, agent_step!, model_step!, n)
+            n = speed[]
+            model = modelobs[] # this is useful only for the reset button
+            abm_interactive_stepping(
+                model, agent_step!, model_step!, n, scheduler,
+                pos, colors, sizes, markers, ac, as, am, offset
+            )
             if L > 0
                 s += n
-                if Agents.should_we_collect(s, model, when) # update collected data
+                if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
                     push!(N.val, s)
-                    update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                    update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
                 end
             end
-            ids = scheduler(model)
-            update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
-            sleslider[] == 0 ? yield() : sleep(sleslider[])
+            slep[] == 0 ? yield() : sleep(slep[])
             isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
@@ -147,14 +131,25 @@ function interactive_abm(
     return figure, df_agent, df_model
 end
 
+function abm_param_controls!(figure, datalayout, model, params, L)
+    slidervals = Dict{Symbol, Observable}()
+    for (i, (l, vals)) in enumerate(params)
+        startvalue = get(model.properties, l, vals[1])
+        sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
+        slidervals[l] = sll.slider.value # directly add the observable
+        datalayout[i+L, :] = sll.layout
+    end
+    return slidervals
+end
 
-function init_data_plots!(figure, model, df_agent, df_model, adata, mdata, N, alabels, mlabels)
+function init_abm_data_plots!(
+        figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+    )
     Agents.collect_agent_data!(df_agent, model, adata, 0)
     Agents.collect_model_data!(df_model, model, mdata, 0)
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
     Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
     data, axs = [], []
-    datalayout = figure[2, :] = GridLayout()
 
     # Plot all quantities
     # TODO: make scatter+line plot 1.
@@ -191,7 +186,7 @@ function init_data_plots!(figure, model, df_agent, df_model, adata, mdata, N, al
     return data, axs
 end
 
-function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+function update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
     Agents.collect_agent_data!(df_agent, model, adata, N[][end])
     Agents.collect_model_data!(df_model, model, mdata, N[][end])
     La = isnothing(adata) ? 0 : size(df_agent)[2]-1
@@ -215,31 +210,6 @@ function update_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, 
     for ax in axs; autolimits!(ax); end
 end
 
-function make_abm_controls!(figure, controllayout, model, params, spu)
-    spusl = labelslider!(figure, "spu =", spu; tellwidth = true)
-    if model.space isa Agents.ContinuousSpace
-        _s, _v = 0:0.01:1, 0
-    else
-        _s, _v = 0:0.1:10, 1
-    end
-    slesl = labelslider!(figure, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
-    controllayout[1, :] = spusl.layout
-    controllayout[2, :] = slesl.layout
-    run = Button(figure, label = "run")
-    update = Button(figure, label = "update")
-    reset = Button(figure, label = "reset")
-    controllayout[3, :] = MakieLayout.hbox!(run, update, reset, tellwidth = false)
-
-    slidervals = Dict{Symbol, Observable}()
-    for (i, (l, vals)) in enumerate(params)
-        startvalue = get(model.properties, l, vals[1])
-        sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
-        slidervals[l] = sll.slider.value # directly add the observable
-        controllayout[i+4, :] = sll.layout
-    end
-    return slidervals, run.clicks, update.clicks, spusl.slider.value, slesl.slider.value, reset.clicks
-end
-
 function update_abm_parameters!(model, params, slidervals)
     for l in keys(slidervals)
         v = slidervals[l][]
@@ -247,6 +217,7 @@ function update_abm_parameters!(model, params, slidervals)
     end
 end
 
+# TODO: Delete
 function vline!(ax, x; kwargs...)
     linepoints = lift(ax.limits, x) do lims, x
         ymin = minimum(lims)[2]
@@ -258,6 +229,7 @@ end
 
 function add_reset_line!(axs, s)
     for ax in axs
-        vline!(ax, s; color = "#c41818")
+        # vline!(ax, s; color = "#c41818")
+        vlines!(ax, [s], color = "#c41818")
     end
 end

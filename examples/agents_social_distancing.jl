@@ -46,8 +46,6 @@ alabels = ["I", "R"]
 mdata = [nagents]
 mlabels = ["N"]
 
-
-
 params = Dict(
     :death_rate => 0.02:0.001:1.0,
     :reinfection_probability => 0:0.01:1.0,
@@ -56,6 +54,6 @@ params = Dict(
 
 when = (model, s) -> s % 50 == 0
 
-p1 = interactive_abm(model, agent_step!, model_step!, params;
+fig, adf, mdf = abm_data_exploration(model, agent_step!, model_step!, params;
 ac = sir_colors, as = sir_sizes, am = sir_shape,
 when = when, mdata = mdata, adata=adata, alabels=alabels, mlabels=mlabels)

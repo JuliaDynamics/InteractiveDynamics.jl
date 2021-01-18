@@ -6,7 +6,7 @@ export abm_video
 
 
 """
-    abm_plot(model::ABM; kwargs...)
+    abm_plot(model::ABM; kwargs...) → figure
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
 
@@ -48,6 +48,11 @@ function abm_plot!(abmax, model;
         scatterkwargs = NamedTuple(),
     )
 
+    o, e = modellims(model) # TODO: extend to 3D
+    @assert length(o) == 2 "At the moment only 2D spaces can be plotted."
+    # TODO: once grid plotting is possible, this will be adjusted
+    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
+
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
     sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
@@ -64,7 +69,6 @@ function abm_plot!(abmax, model;
         scatterkwargs...
     )
     # TODO: This should be expanded into 3D
-    o, e = modellims(model)
     xlims!(abmax, o[1], e[1])
     ylims!(abmax, o[2], e[2])
     equalaspect && (abmax.aspect = AxisAspect(1))
@@ -85,7 +89,7 @@ end
 
 
 """
-    abm_play(model, agent_step!, model_step!; kwargs...)
+    abm_play(model, agent_step!, model_step!; kwargs...) → figure
 Launch an interactive application that plots an agent based model and can animate
 its evolution in real time. Requires `Agents`.
 
@@ -108,7 +112,7 @@ function abm_play(model, agent_step!, model_step!; kwargs...)
     return figure
 end
 
-function abm_play!(figure, model, agent_step!, model_step!; add_update = false, spu = 1:100, kwargs...)
+function abm_play!(figure, model, agent_step!, model_step!; spu = 1:100, kwargs...)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
@@ -121,7 +125,7 @@ function abm_play!(figure, model, agent_step!, model_step!; add_update = false, 
     abmax = figure[1,1] = Axis(figure)
     pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
     # create the controls for the GUI
-    speed, slep, run, reset, = abm_controls_play!(figure, model, spu, add_update)
+    speed, slep, run, reset, = abm_controls_play!(figure, model, spu, false)
     # Functionality of pressing the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -134,7 +138,7 @@ function abm_play!(figure, model, agent_step!, model_step!; add_update = false, 
                 model, agent_step!, model_step!, n, scheduler,
                 pos, colors, sizes, markers, ac, as, am, offset
             )
-            slep[] == 0 ? yield() : sleep(sleslider[])
+            slep[] == 0 ? yield() : sleep(slep[])
             isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
         end
     end

@@ -34,6 +34,7 @@ function __init__()
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
         include("agents/abm.jl")
+        include("agents/interactive_parameters.jl")
     end
 end
 
