@@ -5,33 +5,13 @@
 </video>
 ```
 
+This page describes functions that can be used in conjunction with [Agents.jl](https://juliadynamics.github.io/Agents.jl/dev/) to animate and interact with agent based models.
+
+The animation at the start of this page was done by running the `examples/daisyworld.jl` file, and see also an example application in [Agents.jl docs](https://juliadynamics.github.io/Agents.jl/dev/examples/schelling/).
+
 ```@docs
-interactive_abm
-```
-
-The animation at the start of this page was done with:
-```julia
-using Agents, Random
-using GLMakie
-using InteractiveChaos
-
-cd(@__DIR__)
-
-model, agent_step!, model_step! = Models.forest_fire()
-
-alive(model) = count(a.status for a in allagents(model))
-burning(model) = count(!a.status for a in allagents(model))
-mdata = [alive, burning, nagents]
-mlabels = ["alive", "burning", "total"]
-
-params = Dict(
-    :f => 0.02:0.01:1.0,
-    :p => 0.01:0.01:1.0,
-)
-
-ac(a) = a.status ? "#1f851a" : "#67091b"
-am = :rect
-
-p1 = interactive_abm(model, agent_step!, model_step!, params;
-ac = ac, as = 1, am = am, mdata = mdata, mlabels=mlabels)
+abm_plot
+abm_video
+abm_play
+abm_data_exploration
 ```

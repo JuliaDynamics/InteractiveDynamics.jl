@@ -1,5 +1,5 @@
 using InteractiveChaos
-import GLMakie
+using GLMakie
 using Agents
 using Random, Statistics
 
@@ -50,6 +50,7 @@ mdata = [:solar_luminosity]
 alabels = ["black", "white", "T"]
 mlabels = ["L"]
 
+model, agent_step!, model_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
 figure, adf, mdf = abm_data_exploration(
     model, agent_step!, model_step!, params;
