@@ -49,7 +49,7 @@ function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = not
     kwargs...)
     N = get(kwargs, :N, 100)
     dx = get(kwargs, :dx, 0.01)
-    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, Float32)
+    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, eltype(bd))
     interactive_billiard(bd::Billiard, ps; kwargs...)
 end
 
@@ -65,11 +65,6 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         particle_size = 1.0,
     )
 
-    if eltype(bd) ≠ Float32 || eltype(ps[1]) ≠ Float32
-        error("Only Float32 number type is possible for the billiard applications. "*
-        "Please initialize billiards and particles by explicitly passing Float32 numbers "*
-        "in all numeric fields (e.g. `bd = billiard_mushroom(1f0, 0.2f0, 1f0, 0f0)`).")
-    end
     N = length(ps)
     p0s = deepcopy(ps) # deep is necessary because vector of mutables
     ω0 = DynamicalBilliards.ismagnetic(ps[1]) ? ps[1].ω : nothing
@@ -221,7 +216,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
             pos = val[1]
             dir = val[2] - val[1]
             φ = atan(dir[2], dir[1])
-            p0s .= DynamicalBilliards.particlebeam(pos..., φ, N, dx, ω0, Float32)
+            p0s .= DynamicalBilliards.particlebeam(pos..., φ, N, dx, ω0, eltype(bd))
             resetbutton.clicks[] += 1
         end
     end # adding controls blocks
@@ -269,7 +264,7 @@ function billiard_video(file::String, bd::Billiard, x::Real, y::Real, φ::Real, 
     kwargs...)
     N = get(kwargs, :N, 500)
     dx = get(kwargs, :dx, 0.01)
-    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, Float32)
+    ps = DynamicalBilliards.particlebeam(x, y, φ, N, dx, ω, eltype(bd))
     billiard_video(file, bd, ps; kwargs...)
 end
 
@@ -278,7 +273,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
         speed = 5, frames = 1000, framerate = 60, kwargs...
     )
 
-    dt = Float32(dt)
+    dt = eltype(bd)(dt)
     if res == nothing
         xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
         aspect = (xmax - xmin)/(ymax-ymin)
@@ -352,7 +347,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
     else
         to_color.(colors)
     end
-    dt = Float32(dt)
+    dt = eltype(bd)(dt)
 
     figure, allparobs, balls, vels, vr = interactive_billiard(bd, ps;
         res, plot_particles, kwargs..., add_controls = false,
@@ -503,7 +498,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
         pos, vel = DynamicalBilliards.from_bcoords(ξsin..., bd, intervals)
         current_color[] = newcolor(pos, vel, ξsin...)
         p0s[1] = ω ≠ nothing ? DynamicalBilliards.MagneticParticle(pos, vel, ω) : DynamicalBilliards.Particle(pos, vel)
-        DynamicalBilliards.propagate!(p0s[1], 10eps(Float32)) # ensure no bad behavior with boundary
+        DynamicalBilliards.propagate!(p0s[1], 10eps(eltype(bd))) # ensure no bad behavior with boundary
         rebind_partobs!(parobs, p0s[1], bd, ξsin)
         resetbutton.clicks[] += 1 # reset main billiard
     end

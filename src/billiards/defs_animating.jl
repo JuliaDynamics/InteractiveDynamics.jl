@@ -1,32 +1,33 @@
 using DataStructures
 
-mutable struct ParticleObservable{P<:AbstractParticle{Float32}}
+mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     # Fields necessary for simulation
-    p::P   # particle
-    i::Int # index of obstacle to be collided with
-    tmin::Float32 # time to next collision
-    t::Float32    # current time (resets at each collision)
-    n::Int        # number of collisions done so far
-    T::Float32    # total time
+    p::P         # particle
+    i::Int       # index of obstacle to be collided with
+    tmin::T      # time to next collision
+    t::T         # current time (resets at each collision)
+    n::Int       # number of collisions done so far
+    T::T         # total time
     # Fields used in plotting
     tail::Observable{CircularBuffer{Point2f0}}
     ξsin::Observable{Point2f0}
 end
-function ParticleObservable(p, bd, n, ξsin = Point2f0(0, 0)) # initializer
-    i, tmin::Float32, cp = DynamicalBilliards.next_collision(p, bd)
+function ParticleObservable(p::P, bd, n, ξsin = Point2f0(0, 0)) where {P<:AbstractParticle}
+    T = eltype(p.pos)
+    i, tmin, cp = DynamicalBilliards.next_collision(p, bd)
     cb = CircularBuffer{Point2f0}(n)
     for i in 1:n; push!(cb, Point2f0(p.pos)); end
-    ParticleObservable(p, i, tmin, 0f0, 0, 0f0, Observable.((cb, ξsin))...)
+    ParticleObservable{T,P}(p, i, tmin, 0, 0, 0, Observable(cb), Observable(ξsin))
 end
 const ParObs = ParticleObservable
 
 function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin = p.ξsin[])
-    i, tmin::Float32, cp = DynamicalBilliards.next_collision(p0, bd)
+    i, tmin, cp = DynamicalBilliards.next_collision(p0, bd)
     ξ = sφ = 0f0 # TODO: Use boundary map on cp
     p.p.pos = p0.pos
     p.p.vel = p0.vel
     DynamicalBilliards.ismagnetic(p.p) && (p.p.center = DynamicalBilliards.find_cyclotron(p.p))
-    p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0f0, 0, 0f0
+    p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0, 0, 0
     L = length(p.tail[])
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
@@ -60,10 +61,10 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
         ξ += intervals[parobs.i]
         parobs.ξsin[] = (ξ, sφ)
     end
-    i, tmin::Float32, = DynamicalBilliards.next_collision(parobs.p, bd)
+    i, tmin, = DynamicalBilliards.next_collision(parobs.p, bd)
     parobs.i = i
     parobs.tmin = tmin
-    parobs.t = 0f0
+    parobs.t = 0
     parobs.T += tmin
     parobs.n += 1
     push!(parobs.tail[], parobs.p.pos)

@@ -1,7 +1,7 @@
 name = "InteractiveChaos"
 uuid = "81850811-659e-51ab-a7c2-5dd848ff4aa4"
 repo = "https://github.com/JuliaDynamics/InteractiveChaos.jl.git"
-version = "0.12.0"
+version = "0.12.1"
 
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"
