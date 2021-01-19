@@ -202,7 +202,7 @@ end
 
 
 """
-    abm_play(file, model, agent_step!, model_step!; kwargs...)
+    abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
 saved at given path `file`. The plotting is identical as in [`abm_plot`](@ref).
 
@@ -214,7 +214,7 @@ saved at given path `file`. The plotting is identical as in [`abm_plot`](@ref).
 * `frames = 300`: How many frames to record in total.
 * `resolution = (600, 600)`: Resolution of the figure.
 """
-function abm_video(file, model, agent_step!, model_step!;
+function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
         title = "", showstep = true, kwargs...
     )
@@ -233,7 +233,7 @@ function abm_video(file, model, agent_step!, model_step!;
     if title ≠ "" && showstep
         t = lift(x -> title*", step = "*string(x), s)
     elseif showstep
-        t = lift(x -> "step = "*string(x))
+        t = lift(x -> "step = "*string(x), s)
     else
         t = title
     end

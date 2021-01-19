@@ -1,4 +1,5 @@
-using InteractiveChaos, GLMakie
+using InteractiveChaos
+import GLMakie
 using Agents
 using Random, Statistics
 
