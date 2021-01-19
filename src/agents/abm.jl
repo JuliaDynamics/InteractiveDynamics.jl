@@ -204,7 +204,8 @@ end
 """
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
-saved at given path `file`. The plotting is identical as in [`abm_plot`](@ref).
+saved at given path `file`, by recording the behavior of [`abm_play`](@ref) (without sliders).
+The plotting is identical as in [`abm_plot`](@ref).
 
 ## Keywords
 * `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).

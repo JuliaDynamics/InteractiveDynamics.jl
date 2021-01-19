@@ -11,7 +11,7 @@ The animation at the start of this page was done by running the `examples/daisyw
 
 ```@docs
 abm_plot
-abm_video
 abm_play
+abm_video
 abm_data_exploration
 ```
