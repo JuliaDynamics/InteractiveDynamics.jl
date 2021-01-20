@@ -9,7 +9,7 @@ All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
 
-The function returns `figure, layout`. `figure` is the overarching figure
+The function returns `figure, obs`. `figure` is the overarching figure
 (the entire GUI) and can be recorded.
 `obs` is a vector of observables, each containing the current state of the trajectory.
 

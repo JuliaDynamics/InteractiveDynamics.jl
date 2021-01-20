@@ -562,7 +562,8 @@ the boundary map, each with its own color (keyword `colors`), and the same color
 for the corresponding scatter points in the boundary map.
 
 All keyword arguments are the same as [`interactive_billiard_bmap`](@ref), besides
-the interaction part of course.
+the interaction part of course. The additional keyword `steps` counts how many
+times to progress the particles (in multiples of `dt`).
 """
 function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
         ms = 8, plot_particles=true, colors = JULIADYNAMICS_COLORS,
