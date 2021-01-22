@@ -1,3 +1,5 @@
+export abm_interactive_step!
+
 struct ABMStepper{AS, MS, X, C, M, S, O}
     agent_step!::AS
     model_step!::MS
@@ -12,10 +14,18 @@ struct ABMStepper{AS, MS, X, C, M, S, O}
     markers::Observable
 end
 
+Base.show(io::IO, ::ABMStepper) =
+println(io, "Helper structure for stepping and updating the plot of an agent based model. ",
+"It is outputted by `abm_plot` and can be used in `abm_interactive_step!`.")
 
-# If n = 0, it updates the plotted quantities without
-# doing any stepping (useful when the model parameters have been updated
-# or the reset button has been used)
+"""
+    abm_interactive_step!(abmstepper, model, n::Int)
+Step the given `model` for `n` steps while also updating the plot that corresponds to it,
+which is produced with the function [`abm_plot`](@ref).
+
+You can still call this function with `n=0` to update the plot for a new `model`,
+without doing any stepping.
+"""
 function abm_interactive_step!(abmstepper, model, n::Int)
     astep! = abmstepper.agent_step!
     mstep! = abmstepper.model_step!
