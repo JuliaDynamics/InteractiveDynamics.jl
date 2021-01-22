@@ -1,13 +1,11 @@
 export abm_interactive_step!
 
-struct ABMStepper{AS, MS, X, C, M, S, O}
-    agent_step!::AS
-    model_step!::MS
-    scheduler::X
+struct ABMStepper{X, C, M, S, O}
     ac::C
     am::M
     as::S
     offset::O
+    scheduler::X
     pos::Observable
     colors::Observable
     sizes::Observable
@@ -18,15 +16,29 @@ Base.show(io::IO, ::ABMStepper) =
 println(io, "Helper structure for stepping and updating the plot of an agent based model. ",
 "It is outputted by `abm_plot` and can be used in `abm_interactive_step!`.")
 
+function abm_initialize_plot!(ax, model;
+        ac = JULIADYNAMICS_COLORS[1],
+        as = 1,
+        am = :circle,
+        scheduler = model.scheduler,
+        offset = nothing,
+        equalaspect = true,
+        scatterkwargs = NamedTuple(),
+    )
+    # TODO: initializes the stepper and adds the plots to the given axis
+    # The source code of the internal abm_plot! goes here
+    return abmstepper
+end
+
 """
-    abm_interactive_step!(abmstepper, model, n::Int)
+    abm_interactive_step!(abmstepper, agent_step!, model_step!, model, n::Int)
 Step the given `model` for `n` steps while also updating the plot that corresponds to it,
 which is produced with the function [`abm_plot`](@ref).
 
 You can still call this function with `n=0` to update the plot for a new `model`,
 without doing any stepping.
 """
-function abm_interactive_step!(abmstepper, model, n::Int)
+function abm_interactive_step!(abmstepper, agent_step!, model_step!, model, n::Int)
     astep! = abmstepper.agent_step!
     mstep! = abmstepper.model_step!
     sched = abmstepper.scheduler

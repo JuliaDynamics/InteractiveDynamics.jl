@@ -2,6 +2,7 @@ export abm_plot
 export abm_play
 export abm_video
 
+# TODO: update docstring
 """
     abm_plot(model::ABM; kwargs...) → figure
 Plot an agent based model by plotting each individual agent as a marker and using
@@ -32,8 +33,10 @@ the agent's position field as its location on the plot. Requires `Agents`.
 function abm_plot(model; resolution = (600, 600), kwargs...)
     figure = Figure(; resolution)
     ax = figure[1,1] = Axis(figure)
+    abmstepper = abm_initialize_plot!(ax, model; kwargs...)
+    # TODO: then abm_plot! becomes obsolete, and we
+    return figure, abmstepper
     pos = abm_plot!(ax, model; kwargs...)
-    return figure
 end
 
 function abm_plot!(abmax, model;
