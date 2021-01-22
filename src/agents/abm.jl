@@ -173,34 +173,6 @@ function abm_controls_play!(figure, model, spu, add_update = false)
     return spusl.slider.value, slesl.slider.value, run.clicks, reset.clicks, upret
 end
 
-function abm_interactive_stepping(
-        model, agent_step!, model_step!, n, scheduler,
-        pos, colors, sizes, markers, ac, as, am, offset
-    )
-    Agents.step!(model, agent_step!, model_step!, n)
-    ids = scheduler(model)
-    update_abm_plot!(pos, colors, sizes, markers, model, ids, ac, as, am, offset)
-    return nothing
-end
-
-function update_abm_plot!(
-        pos, colors, sizes, markers, model, ids, ac, as, am, offset
-    )
-    if Agents.nagents(model) == 0
-        @warn "The model has no agents, we can't plot anymore!"
-        error("The model has no agents, we can't plot anymore!")
-    end
-    if offset == nothing
-        pos[] = [model[i].pos for i in ids]
-    else
-        pos[] = [model[i].pos .+ offset(model[i]) for i in ids]
-    end
-    if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
-    if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
-    if am isa Function; markers[] = [am(model[i]) for i in ids]; end
-end
-
-
 """
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
