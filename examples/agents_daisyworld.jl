@@ -25,6 +25,13 @@ fig, abmstepper = abm_plot(
     scheduler = landfirst # crucial to change model scheduler!
 )
 
+# %% interactive evolution
+fig, abmstepper = abm_play(
+    model, agent_step!, model_step!;
+    ac = daisycolor, am = daisyshape, as = daisysize,
+    scheduler = landfirst # crucial to change model scheduler!
+)
+
 # %% daisyworld video:
 model, agent_step!, model_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 abm_video(

@@ -44,14 +44,8 @@ function abm_plot(model; resolution = (600, 600), kwargs...)
     return fig, abmstepper
 end
 
-
-
-#######################################
-#######################################
-#######################################
-#######################################
 """
-    abm_play(model, agent_step!, model_step!; kwargs...) → fig
+    abm_play(model, agent_step!, model_step!; kwargs...) → fig, abmstepper
 Launch an interactive application that plots an agent based model and can animate
 its evolution in real time. Requires `Agents`.
 
@@ -68,25 +62,19 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spu = 1:100`: The values of the "spu" slider.
 """
-function abm_play(model, agent_step!, model_step!; kwargs...)
+function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
     fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    abm_play!(fig, model, agent_step!, model_step!; kwargs...)
-    return fig
+    ax = fig[1,1] = Axis(fig)
+    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
+    abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
+    display(fig)
+    return fig, abmstepper
 end
 
-function abm_play!(fig, model, agent_step!, model_step!; spu = 1:100, kwargs...)
+function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
-    scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
-    # plot the abm
-    abmax = fig[1,1] = Axis(fig)
-    pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
-    # create the controls for the GUI
     speed, slep, run, reset, = abm_controls_play!(fig, model, spu, false)
     # Functionality of pressing the run button
     isrunning = Observable(false)
@@ -96,10 +84,7 @@ function abm_play!(fig, model, agent_step!, model_step!; spu = 1:100, kwargs...)
         # while isrunning[]
             n = speed[]
             model = modelobs[] # this is useful only for the reset button
-            abm_interactive_stepping(
-                model, agent_step!, model_step!, n, scheduler,
-                pos, colors, sizes, markers, ac, as, am, offset
-            )
+            Agents.step!(abmstepper, model, agent_step!, model_step!, n)
             slep[] == 0 ? yield() : sleep(slep[])
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
@@ -107,9 +92,8 @@ function abm_play!(fig, model, agent_step!, model_step!; spu = 1:100, kwargs...)
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
-        update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
+        Agents.step!(abmstepper, agent_step!, model_step!, modelobs[], 0)
     end
-
     return nothing
 end
 

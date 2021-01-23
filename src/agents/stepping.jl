@@ -67,25 +67,25 @@ end
 
 
 #=
-    Agents.step!(abmstepper, agent_step!, model_step!, model, n::Int)
+    Agents.step!(abmstepper, model, agent_step!, model_step!, n::Int)
 Step the given `model` for `n` steps while also updating the plot that corresponds to it,
 which is produced with the function [`abm_plot`](@ref).
 
 You can still call this function with `n=0` to update the plot for a new `model`,
 without doing any stepping.
 =#
-function Agents.step!(abmstepper::ABMStepper, agent_step!, model_step!, model, n::Int)
-    sched = abmstepper.scheduler
-    ac, am, as = getproperty.(abmstepper, (:ac, :am, :as))
+function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n::Int)
+    ac, am, as = abmstepper.ac, abmstepper.am, abmstepper.as
     offset = abmstepper.offset
-    pos, colors, sizes, markers = getproperty.(abmstepper, (:pos, :colors, :sizes, :markers))
+    pos, colors = abmstepper.pos, abmstepper.colors
+    sizes, markers =  abmstepper.sizes, abmstepper.markers
 
     Agents.step!(model, agent_step!, model_step!, n)
-    ids = scheduler(model)
     if Agents.nagents(model) == 0
         @warn "The model has no agents, we can't plot anymore!"
         error("The model has no agents, we can't plot anymore!")
     end
+    ids = abmstepper.scheduler(model)
     if offset == nothing
         pos[] = [model[i].pos for i in ids]
     else
