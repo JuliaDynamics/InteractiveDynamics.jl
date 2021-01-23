@@ -1,12 +1,18 @@
-export abm_plot
-export abm_play
-export abm_video
+export abm_plot, abm_play, abm_video
 
-# TODO: update docstring
 """
-    abm_plot(model::ABM; kwargs...) → figure
+    abm_plot(model::ABM; kwargs...) → fig, abmstepper
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
+
+Return the overarching `fig` object, as well as a struct `abmstepper` that can be used
+to interactively animate the evolution of the ABM and combine it with other subplots.
+To progress the ABM plot `n` steps simply do:
+```julia
+Agents.step!(abmstepper, model, agent_step!, model_step!, n)
+```
+You can still call this function with `n=0` to update the plot for a new `model`,
+without doing any stepping.
 
 ## Keywords
 * `ac, as, am`: These three keywords decided the color, size, and marker, that
@@ -28,69 +34,24 @@ the agent's position field as its location on the plot. Requires `Agents`.
   (which matters only if there is overlap).
 * `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
-* `resolution = (600, 600)`: Resolution of the figure.
+* `resolution = (600, 600)`: Resolution of the fig.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
-    figure = Figure(; resolution)
-    ax = figure[1,1] = Axis(figure)
-    abmstepper = abm_initialize_plot!(ax, model; kwargs...)
-    # TODO: then abm_plot! becomes obsolete, and we
-    return figure, abmstepper
-    pos = abm_plot!(ax, model; kwargs...)
-end
-
-function abm_plot!(abmax, model;
-        ac = JULIADYNAMICS_COLORS[1],
-        as = 1,
-        am = :circle,
-        scheduler = model.scheduler,
-        offset = nothing,
-        equalaspect = true,
-        scatterkwargs = NamedTuple(),
-    )
-
-    o, e = modellims(model) # TODO: extend to 3D
-    @assert length(o) == 2 "At the moment only 2D spaces can be plotted."
-    # TODO: once grid plotting is possible, this will be adjusted
-    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
-
-    ids = scheduler(model)
-    colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
-    sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
-    markers = am isa Function ? Observable([am(model[i]) for i ∈ ids]) : am
-    if offset == nothing
-        pos = Observable([model[i].pos for i ∈ ids])
-    else
-        pos = Observable([model[i].pos .+ offset(model[i]) for i ∈ ids])
-    end
-
-    scatter!(
-        abmax, pos;
-        color = colors, markersize = sizes, marker = markers, strokewidth = 0.0,
-        scatterkwargs...
-    )
-    # TODO: This should be expanded into 3D
-    xlims!(abmax, o[1], e[1])
-    ylims!(abmax, o[2], e[2])
-    equalaspect && (abmax.aspect = AxisAspect(1))
-
-    return pos, colors, sizes, markers
-end
-
-function modellims(model)
-    if model.space isa Agents.ContinuousSpace
-        e = model.space.extent
-        o = zero.(e) .+ 0.5
-    elseif model.space isa Agents.DiscreteSpace
-        e = size(model.space.s) .+ 1
-        o = zero.(e)
-    end
-    return o, e
+    fig = Figure(; resolution)
+    ax = fig[1,1] = Axis(fig)
+    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
+    display(fig)
+    return fig, abmstepper
 end
 
 
+
+#######################################
+#######################################
+#######################################
+#######################################
 """
-    abm_play(model, agent_step!, model_step!; kwargs...) → figure
+    abm_play(model, agent_step!, model_step!; kwargs...) → fig
 Launch an interactive application that plots an agent based model and can animate
 its evolution in real time. Requires `Agents`.
 
@@ -108,12 +69,12 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; kwargs...)
-    figure = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    abm_play!(figure, model, agent_step!, model_step!; kwargs...)
-    return figure
+    fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
+    abm_play!(fig, model, agent_step!, model_step!; kwargs...)
+    return fig
 end
 
-function abm_play!(figure, model, agent_step!, model_step!; spu = 1:100, kwargs...)
+function abm_play!(fig, model, agent_step!, model_step!; spu = 1:100, kwargs...)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
@@ -123,10 +84,10 @@ function abm_play!(figure, model, agent_step!, model_step!; spu = 1:100, kwargs.
     scheduler = get(kwargs, :scheduler, model.scheduler)
     offset = get(kwargs, :offset, nothing)
     # plot the abm
-    abmax = figure[1,1] = Axis(figure)
+    abmax = fig[1,1] = Axis(fig)
     pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
     # create the controls for the GUI
-    speed, slep, run, reset, = abm_controls_play!(figure, model, spu, false)
+    speed, slep, run, reset, = abm_controls_play!(fig, model, spu, false)
     # Functionality of pressing the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -140,7 +101,7 @@ function abm_play!(figure, model, agent_step!, model_step!; spu = 1:100, kwargs.
                 pos, colors, sizes, markers, ac, as, am, offset
             )
             slep[] == 0 ? yield() : sleep(slep[])
-            isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
     # Clicking the reset button
@@ -152,21 +113,21 @@ function abm_play!(figure, model, agent_step!, model_step!; spu = 1:100, kwargs.
     return nothing
 end
 
-function abm_controls_play!(figure, model, spu, add_update = false)
-    controllayout = figure[2, 1] = GridLayout(tellheight = true)
-    spusl = labelslider!(figure, "spu =", spu; tellwidth = true)
+function abm_controls_play!(fig, model, spu, add_update = false)
+    controllayout = fig[2, 1] = GridLayout(tellheight = true)
+    spusl = labelslider!(fig, "spu =", spu; tellwidth = true)
     if model.space isa Agents.ContinuousSpace
         _s, _v = 0:0.01:1, 0
     else
         _s, _v = 0:0.1:10, 1
     end
-    slesl = labelslider!(figure, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
+    slesl = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
     controllayout[2, :] = slesl.layout
-    run = Button(figure, label = "run")
-    reset = Button(figure, label = "reset")
+    run = Button(fig, label = "run")
+    reset = Button(fig, label = "reset")
     if add_update
-        update = Button(figure, label = "update")
+        update = Button(fig, label = "update")
         controllayout[3, :] = MakieLayout.hbox!(run, reset, update; tellwidth = false)
         upret = update.clicks
     else
@@ -188,13 +149,13 @@ The plotting is identical as in [`abm_plot`](@ref).
   frame.
 * `framerate = 30`: The frame rate of the exported video.
 * `frames = 300`: How many frames to record in total.
-* `resolution = (600, 600)`: Resolution of the figure.
+* `resolution = (600, 600)`: Resolution of the fig.
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
         title = "", showstep = true, kwargs...
     )
-    figure = Figure(; resolution, backgroundcolor = DEFAULT_BG)
+    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
@@ -215,11 +176,11 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
 
     # plot the abm
-    abmax = figure[1,1] = Axis(figure; title = t, titlealign = :left)
+    abmax = fig[1,1] = Axis(fig; title = t, titlealign = :left)
     pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
 
 
-    record(figure, file, 1:frames; framerate) do j
+    record(fig, file, 1:frames; framerate) do j
         abm_interactive_stepping(
             model, agent_step!, model_step!, spf, scheduler,
             pos, colors, sizes, markers, ac, as, am, offset
