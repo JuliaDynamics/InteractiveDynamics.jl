@@ -94,7 +94,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
-        Agents.step!(abmstepper, agent_step!, model_step!, modelobs[], 0)
+        Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
     end
     return nothing
 end
