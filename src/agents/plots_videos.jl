@@ -44,6 +44,8 @@ function abm_plot(model; resolution = (600, 600), kwargs...)
     return fig, abmstepper
 end
 
+##########################################################################################
+
 """
     abm_play(model, agent_step!, model_step!; kwargs...) → fig, abmstepper
 Launch an interactive application that plots an agent based model and can animate
@@ -121,6 +123,8 @@ function abm_controls_play!(fig, model, spu, add_update = false)
     return spusl.slider.value, slesl.slider.value, run.clicks, reset.clicks, upret
 end
 
+
+##########################################################################################
 """
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
@@ -139,15 +143,6 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
         title = "", showstep = true, kwargs...
     )
-    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    # preinitialize a bunch of stuff
-    model0 = deepcopy(model)
-    modelobs = Observable(model) # only useful for resetting
-    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
-    scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
 
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -159,16 +154,12 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         t = title
     end
 
-    # plot the abm
-    abmax = fig[1,1] = Axis(fig; title = t, titlealign = :left)
-    pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
-
+    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
+    ax = fig[1,1] = Axis(fig; title = t, titlealign = :left)
+    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
 
     record(fig, file, 1:frames; framerate) do j
-        abm_interactive_stepping(
-            model, agent_step!, model_step!, spf, scheduler,
-            pos, colors, sizes, markers, ac, as, am, offset
-        )
+        Agents.step!(abmstepper, model, agent_step!, model_step!, spf)
         s[] += spf; s[] = s[]
         # (title ≠ "" || showstep) && (abmax.title = titlef(s))
     end
