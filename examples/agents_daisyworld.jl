@@ -19,15 +19,22 @@ daisysize(a::Land) = 20
 landfirst = by_type((Land, Daisy), false) # scheduler
 
 # static daisyworld plot:
-figure = abm_plot(
+fig, abmstepper = abm_plot(
     model;
+    ac = daisycolor, am = daisyshape, as = daisysize,
+    scheduler = landfirst # crucial to change model scheduler!
+)
+
+# %% interactive evolution
+fig, abmstepper = abm_play(
+    model, agent_step!, model_step!;
     ac = daisycolor, am = daisyshape, as = daisysize,
     scheduler = landfirst # crucial to change model scheduler!
 )
 
 # %% daisyworld video:
 model, agent_step!, model_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
-figure = abm_video(
+abm_video(
     "daisyworld.mp4", model, agent_step!, model_step!;
     ac = daisycolor, am = daisyshape, as = daisysize,
     scheduler = landfirst, # crucial to change model scheduler!
@@ -52,7 +59,7 @@ mlabels = ["L"]
 
 model, agent_step!, model_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
-figure, adf, mdf = abm_data_exploration(
+fig, adf, mdf = abm_data_exploration(
     model, agent_step!, model_step!, params;
     ac = daisycolor, am = daisyshape, as = daisysize,
     mdata, adata, alabels, mlabels,
