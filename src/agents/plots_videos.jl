@@ -40,7 +40,6 @@ function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
     ax = fig[1,1] = Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
-    display(fig)
     return fig, abmstepper
 end
 
