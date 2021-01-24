@@ -12,7 +12,8 @@ To progress the ABM plot `n` steps simply do:
 Agents.step!(abmstepper, model, agent_step!, model_step!, n)
 ```
 You can still call this function with `n=0` to update the plot for a new `model`,
-without doing any stepping.
+without doing any stepping. From `fig` you can obtain the plotted axis (to e.g. turn
+off ticks, etc.) using `ax = content(fig[1, 1])`.
 
 ## Keywords
 * `ac, as, am`: These three keywords decided the color, size, and marker, that
@@ -137,10 +138,12 @@ The plotting is identical as in [`abm_plot`](@ref).
 * `framerate = 30`: The frame rate of the exported video.
 * `frames = 300`: How many frames to record in total.
 * `resolution = (600, 600)`: Resolution of the fig.
+* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
+  setting `xticksvisible = false`.
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
-        title = "", showstep = true, kwargs...
+        title = "", showstep = true, axiskwargs = NamedTuple(), kwargs...
     )
 
     # add some title stuff
@@ -154,7 +157,7 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
 
     fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1] = Axis(fig; title = t, titlealign = :left)
+    ax = fig[1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
     abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
 
     record(fig, file, 1:frames; framerate) do j

@@ -1,13 +1,13 @@
-struct ABMStepper{X, C, M, S, O}
+struct ABMStepper{X, C, M, S, O, AC, AS, AM}
     ac::C
     am::M
     as::S
     offset::O
     scheduler::X
     pos::Observable
-    colors::Union{Observable,RGBAf0,Vector{RGBAf0}}
-    sizes::Union{Observable,S}
-    markers::Union{Observable,M}
+    colors::AC
+    sizes::AS
+    markers::AM
 end
 
 Base.show(io::IO, ::ABMStepper) =
