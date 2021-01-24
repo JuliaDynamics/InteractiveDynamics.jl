@@ -17,7 +17,7 @@ println(io, "Helper structure for stepping and updating the plot of an agent bas
 "Initialize the abmstepper and the plotted observables. return the stepper"
 function abm_init_stepper_and_plot!(ax, model;
         ac = JULIADYNAMICS_COLORS[1],
-        as = 1,
+        as = 10,
         am = :circle,
         scheduler = model.scheduler,
         offset = nothing,
@@ -56,12 +56,10 @@ end
 function modellims(model)
     if model.space isa Agents.ContinuousSpace
         e = model.space.extent
-        o = zero.(e) .+ 0.5
     elseif model.space isa Agents.DiscreteSpace
         e = size(model.space.s) .+ 1
-        o = zero.(e)
     end
-    return o, e
+    return zero.(e), e
 end
 
 
