@@ -5,7 +5,7 @@ struct ABMStepper{X, C, M, S, O}
     offset::O
     scheduler::X
     pos::Observable
-    colors::Union{Observable,RGBA{Float32},Vector{RGBA{Float32}}}
+    colors::Union{Observable,RGBf0,Vector{RGBf0}}
     sizes::Union{Observable,S}
     markers::Union{Observable,M}
 end
