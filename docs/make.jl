@@ -4,7 +4,7 @@ Pkg.activate(@__DIR__)
 CI = get(ENV, "CI", nothing) == "true" || get(ENV, "GITHUB_TOKEN", nothing) !== nothing
 CI && Pkg.instantiate()
 
-using InteractiveChaos
+using InteractiveDynamics
 using DynamicalSystems, DynamicalBilliards, Agents
 using Documenter
 using DocumenterTools: Themes
@@ -25,9 +25,9 @@ Themes.compile(joinpath(@__DIR__, "juliadynamics-light.scss"), joinpath(@__DIR__
 Themes.compile(joinpath(@__DIR__, "juliadynamics-dark.scss"), joinpath(@__DIR__, "src/assets/themes/documenter-dark.css"))
 
 makedocs(
-modules=[InteractiveChaos, DynamicalSystems, DynamicalBilliards, Agents],
+modules=[InteractiveDynamics, DynamicalSystems, DynamicalBilliards, Agents],
 doctest=false,
-sitename= "InteractiveChaos",
+sitename= "InteractiveDynamics",
 root = @__DIR__,
 format = Documenter.HTML(
     prettyurls = CI,
@@ -50,7 +50,7 @@ pages = [
 
 if CI
     deploydocs(
-        repo = "github.com/JuliaDynamics/InteractiveChaos.jl.git",
+        repo = "github.com/JuliaDynamics/InteractiveDynamics.jl.git",
         target = "build",
         push_preview = true
     )

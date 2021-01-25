@@ -1,4 +1,4 @@
-using InteractiveChaos, Observables, Test
+using InteractiveDynamics, Observables, Test
 using DynamicalSystems
 
 ds = Systems.henonheiles()

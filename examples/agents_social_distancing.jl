@@ -1,6 +1,6 @@
 using Agents, Random
 using GLMakie
-using InteractiveChaos
+using InteractiveDynamics
 
 model, agent_step!, model_step! = Models.social_distancing(isolated = 0.8)
 

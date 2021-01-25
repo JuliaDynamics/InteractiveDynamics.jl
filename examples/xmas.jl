@@ -1,4 +1,4 @@
-using DynamicalBilliards, InteractiveChaos, GLMakie
+using DynamicalBilliards, InteractiveDynamics, GLMakie
 
 SV = SVector{2, Float32}
 w = 0.4 # stump width

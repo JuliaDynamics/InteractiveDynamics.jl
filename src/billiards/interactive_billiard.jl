@@ -372,7 +372,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
         scatter!(
             tsax, all_balls[i];
             markersize = 20*AbstractPlotting.px,
-            color = InteractiveChaos.to_alpha(cs[i], 0.75),
+            color = InteractiveDynamics.to_alpha(cs[i], 0.75),
         )
     end
     ylims!(tsax, ylim)
@@ -387,7 +387,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
             for i in 1:N
                 p = ps[i]
                 parobs = allparobs[i]
-                InteractiveChaos.animstep!(parobs, bd, dt, false)
+                InteractiveDynamics.animstep!(parobs, bd, dt, false)
             end
         end
 
@@ -396,11 +396,11 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
         for i in 1:N
             p = ps[i]
             parobs = allparobs[i]
-            InteractiveChaos.animstep!(parobs, bd, dt, true)
+            InteractiveDynamics.animstep!(parobs, bd, dt, true)
             # Update timeseries
             current_point = Point2f0(t_current, f(p))
             all_balls[i][] = current_point
-            InteractiveChaos.pushupdate!(all_ts[i], current_point)
+            InteractiveDynamics.pushupdate!(all_ts[i], current_point)
             if plot_particles
                 balls[][i] = parobs.p.pos
                 vels[][i] = vr * parobs.p.vel
@@ -576,7 +576,7 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
         kwargs..., dt = dt, add_controls =false, plot_particles=plot_particles,
         intervals = intervals, res = (1600, 800), colors = colors
     )
-    cs = (!(colors isa Vector) || length(colors) ≠ N) ? InteractiveChaos.colors_from_map(colors, 1.0, N) : colors
+    cs = (!(colors isa Vector) || length(colors) ≠ N) ? InteractiveDynamics.colors_from_map(colors, 1.0, N) : colors
 
     sublayout = GridLayout()
     bmapax = sublayout[1,1] = Axis(figure)

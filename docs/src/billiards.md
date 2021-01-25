@@ -16,7 +16,7 @@ interactive_billiard
 
 For example, running
 ```
-using DynamicalBilliards, InteractiveChaos, GLMakie
+using DynamicalBilliards, InteractiveDynamics, GLMakie
 bd, = billiard_logo(T = Float32)
 interactive_billiard(bd, 1f0, tail = 1000)
 ```
@@ -49,7 +49,7 @@ billiard_video_timeseries
 
 For example running
 ```julia
-using InteractiveChaos, DynamicalBilliards, GLMakie
+using InteractiveDynamics, DynamicalBilliards, GLMakie
 
 psize = 2.0
 

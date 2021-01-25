@@ -1,4 +1,4 @@
-using InteractiveChaos
+using InteractiveDynamics
 using DynamicalSystems, GLMakie
 using OrdinaryDiffEq
 

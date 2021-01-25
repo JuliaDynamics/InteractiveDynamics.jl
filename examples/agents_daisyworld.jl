@@ -1,4 +1,4 @@
-using InteractiveChaos
+using InteractiveDynamics
 using GLMakie
 using Agents
 using Random, Statistics

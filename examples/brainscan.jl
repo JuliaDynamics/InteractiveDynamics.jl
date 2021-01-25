@@ -1,4 +1,4 @@
-using GLMakie, DynamicalSystems, InteractiveChaos
+using GLMakie, DynamicalSystems, InteractiveDynamics
 using OrdinaryDiffEq
 
 ds = Systems.henonheiles()

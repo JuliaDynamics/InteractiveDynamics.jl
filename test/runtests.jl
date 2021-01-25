@@ -1,4 +1,4 @@
-using Test, InteractiveChaos, Observables
+using Test, InteractiveDynamics, Observables
 
-include("od_test.jl")
-include("psos_test.jl")
+# include("od_test.jl")
+# include("psos_test.jl")
