@@ -4,7 +4,7 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 DocumenterTools = "35a29f4d-8980-5a13-9543-d66fff28ecb8"
 DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5"
 DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634"
-InteractiveDynamics = "81850811-659e-51ab-a7c2-5dd848ff4aa4"
+InteractiveDynamics = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 
 [compat]
 Documenter = "0.24.6"
