@@ -1,6 +1,4 @@
-![InteractiveDynamics logo](https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/interactive_chaos_logo.gif?raw=true)
-
-## Introduction
+# Introduction
 `InteractiveDynamics` is a package that provides applications for interactively exploring dynamical systems. It _extends_ various packages of [JuliaDynamics](https://juliadynamics.github.io/JuliaDynamics/).
 
 !!! info "Example animations"
