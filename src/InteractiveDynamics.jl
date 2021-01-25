@@ -1,4 +1,4 @@
-module InteractiveChaos
+module InteractiveDynamics
 
 using AbstractPlotting, Observables
 using AbstractPlotting.MakieLayout

@@ -13,7 +13,7 @@ interactive_evolution
 To generate the video at the start of this page run
 
 ```julia
-using InteractiveChaos
+using InteractiveDynamics
 using DynamicalSystems, GLMakie
 using OrdinaryDiffEq
 
@@ -34,7 +34,7 @@ figure, obs = interactive_evolution(
 
 And here is another version for a discrete system:
 ```julia
-using InteractiveChaos
+using InteractiveDynamics
 using DynamicalSystems, GLMakie
 
 ds = Systems.towel() # 3D chaotic discrete system

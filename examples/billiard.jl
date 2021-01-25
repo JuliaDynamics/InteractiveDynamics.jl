@@ -1,4 +1,4 @@
-using DynamicalBilliards, InteractiveChaos, GLMakie
+using DynamicalBilliards, InteractiveDynamics, GLMakie
 
 N = 100
 colors = :dense
@@ -36,7 +36,7 @@ BLUE = "#7BC3DC"
 BROWN = "#8D6238"
 colors = [BLUE, BROWN]
 # Overwrite default color of obstacles to white (to fit with black)
-InteractiveChaos.obcolor(::Obstacle) = RGBf0(1,1,1)
+InteractiveDynamics.obcolor(::Obstacle) = RGBf0(1,1,1)
 bd = billiard_stadium(1.0f0, 1.0f0)
 billiard_video(
     "3b1billiard.mp4", bd, 1.0, 0.6, 0;

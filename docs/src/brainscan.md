@@ -12,7 +12,7 @@ brainscan_poincaresos
 The animation at the top of this page was done with
 
 ```julia
-using GLMakie, DynamicalSystems, InteractiveChaos
+using GLMakie, DynamicalSystems, InteractiveDynamics
 using OrdinaryDiffEq
 
 ds = Systems.henonheiles()
