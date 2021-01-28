@@ -76,7 +76,7 @@ function abm_data_exploration(
     abmax = figure[1,1] = Axis(figure)
 
     # initialize the ABM plot stuff
-    pos, colors, sizes, markers = abm_plot!(abmax, model; kwargs...)
+    abmstepper = abm_init_stepper_and_plot!(abmax, model; kwargs...)
     speed, slep, run, reset, update = abm_controls_play!(figure, model, spu, true)
 
     # Initialize parameter controls & data plots
@@ -96,10 +96,7 @@ function abm_data_exploration(
         @async while isrunning[]
             n = speed[]
             model = modelobs[] # this is useful only for the reset button
-            abm_interactive_stepping(
-                model, agent_step!, model_step!, n, scheduler,
-                pos, colors, sizes, markers, ac, as, am, offset
-            )
+            Agents.step!(abmstepper, model, agent_step!, model_step!, n)
             if L > 0
                 s += n
                 if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
@@ -121,7 +118,7 @@ function abm_data_exploration(
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
-        update_abm_plot!(pos, colors, sizes, markers, model0, scheduler(model0), ac, as, am, offset)
+        Agents.step!(abmstepper, model, agent_step!, model_step!, 0)
         L > 0 && add_reset_line!(axs, s)
         update[] = update[] + 1 # also trigger parameter updates
     end

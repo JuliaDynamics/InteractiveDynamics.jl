@@ -23,17 +23,19 @@ sir_shape(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
 #     poly(xs, ys)
 # end
 
-fig = abm_plot(model;
+fig, abmstepper = abm_plot(model;
     ac = sir_colors, as = sir_sizes, am = sir_shape,
 )
 
+display(fig)
+
 # %% same, but interactive
-fig = abm_play(model, agent_step!, model_step!;
+abm_play(model, agent_step!, model_step!;
     ac = sir_colors, as = sir_sizes, am = sir_shape,
 )
 
 # %% same, but video
-fig = abm_video("socialdist.mp4", model, agent_step!, model_step!;
+abm_video("socialdist.mp4", model, agent_step!, model_step!;
     ac = sir_colors, as = sir_sizes, am = sir_shape,
     spf = 2, frames = 100,
 )

@@ -7,6 +7,8 @@ the agent's position field as its location on the plot. Requires `Agents`.
 
 Return the overarching `fig` object, as well as a struct `abmstepper` that can be used
 to interactively animate the evolution of the ABM and combine it with other subplots.
+The figure is not displayed by default, you need to either return `fig` as a last statement
+in your functions or simply call `display(fig)`.
 To progress the ABM plot `n` steps simply do:
 ```julia
 Agents.step!(abmstepper, model, agent_step!, model_step!, n)

@@ -25,6 +25,8 @@ fig, abmstepper = abm_plot(
     scheduler = landfirst # crucial to change model scheduler!
 )
 
+display(fig)
+
 # %% interactive evolution
 fig, abmstepper = abm_play(
     model, agent_step!, model_step!;
