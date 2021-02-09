@@ -53,8 +53,7 @@ function interactive_evolution(
     idxs = DynamicalSystems.SVector(idxs...)
     figure = Figure(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
-    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
-    finalpoints = Observable([x[][end] for x in obs])
+    obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
 
     # Initialize main plot with correct dimensionality
     main = figure[1,1] = init_main_trajectory_plot(
@@ -91,10 +90,10 @@ function init_trajectory_observables(L, pinteg, tail, idxs, transform)
     for i in 1:L
         cb = CircularBuffer{T}(tail)
         fill!(cb, T(transform(DynamicalSystems.get_state(pinteg, i))[idxs]))
-        # append!(cb, rand(T, tail))
         push!(obs, Observable(cb))
     end
-    return obs
+    finalpoints = Observable([x[][end] for x in obs])
+    return obs, finalpoints
 end
 
 function init_main_trajectory_plot(
@@ -211,10 +210,8 @@ function interactive_evolution_timeseries(
     idxs = DynamicalSystems.SVector(idxs...)
     figure = Figure(resolution = (1600, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
-    obs = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
-    finalpoints = Observable([x[][end] for x in obs])
+    obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     tdt = total_span/50
-
 
     # Initialize main plot with correct dimensionality
     main = figure[1,1] = init_main_trajectory_plot(
