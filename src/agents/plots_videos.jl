@@ -30,6 +30,10 @@ off ticks, etc.) using `ax = content(fig[1, 1])`.
   # as = :diamond
   as(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
   ```
+  Notice that `am` can be/return a `Polygon` instance, which plots each agent as an arbitrary
+  polygon. It is assumed that the origin (0, 0) is the agent's position when creating
+  the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
+  own size. Use the functions `scale, rotate2D` to transform this polygon.
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
@@ -37,6 +41,7 @@ off ticks, etc.) using `ax = content(fig[1, 1])`.
   (which matters only if there is overlap).
 * `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
+  If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
 * `resolution = (600, 600)`: Resolution of the fig.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
