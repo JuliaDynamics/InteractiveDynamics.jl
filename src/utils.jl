@@ -133,4 +133,4 @@ end
     scale(p::Polygon, s)
 Scale given polygon by `s`, assuming polygon's "center" is the origin.
 """
-scale(p::Polygon, s) = Polygon(decompose(Point2f0, p.exterior) .* Float32(s)
+scale(p::Polygon, s) = Polygon(decompose(Point2f0, p.exterior) .* Float32(s))
