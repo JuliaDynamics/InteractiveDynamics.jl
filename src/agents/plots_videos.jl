@@ -16,6 +16,8 @@ Agents.step!(abmstepper, model, agent_step!, model_step!, n)
 You can still call this function with `n=0` to update the plot for a new `model`,
 without doing any stepping. From `fig` you can obtain the plotted axis (to e.g. turn
 off ticks, etc.) using `ax = content(fig[1, 1])`.
+See [Sugarscape](@ref) for an example of using `abmstepper` to make an animation of
+evolving the ABM and a heatmap in parallel with only a few lines of code.
 
 ## Keywords
 * `ac, as, am`: These three keywords decided the color, size, and marker, that
@@ -143,7 +145,7 @@ The plotting is identical as in [`abm_plot`](@ref).
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
 * `framerate = 30`: The frame rate of the exported video.
-* `frames = 300`: How many frames to record in total, with +1 the starting frame.
+* `frames = 300`: How many frames to record in total, including the starting frame.
 * `resolution = (600, 600)`: Resolution of the fig.
 * `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
   setting `xticksvisible = false`.
@@ -168,11 +170,12 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
 
     record(fig, file; framerate) do io
-        for j in 0:frames
+        for j in 1:frames-1
             recordframe!(io)
             Agents.step!(abmstepper, model, agent_step!, model_step!, spf)
             s[] += spf; s[] = s[]
         end
+        recordframe!(io)
     end
     return nothing
 end
