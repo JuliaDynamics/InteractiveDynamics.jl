@@ -138,7 +138,7 @@ The plotting is identical as in [`abm_plot`](@ref).
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
 * `framerate = 30`: The frame rate of the exported video.
-* `frames = 300`: How many frames to record in total.
+* `frames = 300`: How many frames to record in total, with +1 the starting frame.
 * `resolution = (600, 600)`: Resolution of the fig.
 * `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
   setting `xticksvisible = false`.
@@ -162,10 +162,12 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     ax = fig[1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
     abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
 
-    record(fig, file, 1:frames; framerate) do j
-        Agents.step!(abmstepper, model, agent_step!, model_step!, spf)
-        s[] += spf; s[] = s[]
-        # (title ≠ "" || showstep) && (abmax.title = titlef(s))
+    record(fig, file; framerate) do io
+        for j in 0:frames
+            recordframe!(io)
+            Agents.step!(abmstepper, model, agent_step!, model_step!, spf)
+            s[] += spf; s[] = s[]
+        end
     end
     return nothing
 end
