@@ -108,3 +108,29 @@ function to_alpha(c, α = 1.2)
     c = to_color(c)
     return RGBAf0(c.r, c.g, c.b, α)
 end
+
+##########################################################################################
+# Polygon stuff
+##########################################################################################
+using AbstractPlotting.GeometryBasics # for using Polygons
+export rotate2D, scale, Polygon, Point2f0
+
+translate(p::Polygon, point) = Polygon(decompose(Point2f0, p.exterior) .+ point)
+
+"""
+    rotate2D(p::Polygon, θ)
+Rotate given polygon counter-clockwise by `θ` (in radians).
+"""
+function rotate2D(p::Polygon, θ)
+    sinφ, cosφ = sincos(θ)
+    Polygon(map(
+        p -> Point2f0(cosφ*p[1] - sinφ*p[2], sinφ*p[1] + cosφ*p[2]),
+        decompose(Point2f0, p.exterior)
+    ))
+end
+
+"""
+    scale(p::Polygon, s)
+Scale given polygon by `s`, assuming polygon's "center" is the origin.
+"""
+scale(p::Polygon, s) = Polygon(decompose(Point2f0, p.exterior) .* Float32(s)

@@ -1,3 +1,6 @@
+#=
+In this file we define how agents are plotted and how the plots are updated while stepping
+=#
 struct ABMStepper{X, C, M, S, O, AC, AS, AM}
     ac::C
     am::M
@@ -12,7 +15,7 @@ end
 
 Base.show(io::IO, ::ABMStepper) =
 println(io, "Helper structure for stepping and updating the plot of an agent based model. ",
-"It is outputted by `abm_plot` and can be used in `Agents.step!`.")
+"It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
 "Initialize the abmstepper and the plotted observables. return the stepper"
 function abm_init_stepper_and_plot!(ax, model;
@@ -35,17 +38,29 @@ function abm_init_stepper_and_plot!(ax, model;
     sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
     markers = am isa Function ? Observable([am(model[i]) for i ∈ ids]) : am
     if offset == nothing
-        pos = Observable([model[i].pos for i ∈ ids])
+        pos = Observable(Point2f0[model[i].pos for i ∈ ids])
     else
-        pos = Observable([model[i].pos .+ offset(model[i]) for i ∈ ids])
+        pos = Observable(Point2f0[model[i].pos .+ offset(model[i]) for i ∈ ids])
     end
 
-    scatter!(
-        ax, pos;
-        color = colors, markersize = sizes, marker = markers, strokewidth = 0.0,
-        scatterkwargs...
-    )
-    # TODO: This should be expanded into 3D
+    # Here we make the decision of whether the user has provided markers, and thus use
+    # `scatter`, or polygons, and thus use `poly`:
+    if user_used_polygons(am, markers)
+        # For polygons we always need vector, even if all agents are same polygon
+        if markers isa Observable
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers = Observable([translate(am, p) for p in pos])
+        end
+        poly!(ax, markers; color = colors, scatterkwargs...)
+    else
+        scatter!(
+            ax, pos;
+            color = colors, markersize = sizes, marker = markers, strokewidth = 0.0,
+            scatterkwargs...
+        )
+    end
+    # TODO: This should be expanded into 3D (and also scale and stuff)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
     equalaspect && (ax.aspect = AxisAspect(1))
@@ -62,7 +77,15 @@ function modellims(model)
     return zero.(e), e
 end
 
-
+function user_used_polygons(am, markers)
+    if (am isa Polygon)
+        return true
+    elseif (am isa Function) && (markers[][1] isa Polygon)
+        return true
+    else
+        return false
+    end
+end
 
 #=
     Agents.step!(abmstepper, model, agent_step!, model_step!, n::Int)
@@ -92,5 +115,10 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
+    # If we use Polygons as markers, do a final update:
+    if user_used_polygons(am, markers)
+        # translate all polygons according to pos
+        markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+    end
     return nothing
 end
