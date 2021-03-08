@@ -44,7 +44,10 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
   If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
-* `resolution = (600, 600)`: Resolution of the fig.
+* `resolution = (600, 600)`: Resolution of the figugre.
+* `static_preplot!`: This is a function `f!(ax, model)` which does a static plot on the
+  axis **before** the agents are plotted. Can be used to plot a static heatmap or perhaps
+  some static obstacles. For dynamic plots please use the `abmstepper` as explained above.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)

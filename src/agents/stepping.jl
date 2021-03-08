@@ -26,12 +26,16 @@ function abm_init_stepper_and_plot!(ax, model;
         offset = nothing,
         equalaspect = true,
         scatterkwargs = NamedTuple(),
+        static_preplot! = default_static_preplot
     )
 
     o, e = modellims(model) # TODO: extend to 3D
     @assert length(o) == 2 "At the moment only 2D spaces can be plotted."
     # TODO: once graph plotting is possible, this will be adjusted
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
+    # TODO: Point2f0 must be replaced by 3D version in the future
+    
+    static_preplot!(ax, model)
 
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
@@ -67,6 +71,8 @@ function abm_init_stepper_and_plot!(ax, model;
 
     return ABMStepper(ac, am, as, offset, scheduler, pos, colors, sizes, markers)
 end
+
+default_static_preplot(ax, model) = nothing
 
 function modellims(model)
     if model.space isa Agents.ContinuousSpace
