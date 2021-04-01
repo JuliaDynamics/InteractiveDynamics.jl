@@ -39,11 +39,6 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     # TODO: Point2f0 must be replaced by 3D version in the future
 
-    # TODO: This should be expanded into 3D (and also scale and stuff)
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    equalaspect && (ax.aspect = AxisAspect(1))
-
     if heatarray isa AbstractMatrix
         obs_heat = Observable(heatarray)
         hmap = heatmap!(ax, obs_heat; heatkwargs...)
@@ -85,6 +80,10 @@ function abm_init_stepper_and_plot!(ax, fig, model;
             scatterkwargs...
         )
     end
+    # TODO: This should be expanded into 3D (and also scale and stuff)
+    xlims!(ax, o[1], e[1])
+    ylims!(ax, o[2], e[2])
+    equalaspect && (ax.aspect = AxisAspect(1))
 
     return ABMStepper(ac, am, as, offset, scheduler, pos, colors, sizes, markers, obs_heat)
 end
