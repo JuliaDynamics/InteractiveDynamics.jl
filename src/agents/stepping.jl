@@ -78,7 +78,7 @@ function abm_init_stepper_and_plot!(ax, model;
     else
         scatter!(
             ax, pos;
-            color = colors, markersize = sizes, marker = markers, strokewidth = 0.0,
+            color = colors, markersize = sizes, marker = markers,
             scatterkwargs...
         )
     end
