@@ -20,7 +20,7 @@ println(io, "Helper structure for stepping and updating the plot of an agent bas
 "It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
 "Initialize the abmstepper and the plotted observables. return the stepper"
-function abm_init_stepper_and_plot!(ax, model;
+function abm_init_stepper_and_plot!(ax, fig, model;
         ac = JULIADYNAMICS_COLORS[1],
         as = 10,
         am = :circle,
@@ -28,9 +28,9 @@ function abm_init_stepper_and_plot!(ax, model;
         offset = default_offset(model),
         equalaspect = true,
         scatterkwargs = NamedTuple(),
-        static_preplot! = default_static_preplot,
         heatarray = nothing,
         heatkwargs = (colormap=:tokyo,),
+        add_colorbar = true,
     )
 
     o, e = modellims(model) # TODO: extend to 3D
@@ -44,15 +44,18 @@ function abm_init_stepper_and_plot!(ax, model;
     ylims!(ax, o[2], e[2])
     equalaspect && (ax.aspect = AxisAspect(1))
 
-    static_preplot!(ax, model)
     if heatarray isa AbstractMatrix
         obs_heat = Observable(heatarray)
-        heatmap!(ax, obs_heat; heatkwargs...)
+        hmap = heatmap!(ax, obs_heat; heatkwargs...)
     elseif heatarray isa Observable
         obs_heat = heatarray
-        heatmap!(ax, obs_heat; heatkwargs...)
+        hmap = heatmap!(ax, obs_heat; heatkwargs...)
     else
         obs_heat = nothing
+    end
+    if add_colorbar && !isnothing(obs_heat)
+        Colorbar(fig[1, 1][1, 2], hmap, width = 20)
+        rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
 
     ids = scheduler(model)
