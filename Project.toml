@@ -1,7 +1,7 @@
 name = "InteractiveDynamics"
 uuid = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 repo = "https://github.com/JuliaDynamics/InteractiveDynamics.jl.git"
-version = "0.13.5"
+version = "0.14.0"
 
 [deps]
 AbstractPlotting = "537997a7-5e4e-5d89-9595-2241ea00577e"

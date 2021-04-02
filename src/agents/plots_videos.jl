@@ -9,6 +9,9 @@ Return the overarching `fig` object, as well as a struct `abmstepper` that can b
 to interactively animate the evolution of the ABM and combine it with other subplots.
 The figure is not displayed by default, you need to either return `fig` as a last statement
 in your functions or simply call `display(fig)`.
+Notice that models with `DiscreteSpace` are plotted starting from 0 to n, with
+n the space size along each dimension.
+
 To progress the ABM plot `n` steps simply do:
 ```julia
 Agents.step!(abmstepper, model, agent_step!, model_step!, n)
@@ -19,7 +22,7 @@ off ticks, etc.) using `ax = content(fig[1, 1])`.
 See [Sugarscape](@ref) for an example of using `abmstepper` to make an animation of
 evolving the ABM and a heatmap in parallel with only a few lines of code.
 
-## Keywords
+## Agent related keywords
 * `ac, as, am`: These three keywords decided the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
   which takes as an input a single argument and ouputs the corresponding value.
@@ -40,19 +43,29 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position vector to be added to the agent's position
-  (which matters only if there is overlap).
-* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
+  (which matters only if there is overlap). For `DiscreteSpace` it by default shifts
+  all agents by `-0.5` to bring them to the center of each cell.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
   If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
+
+## Model and figure related keywords
+* `heatarray = nothing` : A keyword that plots a heatmap over the space.
+  Its values can be standard data accessors given to functions like `run!`, i.e.
+  either a symbol (directly obtain model property) or a function of the model.
+  The returned data must be a matrix of the same size as the underlying space.
+  For example `heatarray = :temperature` is used in the [Daisyworld](@ref) example.
+  But you could also define `f(model) = create_some_matrix_from_model...` and set
+  `heatarray = f`. The heatmap will be updated automatically during model evolution
+  in videos and interactive applications.
+* `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `AbstractPlotting.heatmap` function
+  if `heatarray` is not nothing.
+* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `resolution = (600, 600)`: Resolution of the figugre.
-* `static_preplot!`: This is a function `f!(ax, model)` which does a static plot on the
-  axis **before** the agents are plotted. Can be used to plot a static heatmap or perhaps
-  some static obstacles. For dynamic plots please use the `abmstepper` as explained above.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
-    ax = fig[1,1] = Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
+    ax = fig[1,1][1,1] = Axis(fig)
+    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     return fig, abmstepper
 end
 
@@ -78,8 +91,8 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
     fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1] = Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
+    ax = fig[1,1][1,1] = Axis(fig)
+    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
     return fig, abmstepper
@@ -144,7 +157,6 @@ saved at given path `file`, by recording the behavior of [`abm_play`](@ref) (wit
 The plotting is identical as in [`abm_plot`](@ref).
 
 ## Keywords
-* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
 * `framerate = 30`: The frame rate of the exported video.
@@ -152,6 +164,7 @@ The plotting is identical as in [`abm_plot`](@ref).
 * `resolution = (600, 600)`: Resolution of the fig.
 * `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
   setting `xticksvisible = false`.
+* `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
@@ -169,8 +182,8 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
 
     fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
-    abmstepper = abm_init_stepper_and_plot!(ax, model; kwargs...)
+    ax = fig[1,1][1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
+    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
