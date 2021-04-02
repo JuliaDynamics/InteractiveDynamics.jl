@@ -1,18 +1,19 @@
 #=
 In this file we define how agents are plotted and how the plots are updated while stepping
 =#
-# TODO: Perhaps it is worth it to NOT specialize this struct to its fields
-struct ABMStepper{X, C, M, S, O, AC, AS, AM, HA}
-    ac::C
-    am::M
-    as::S
-    offset::O
-    scheduler::X
-    pos::Observable
-    colors::AC
-    sizes::AS
-    markers::AM
-    heatarray::HA
+# TODO: I should check whether it is worth to type-parameterize this.
+struct ABMStepper # {X, C, M, S, O, AC, AS, AM, HA}
+    ac # ::C
+    am # ::M
+    as # ::S
+    offset # ::O
+    scheduler # ::X
+    pos # ::Observable
+    colors # ::AC
+    sizes # ::AS
+    markers # ::AM
+    heatarray # ::HA
+    heatobs # ::HO
 end
 
 Base.show(io::IO, ::ABMStepper) =
@@ -40,16 +41,20 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     # TODO: Point2f0 must be replaced by 3D version in the future
 
-    if heatarray isa AbstractMatrix
-        obs_heat = Observable(heatarray)
-        hmap = heatmap!(ax, obs_heat; heatkwargs...)
-    elseif heatarray isa Observable
-        obs_heat = heatarray
-        hmap = heatmap!(ax, obs_heat; heatkwargs...)
+    if !isnothing(heatarray)
+        # TODO: This is also possible for continuous spaces, we have to
+        # get the matrix size, and then make a range for each dimension
+        # and do heatmap!(ax, x, y, heatobs)
+        matrix = Agents.get_data(model, heatarray, identity)
+        if !(matrix isa Matrix) || size(matrix) ≠ size(model.space)
+            error("The heat array property must yield a matrix of same size as the grid!")
+        end
+        heatobs = Observable(matrix)
+        hmap = heatmap!(ax, heatobs; heatkwargs...)
     else
-        obs_heat = nothing
+        heatobs = nothing
     end
-    if add_colorbar && !isnothing(obs_heat)
+    if add_colorbar && !isnothing(heatobs)
         Colorbar(fig[1, 1][1, 2], hmap, width = 20)
         # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
@@ -86,7 +91,11 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     ylims!(ax, o[2], e[2])
     equalaspect && (ax.aspect = AxisAspect(1))
 
-    return ABMStepper(ac, am, as, offset, scheduler, pos, colors, sizes, markers, obs_heat)
+    return ABMStepper(
+        ac, am, as, offset, scheduler,
+        pos, colors, sizes, markers,
+        heatarray, heatobs
+    )
 end
 
 function default_offset(model)
@@ -136,9 +145,6 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
 
     Agents.step!(model, agent_step!, model_step!, n)
 
-    if !isnothing(abmstepper.heatarray) # trigger update on the heatmap
-        abmstepper.heatarray[] = abmstepper.heatarray[]
-    end
     if Agents.nagents(model) == 0
         @warn "The model has no agents, we can't plot anymore!"
         error("The model has no agents, we can't plot anymore!")
@@ -156,6 +162,11 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     if user_used_polygons(am, markers)
         # translate all polygons according to pos
         markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+    end
+    # Finally update the heat array, if any
+    if !isnothing(abmstepper.heatarray)
+        newmatrix = Agents.get_data(model, abmstepper.heatarray, identity)
+        abmstepper.heatobs[] = newmatrix
     end
     return nothing
 end

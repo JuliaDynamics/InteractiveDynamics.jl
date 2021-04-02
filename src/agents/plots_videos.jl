@@ -22,7 +22,7 @@ off ticks, etc.) using `ax = content(fig[1, 1])`.
 See [Sugarscape](@ref) for an example of using `abmstepper` to make an animation of
 evolving the ABM and a heatmap in parallel with only a few lines of code.
 
-## Keywords
+## Agent related keywords
 * `ac, as, am`: These three keywords decided the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
   which takes as an input a single argument and ouputs the corresponding value.
@@ -39,26 +39,28 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   polygon. It is assumed that the origin (0, 0) is the agent's position when creating
   the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
   own size. Use the functions `scale, rotate2D` to transform this polygon.
-* `heatarray = nothing` : A matrix used to plot a heatmap over the space. `heatarray`
-  can be updated in-place during your model plotting, and this will update the heatmap
-  colors accordingly. Notice that if you need to generate new arrays instead of updating
-  `heatarray` in-place, then provide an `Observable` as `heatarray` and update the
-  `Observable` yourself accordingly during stepping.
-* `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `AbstractPlotting.heatmap` function
-  if `heatarray` is not nothing.
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position vector to be added to the agent's position
   (which matters only if there is overlap). For `DiscreteSpace` it by default shifts
   all agents by `-0.5` to bring them to the center of each cell.
-* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
   If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
+
+## Model and figure related keywords
+* `heatarray = nothing` : A keyword that plots a heatmap over the space.
+  Its values can be standard data accessors given to functions like `run!`, i.e.
+  either a symbol (directly obtain model property) or a function of the model.
+  The returned data must be a matrix of the same size as the underlying space.
+  For example `heatarray = :temperature` is used in the [Daisyworld](@ref) example.
+  But you could also define `f(model) = create_some_matrix_from_model...` and set
+  `heatarray = f`. The heatmap will be updated automatically during model evolution
+  in videos and interactive applications.
+* `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `AbstractPlotting.heatmap` function
+  if `heatarray` is not nothing.
+* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `resolution = (600, 600)`: Resolution of the figugre.
-* `static_preplot!`: This is a function `f!(ax, model)` which does a static plot on the
-  axis **before** the agents are plotted. Can be used to plot a static heatmap or perhaps
-  some static obstacles. For dynamic plots please use the `abmstepper` as explained above.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
