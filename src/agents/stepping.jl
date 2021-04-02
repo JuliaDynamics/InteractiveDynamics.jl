@@ -29,10 +29,11 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         equalaspect = true,
         scatterkwargs = NamedTuple(),
         heatarray = nothing,
-        heatkwargs = (colormap=:tokyo,),
+        heatkwargs = NamedTuple(),
         add_colorbar = true,
     )
 
+    heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
     o, e = modellims(model) # TODO: extend to 3D
     @assert length(o) == 2 "At the moment only 2D spaces can be plotted."
     # TODO: once graph plotting is possible, this will be adjusted
@@ -50,7 +51,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     end
     if add_colorbar && !isnothing(obs_heat)
         Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-        rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
+        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
 
     ids = scheduler(model)
