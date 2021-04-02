@@ -46,7 +46,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         # get the matrix size, and then make a range for each dimension
         # and do heatmap!(ax, x, y, heatobs)
         matrix = Agents.get_data(model, heatarray, identity)
-        if !(matrix isa Matrix) || size(matrix) ≠ size(model.space)
+        if !(matrix isa AbstractMatrix) || size(matrix) ≠ size(model.space)
             error("The heat array property must yield a matrix of same size as the grid!")
         end
         heatobs = Observable(matrix)
