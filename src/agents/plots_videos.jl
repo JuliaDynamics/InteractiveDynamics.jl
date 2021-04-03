@@ -61,6 +61,8 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   if `heatarray` is not nothing.
 * `equalaspect = true`: Whether the plot should be of equal aspect ratio.
 * `resolution = (600, 600)`: Resolution of the figugre.
+* `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
+  but before the agents.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)

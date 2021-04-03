@@ -32,6 +32,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         heatarray = nothing,
         heatkwargs = NamedTuple(),
         add_colorbar = true,
+        static_preplot! = default_static_preplot,
     )
 
     heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
@@ -58,6 +59,8 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         Colorbar(fig[1, 1][1, 2], hmap, width = 20)
         # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
+
+    static_preplot!(ax, model)
 
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
