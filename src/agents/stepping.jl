@@ -27,7 +27,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         am = :circle,
         scheduler = model.scheduler,
         offset = default_offset(model),
-        aspect = true,
+        aspect = DataAspect(),
         scatterkwargs = NamedTuple(),
         heatarray = nothing,
         heatkwargs = NamedTuple(),
@@ -45,7 +45,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     # TODO: This should be expanded into 3D (and also scale and stuff)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
-    equalaspect && (ax.aspect = AxisAspect(1))
+    ax.aspect = aspect
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
