@@ -59,7 +59,7 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   in videos and interactive applications.
 * `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `AbstractPlotting.heatmap` function
   if `heatarray` is not nothing.
-* `equalaspect = true`: Whether the plot should be of equal aspect ratio.
+* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
 * `resolution = (600, 600)`: Resolution of the figugre.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
@@ -88,7 +88,7 @@ Two sliders control the animation speed: "spu" decides how many model steps shou
 before the plot is updated, and "sleep" the `sleep()` time between updates.
 
 ## Keywords
-* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
+* `ac, am, as, scheduler, offset, aspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)

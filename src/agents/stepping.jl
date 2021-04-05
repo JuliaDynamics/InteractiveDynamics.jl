@@ -27,7 +27,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         am = :circle,
         scheduler = model.scheduler,
         offset = default_offset(model),
-        equalaspect = true,
+        aspect = DataAspect(),
         scatterkwargs = NamedTuple(),
         heatarray = nothing,
         heatkwargs = NamedTuple(),
@@ -41,6 +41,11 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     # TODO: once graph plotting is possible, this will be adjusted
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     # TODO: Point2f0 must be replaced by 3D version in the future
+
+    # TODO: This should be expanded into 3D (and also scale and stuff)
+    xlims!(ax, o[1], e[1])
+    ylims!(ax, o[2], e[2])
+    ax.aspect = aspect
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
@@ -89,10 +94,6 @@ function abm_init_stepper_and_plot!(ax, fig, model;
             scatterkwargs...
         )
     end
-    # TODO: This should be expanded into 3D (and also scale and stuff)
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    equalaspect && (ax.aspect = AxisAspect(1))
 
     return ABMStepper(
         ac, am, as, offset, scheduler,

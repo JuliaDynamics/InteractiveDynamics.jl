@@ -30,7 +30,7 @@ data plots when resetting, for visual guidance.
 
 ## Keywords
 
-* `ac, am, as, scheduler, offset, equalaspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
+* `ac, am, as, scheduler, offset, aspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `adata, mdata`: Same as the keyword arguments of `Agents.run!`, and decide which data of the
   model/agents will be collected and plotted below the interactive plot. Notice that
   data collection can only occur on plotted steps (and thus steps not plotted due to
