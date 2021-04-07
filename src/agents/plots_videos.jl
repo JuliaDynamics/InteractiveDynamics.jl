@@ -62,7 +62,15 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `aspect = DataAspect()`: The aspect ratio behavior of the axis.
 * `resolution = (600, 600)`: Resolution of the figugre.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
-  but before the agents.
+  but before the agents. Notice that you can still make objects of this plot be visible
+  above the agents using a translation in the third dimension like below:
+  ```julia
+  function static_preplot!(ax, model)
+      obj = CairoMakie.scatter!([50 50]; color = :red) # Show position of teacher
+      CairoMakie.hidedecorations!(ax) # hide tick labels etc.
+      CairoMakie.translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
+  end
+  ```
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
