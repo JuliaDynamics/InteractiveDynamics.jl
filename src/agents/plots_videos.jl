@@ -32,8 +32,8 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   ac(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
   # as = 10
   as(a) = 10*randn() + 1
-  # as = :diamond
-  as(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
+  # am = :diamond
+  am(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
   ```
   Notice that `am` can be/return a `Polygon` instance, which plots each agent as an arbitrary
   polygon. It is assumed that the origin (0, 0) is the agent's position when creating
