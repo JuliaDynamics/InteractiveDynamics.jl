@@ -81,7 +81,9 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     ax = figure[0, :] = Axis(figure)
 
     # Initial Section
-    data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
+    f = (t) -> planecrossing(integ(t))
+    @show T_slider[]
+    data = ChaosTools._poincaresos(integ, f, planecrossing, T_slider[], i, rootkw)
     length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 
     positions_node = Observable(data)
@@ -89,8 +91,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     colors_node = Observable(colors)
     scatter!(
         ax, positions_node, color = colors_node,
-        markersize = lift(o -> o*px, m_slider), marker = MARKER,
-        strokewidth = 0.0, scatterkwargs...
+        markersize = lift(o -> o*px, m_slider), marker = MARKER, scatterkwargs...
     )
 
     ax.xlabel, ax.ylabel = labels
@@ -109,7 +110,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
         end
 
         DynamicalSystems.reinit!(integ, newstate)
-        data = DynamicalSystems.poincaresos(integ, planecrossing, T_slider[], 0.0, i, rootkw)
+        data = ChaosTools._poincaresos(integ, f, planecrossing, T_slider[], i, rootkw)
         positions = positions_node[]; colors = colors_node[]
         append!(positions, data)
         c = color(newstate)
