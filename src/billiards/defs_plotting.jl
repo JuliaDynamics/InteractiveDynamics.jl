@@ -99,7 +99,7 @@ function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
     # to allow something like `markerspace = :display`
     marker = Circle(Point2f0(xs[][1], ys[][1]), Float32(1))
 
-    scatter!(ax, xs, ys; color = c, marker = marker, markersize = ms*px)
+    scatter!(ax, xs, ys; color = c, marker = marker, markersize = ms*px, strokewidth = 0.0)
     arrows!(ax, xs, ys, vxs, vys;
         normalize = false, arrowsize = 0.01px,
         linewidth  = 2,

@@ -29,7 +29,7 @@ otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
 figure = Figure(resolution = (2000, 800))
 display(figure)
-ax = figure[1, 1] = LScene(figure)
+ax = figure[1, 1] = Axis3(figure)
 axp = figure[1, 2] = Axis(figure)
 sll = labelslider!(
     figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);

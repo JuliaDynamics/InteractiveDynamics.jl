@@ -101,18 +101,8 @@ function init_main_trajectory_plot(
     )
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
-    ms = m*(is3D ? 25mm : 15)
-    main = if !is3D
-        Axis(figure)
-    else
-        if isnothing(lims)
-            LScene(figure, scenekw = (camera = cam3d!, raw = false))
-        else
-            l = FRect3D((lims[1][1], lims[2][1], lims[3][1]),
-            (lims[1][2] - lims[1][1], lims[2][2] - lims[2][1], lims[3][2] - lims[3][1]))
-            LScene(figure, scenekw = (camera = cam3d!, raw = false, limits = l))
-        end
-    end
+    ms = m*(is3D ? 4000 : 15)
+    main = !is3D ? Axis(figure) : Axis3(figure)
     # Initialize trajectory plotted element
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
@@ -126,8 +116,6 @@ function init_main_trajectory_plot(
             )
         end
     end
-    # TODO: Label font size is tiny, needs fixing (open proper issue at Makie.jl)
-    # plot final points (also need to deduce scale)
     finalargs = if ds isa DynamicalSystems.ContinuousDynamicalSystem
         (marker = :circle, )
     else
@@ -137,15 +125,7 @@ function init_main_trajectory_plot(
         color = colors, markersize = ms, finalargs...
     )
     if !isnothing(lims)
-        object_to_adjust = length(idxs) == 2 ? main : main.scene
-        xlims!(object_to_adjust, lims[1])
-        ylims!(object_to_adjust, lims[2])
-        if length(idxs) > 2
-            zlims!(object_to_adjust, lims[3])
-            m = maximum(abs(x[2] - x[1]) for x in lims)
-            a = [m/abs(x[2] - x[1]) for x in lims]
-            scale!(object_to_adjust, a...)
-        end
+        main.limits = lims
     end
     return main
 end
