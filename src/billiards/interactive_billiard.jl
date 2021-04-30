@@ -96,7 +96,8 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         particle_plots = (
             scatter!(
                 ax, balls; color = darken_color.(cs),
-                marker = MARKER, markersize = 8*particle_size*AbstractPlotting.px
+                marker = MARKER, markersize = 8*particle_size*AbstractPlotting.px,
+                strokewidth = 0.0,
             ),
             arrows!(
                 ax, balls, vels; arrowcolor = darken_color.(cs),
@@ -373,6 +374,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
             tsax, all_balls[i];
             markersize = 20*AbstractPlotting.px,
             color = InteractiveDynamics.to_alpha(cs[i], 0.75),
+            strokewidth = 0.0,
         )
     end
     ylims!(tsax, ylim)
