@@ -33,7 +33,7 @@ function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
 end
 
 function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
-    θ = 0:0.01:2π
+    θ = range(0, 2π; length = 700)
     p = [Point2f0(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
     poly!(ax, p; color = obfill(o), scale_plot=false, kwargs...)
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),

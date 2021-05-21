@@ -108,7 +108,7 @@ function init_main_trajectory_plot(
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if ds isa DynamicalSystems.ContinuousDynamicalSystem
             AbstractPlotting.lines!(main, ob;
-                color = colors[i], linewidth = 4.0, pk...
+                color = colors[i], linewidth = 2.0, pk...
             )
         else
             AbstractPlotting.scatter!(main, ob; color = colors[i],
