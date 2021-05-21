@@ -159,7 +159,7 @@ function init_abm_data_plots!(
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
         lines!(ax, N, val, color = c)
         scatter!(
-            ax, N, val; marker = MARKER, markersize = 5AbstractPlotting.px,
+            ax, N, val; marker = MARKER, markersize = 5Makie.px,
             color = c, strokewidth = 0.5
         )
     end
@@ -172,7 +172,7 @@ function init_abm_data_plots!(
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val, marker = MARKER, markersize = 5AbstractPlotting.px, color = c,
+        scatter!(ax, N, val, marker = MARKER, markersize = 5Makie.px, color = c,
                  strokewidth = 0.5)
     end
     if La+Lm > 1

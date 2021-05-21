@@ -56,7 +56,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
          direction = -1,
          tfinal = (1000.0, 10.0^4),
          rootkw = (xrtol = 1e-6, atol = 1e-6),
-         # AbstractPlotting kwargs:
+         # Makie kwargs:
          color = randomcolor,
          scatterkwargs = (),
          labels = ("u₁" , "u₂"),

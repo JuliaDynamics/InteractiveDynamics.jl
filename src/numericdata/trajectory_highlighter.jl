@@ -1,4 +1,4 @@
-using AbstractPlotting, Observables
+using Makie, Observables
 using StatsBase
 using StatsMakie
 export trajectory_highlighter
@@ -48,7 +48,7 @@ function trajectory_highlighter(datasets, vals;
 
     # First prepare the colors of the datasets:
     colormap = to_colormap(cmap, length(datasets))
-    get_color(i) = AbstractPlotting.color(AbstractPlotting.interpolated_getindex(
+    get_color(i) = Makie.color(Makie.interpolated_getindex(
         colormap, vals[i], extrema(vals)
     ))
     # The colors are observables; the transparency can be changed
@@ -62,7 +62,7 @@ function trajectory_highlighter(datasets, vals;
 
     hist_scene[Axis][:names, :axisnames] = (hname, "count")
 
-    sc = AbstractPlotting.vbox(data_scene, hist_scene)
+    sc = Makie.vbox(data_scene, hist_scene)
 
     selected_plot = setup_click(data_scene, 1)
     hist_idx = setup_click(hist_scene, 2)
@@ -119,14 +119,15 @@ the selected plot and the index of the selected element in the plot.
 """
 function setup_click(scene, idx=1)
     selection = Observable{Any}(0)
-    on(scene.events.mousebuttons) do buttons
-        if ispressed(scene, Mouse.left) && AbstractPlotting.is_mouseinside(scene)
+    on(scene.events.mousebuttons) do event
+        if event.button == Mouse.left && event.action == Mouse.press && Makie.is_mouseinside(scene)
             plt, click_idx = mouse_selection(scene)
             if toplevelparent(plt) isa BarPlot
                 click_idx = (click_idx + 1) ÷ 4
             end
             selection[] = (plt, click_idx)[idx]
         end
+        return false
     end
     return selection
 end

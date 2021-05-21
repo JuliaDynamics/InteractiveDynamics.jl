@@ -1,4 +1,23 @@
 export subscript, superscript, randomcolor
+export lighten_color, darken_color
+export record_interaction
+
+"""
+    record_interaction(figure, file; framerate = 30, total_time = 10)
+Start recording whatever interaction is happening on some `figure` into a video
+output in `file` (recommended to end in `".mp4"`).
+Provide also a framerate and a `total_time` to record for (in seconds).
+"""
+function record_interaction(figure, file; framerate = 30, total_time = 10)
+    framen = framerate*total_time
+    record(figure, file; framerate) do io
+        for i = 1:framen
+            sleep(1/framerate)
+            recordframe!(io)
+        end
+    end
+    return
+end
 
 """
     subscript(i::Int)
@@ -70,8 +89,8 @@ end
 randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
 
 function colors_from_map(cmap, α, N)
-    N == 1 && return [AbstractPlotting.to_colormap(cmap, 2)[1]]
-    cs = [RGBAf0(c.r, c.g, c.b, α) for c in AbstractPlotting.to_colormap(cmap, N)]
+    N == 1 && return [Makie.to_colormap(cmap, 2)[1]]
+    cs = [RGBAf0(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
 end
 
 function pushupdate!(o::Observable, v)
@@ -112,7 +131,7 @@ end
 ##########################################################################################
 # Polygon stuff
 ##########################################################################################
-using AbstractPlotting.GeometryBasics # for using Polygons
+using Makie.GeometryBasics # for using Polygons
 export rotate2D, scale, Polygon, Point2f0
 
 translate(p::Polygon, point) = Polygon(decompose(Point2f0, p.exterior) .+ point)
