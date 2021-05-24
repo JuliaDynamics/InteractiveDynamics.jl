@@ -150,11 +150,10 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     Agents.step!(model, agent_step!, model_step!, n)
 
     if Agents.nagents(model) == 0
-        @warn "The model has no agents, we can't plot anymore!"
-        error("The model has no agents, we can't plot anymore!")
+        @warn "The model has no agents"
     end
     ids = abmstepper.scheduler(model)
-    if offset == nothing
+    if isnothing(offset)
         pos[] = [model[i].pos for i in ids]
     else
         pos[] = [model[i].pos .+ offset(model[i]) for i in ids]
