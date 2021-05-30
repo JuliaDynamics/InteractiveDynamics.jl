@@ -1,4 +1,4 @@
-using InteractiveDynamics, DynamicalSystems, Makie
+using InteractiveDynamics, DynamicalSystems, GLMakie
 using OrdinaryDiffEq
 diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
 

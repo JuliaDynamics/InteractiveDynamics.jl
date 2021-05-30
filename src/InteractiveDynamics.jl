@@ -1,7 +1,6 @@
 module InteractiveDynamics
 
 using Makie, Observables
-using Makie.MakieLayout
 
 const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
 const DEFAULT_BG = RGBf0(1.0, 1.0, 1.0)
@@ -14,9 +13,6 @@ export JULIADYNAMICS_COLORS
 
 include("utils.jl")
 using Requires
-using Observables
-
-Label = Makie.Label
 
 function __init__()
     @require DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634" begin

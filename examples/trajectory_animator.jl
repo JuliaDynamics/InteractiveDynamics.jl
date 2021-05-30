@@ -60,7 +60,7 @@ u0s = [[0.0, -0.25, 0.42081, 0.0],
 
 diffeq = (alg = Vern9(), dtmax = 0.01)
 idxs = (1, 2, 4)
-colors = AbstractPlotting.to_color.(["#233B43", "#499cbf", "#E84646"])
+colors = Makie.to_color.(["#233B43", "#499cbf", "#E84646"])
 
 figure, obs = interactive_evolution(
     ds, u0s; idxs, tail = 10000, colors, diffeq
