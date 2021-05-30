@@ -43,8 +43,7 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position vector to be added to the agent's position
-  (which matters only if there is overlap). For `DiscreteSpace` it by default shifts
-  all agents by `-0.5` to bring them to the center of each cell.
+  (which matters only if there is overlap).
 * `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
   If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
 
