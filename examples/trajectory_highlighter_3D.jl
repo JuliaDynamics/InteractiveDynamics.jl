@@ -1,4 +1,4 @@
-using InteractiveDynamics, DynamicalSystems, Makie
+using InteractiveDynamics, DynamicalSystems, GLMakie
 
 ds = Systems.henonheiles()
 

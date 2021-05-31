@@ -96,7 +96,7 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
         particle_plots = (
             scatter!(
                 ax, balls; color = darken_color.(cs),
-                marker = MARKER, markersize = 8*particle_size*AbstractPlotting.px,
+                marker = MARKER, markersize = 8*particle_size*Makie.px,
                 strokewidth = 0.0,
             ),
             arrows!(
@@ -287,7 +287,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
     )
     N = length(ps)
 
-    AbstractPlotting.inline!(true) # to not display figure while recording
+    Makie.inline!(true) # to not display figure while recording
     record(figure, file, 1:frames; framerate = framerate) do j
         for i in 1:N
             p = ps[i]
@@ -310,7 +310,7 @@ function billiard_video(file::String, bd::Billiard, ps::Vector{<:AbstractParticl
             end
         end
     end
-    AbstractPlotting.inline!(false)
+    Makie.inline!(false)
     return
 end
 
@@ -372,7 +372,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
         )
         scatter!(
             tsax, all_balls[i];
-            markersize = 20*AbstractPlotting.px,
+            markersize = 20*Makie.px,
             color = InteractiveDynamics.to_alpha(cs[i], 0.75),
             strokewidth = 0.0,
         )
@@ -381,7 +381,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
     t_current = 0.0
     xlims!(tsax, -tdt, total_span+tdt)
 
-    !displayfigure && AbstractPlotting.inline!(true)
+    !displayfigure && Makie.inline!(true)
     record(figure, file, 1:frames; framerate = framerate) do j
         # This loop propagates the particles for `speed` steps but doesn't update the plot
         t_current += dt*speed
@@ -416,7 +416,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
         t_prev = max(0, t_current - total_span)
         xlims!(tsax, t_prev-tdt, max(t_current, total_span)+tdt)
     end
-    !displayfigure && AbstractPlotting.inline!(false)
+    !displayfigure && Makie.inline!(false)
     return figure
 end
 
@@ -467,7 +467,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     scatter_colors = Observable(RGBAf0[])
 
     scatter!(bmapax.scene, scatter_points; color = scatter_colors,
-        marker = MARKER, markersize = ms*AbstractPlotting.px
+        marker = MARKER, markersize = ms*Makie.px
     )
 
     # Make obstacle axis, add info about where each obstacle terminates
@@ -638,7 +638,7 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
         c = cs[i]
         vector = all_bmap_scatters[i]
         scatter!(bmapax, vector; color = cs[i],
-            marker = MARKER, markersize = ms*AbstractPlotting.px
+            marker = MARKER, markersize = ms*Makie.px
         )
     end
     ylims!(bmapax, -1, 1)

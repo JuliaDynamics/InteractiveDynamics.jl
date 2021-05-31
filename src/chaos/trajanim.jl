@@ -107,11 +107,11 @@ function init_main_trajectory_plot(
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if ds isa DynamicalSystems.ContinuousDynamicalSystem
-            AbstractPlotting.lines!(main, ob;
+            Makie.lines!(main, ob;
                 color = colors[i], linewidth = 2.0, pk...
             )
         else
-            AbstractPlotting.scatter!(main, ob; color = colors[i],
+            Makie.scatter!(main, ob; color = colors[i],
                 markersize = 2ms/3, strokewidth = 0.0, pk...
             )
         end
@@ -121,7 +121,7 @@ function init_main_trajectory_plot(
     else
         (marker = :diamond, )
     end
-    AbstractPlotting.scatter!(main, finalpoints;
+    Makie.scatter!(main, finalpoints;
         color = colors, markersize = ms, finalargs...
     )
     if !isnothing(lims)

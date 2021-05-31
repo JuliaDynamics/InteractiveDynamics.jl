@@ -48,15 +48,15 @@ ws[j] = 0
 
 p = lift(y) do y
     ss[j] = y
-    o = AbstractPlotting.Point3f0(ss...)
-    w = AbstractPlotting.Point3f0(ws...)
-    AbstractPlotting.FRect3D(o, w)
+    o = Makie.Point3f0(ss...)
+    w = Makie.Point3f0(ws...)
+    Makie.FRect3D(o, w)
 end
 
-a = AbstractPlotting.RGBAf0(0,0,0,0)
-c = AbstractPlotting.RGBAf0(0.2, 0.2, 1.0, 1.0)
-img = AbstractPlotting.ImagePattern([c a; a c]);
-AbstractPlotting.mesh!(ax, p; color = img);
+a = Makie.RGBAf0(0,0,0,0)
+c = Makie.RGBAf0(0.2, 0.2, 1.0, 1.0)
+img = Makie.ImagePattern([c a; a c]);
+Makie.mesh!(ax, p; color = img);
 
 # Poincare sos
 psos = lift(y) do y
@@ -65,10 +65,10 @@ end
 psos2d = lift(p -> p[:, otheridxs].data, psos)
 psos3d = lift(p -> p.data, psos)
 
-AbstractPlotting.scatter!(axp, psos2d; scatterkw...)
+Makie.scatter!(axp, psos2d; scatterkw...)
 
 ms = 25maximum(abs(ma[i] - mi[i]) for i in 1:3)
-AbstractPlotting.scatter!(ax, psos3d; markersize = ms, scatterkw...)
+Makie.scatter!(ax, psos3d; markersize = ms, scatterkw...)
 
 xlims!(axp, mi[otheridxs[1]], ma[otheridxs[1]])
 ylims!(axp, mi[otheridxs[2]], ma[otheridxs[2]])

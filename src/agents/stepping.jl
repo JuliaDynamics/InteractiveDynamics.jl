@@ -26,7 +26,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         as = 10,
         am = :circle,
         scheduler = model.scheduler,
-        offset = default_offset(model),
+        offset = nothing,
         aspect = DataAspect(),
         scatterkwargs = NamedTuple(),
         heatarray = nothing,
@@ -100,15 +100,6 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         pos, colors, sizes, markers,
         heatarray, heatobs
     )
-end
-
-function default_offset(model)
-    if model.space isa Agents.GridSpace
-        x = 0 .* size(model.space) .- 0.5
-        return a -> x
-    else
-        return nothing
-    end
 end
 
 default_static_preplot(ax, model) = nothing

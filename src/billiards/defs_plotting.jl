@@ -1,7 +1,7 @@
 # DynamicalBilliards.jl constants
 SV = DynamicalBilliards.SV
 Obstacle, Billiard, AbstractParticle = DynamicalBilliards.Obstacle, DynamicalBilliards.Billiard, DynamicalBilliards.AbstractParticle
-using AbstractPlotting: RGBf0, RGBAf0
+using Makie: RGBf0, RGBAf0
 
 obcolor(::Obstacle) = RGBf0(0,0.6,0)
 obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
@@ -45,10 +45,10 @@ function bdplot!(ax, bd::Billiard; kwargs...)
     dx = xmax - xmin; dy = ymax - ymin
     for obst in bd; bdplot!(ax, obst; show_axis = false, kwargs...); end
     if !isinf(xmin) && !isinf(xmax)
-        AbstractPlotting.xlims!(ax, xmin - 0.1dx, xmax + 0.1dx)
+        Makie.xlims!(ax, xmin - 0.1dx, xmax + 0.1dx)
     end
     if !isinf(ymin) && !isinf(ymax)
-        AbstractPlotting.ylims!(ax, ymin - 0.1dy, ymax + 0.1dy)
+        Makie.ylims!(ax, ymin - 0.1dy, ymax + 0.1dy)
     end
     remove_axis!(ax)
     return ax
@@ -78,7 +78,7 @@ end
 
 function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
     use_cell = true, kwargs...)
-    c = haskey(kwargs, :color) ? kwargs[:color] : AbstractPlotting.RGBf0(0,0,0)
+    c = haskey(kwargs, :color) ? kwargs[:color] : Makie.RGBf0(0,0,0)
     N = length(ps)
     xs, ys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
     vxs, vys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
