@@ -2,13 +2,15 @@ export subscript, superscript, randomcolor
 export lighten_color, darken_color
 export record_interaction
 
+
 """
-    record_interaction(figure, file; framerate = 30, total_time = 10)
+    record_interaction(file, figure; framerate = 30, total_time = 10)
 Start recording whatever interaction is happening on some `figure` into a video
 output in `file` (recommended to end in `".mp4"`).
 Provide also a framerate and a `total_time` to record for (in seconds).
 """
-function record_interaction(figure, file; framerate = 30, total_time = 10)
+function record_interaction(file, figure; framerate = 30, total_time = 10)
+    mkpath(dirname(file))
     framen = framerate*total_time
     record(figure, file; framerate) do io
         for i = 1:framen
@@ -18,6 +20,9 @@ function record_interaction(figure, file; framerate = 30, total_time = 10)
     end
     return
 end
+record_interaction(figure::Figure, file; kwargs...) = 
+record_interaction(file, figure; kwargs...)
+
 
 """
     subscript(i::Int)

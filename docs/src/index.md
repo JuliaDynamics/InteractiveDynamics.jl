@@ -71,3 +71,8 @@ It is expected that you have the latest (stable) versions installed for the libr
 Modules = [InteractiveDynamics]
 Order   = [:function, :type]
 ```
+
+## Utility
+```@docs
+record_interaction
+```
