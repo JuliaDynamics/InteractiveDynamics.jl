@@ -55,7 +55,7 @@ x0 = sln.slider.value
 # Timeseries plot
 function seriespoints(x)
     n = 0:length(x)+1
-    c = [Point2f0(n[i], x[i]) for i in 1:length(x)]
+    return [Point2f0(n[i], x[i]) for i in 1:length(x)]
 end
 
 x = Observable(DynamicalSystems.trajectory(ds, L[], x0[]))

@@ -7,10 +7,17 @@ export record_interaction
     record_interaction(file, figure; framerate = 30, total_time = 10)
 Start recording whatever interaction is happening on some `figure` into a video
 output in `file` (recommended to end in `".mp4"`).
-Provide also a framerate and a `total_time` to record for (in seconds).
+
+## Keywords
+* `framerate = 30`
+* `total_time = 10`: Time to record for, in seconds
+# `sleep_time = 1`: Time to call `sleep()` before starting to save.
 """
-function record_interaction(file, figure; framerate = 30, total_time = 10)
-    mkpath(dirname(file))
+function record_interaction(file, figure; 
+        framerate = 30, total_time = 10, sleep_time = 1,
+    )
+    ispath(dirname(file)) || mkpath(dirname(file))
+    sleep(sleep_time)
     framen = framerate*total_time
     record(figure, file; framerate) do io
         for i = 1:framen
