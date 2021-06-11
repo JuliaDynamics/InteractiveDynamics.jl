@@ -130,7 +130,7 @@ for i in 1:O
 end
 
 display(figure)
-return
+return figure
 end
 
 function cobweb(t) # transform timeseries x into cobweb (point2D)
