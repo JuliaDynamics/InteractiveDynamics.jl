@@ -12,25 +12,25 @@ Both the trajectory in the cobweb, as well as any iterate `f` can be turned off 
 using some of the buttons.
 
 ## Keywords
-* `Ttr = 0`: transient amount of time to evolve before plotting
 * `fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O]`: plotting keywords
   for each of the plotted iterates of `f`
-* `trajcolor = randomcolor()`: color of the trajectory
+* `trajcolor = :black`: color of the trajectory
 * `pname = "p"`: name of the parameter slider
 * `pindex = 1`: parameter index
 * `xmin = 0, xmax = 1`: limits the state of the dynamical system can take
 * `Tmax = 1000`: maximum trajectory length
+* `x0s = range(xmin, xmax; length = 101)`: Possible values for the x0 slider.
 """
 function interactive_cobweb(
     ds, prange, O::Int = 3;
-    Ttr = 0,
     fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O],
-    trajcolor = randomcolor(),
+    trajcolor = :black,
     pname = "p",
     xmin = 0.0,
     xmax = 1.0,
     Tmax = 1000,
     pindex = 1,
+    x0s = range(xmin, xmax; length = 101),
 )
 
 @assert O ≥ 1
@@ -48,16 +48,20 @@ sln = labelslider!(figure, "n =", 1:Tmax; sliderkw = Dict(:startvalue => 20))
 figure[4, :] = sln.layout
 L = sln.slider.value
 
+sln = labelslider!(figure, "x₀ =", x0s; sliderkw = Dict(:startvalue => ds.u0))
+figure[5, :] = sln.layout
+x0 = sln.slider.value
+
 # Timeseries plot
 function seriespoints(x)
     n = 0:length(x)+1
     c = [Point2f0(n[i], x[i]) for i in 1:length(x)]
 end
 
-x = Observable(DynamicalSystems.trajectory(ds, L[]; Ttr))
+x = Observable(DynamicalSystems.trajectory(ds, L[], x0[]))
 xn = lift(a -> seriespoints(a), x)
 lines!(axts, xn; color = trajcolor, lw = 2.0)
-scatter!(axts, xn; color = trajcolor, markersize = 5)
+scatter!(axts, xn; color = trajcolor, markersize = 10)
 xlims!(axts, 0, 20) # this is better than autolimits
 ylims!(axts, xmin, xmax)
 
@@ -70,34 +74,24 @@ for order in 2:O
 end
 
 # plot diagonal and fⁿ
-lines!(axmap, [xmin,xmax], [xmin,xmax]; linewidth = 2, color = :black)
+lines!(axmap, [xmin,xmax], [xmin,xmax]; linewidth = 2, color = :gray, linestyle=:dash)
 fcurves = Any[]
 for i in 1:O
     _c = lines!(axmap, xs, fobs[i]; fkwargs[i]...)
     push!(fcurves, _c)
 end
 
-function cobweb(t) # transform timeseries x into cobweb (point2D)
-    # TODO: can be optimized to become in-place instead of allocating
-    c = Point2f0[]
-    for i ∈ 1:length(t)-1
-        push!(c, Point2f0(t[i], t[i]))
-        push!(c, Point2f0(t[i], t[i+1]))
-    end
-    return c
-end
-
 cobs = lift(a -> cobweb(a), x)
-ccurve = lines!(axmap, cobs; color = trajcolor)
+ccurve = lines!(axmap, cobs; color = (trajcolor, 0.5))
 # cscatter = scatter!(axmap, cobs; color = trajcolor, markersize = 2)
 
-# xlims!(axmap, 0, 1)
-# ylims!(axmap, 0, 1)
+xlims!(axmap, xmin, xmax)
+ylims!(axmap, xmin, xmax)
 
 # On trigger r-slider update all plots:
 on(r_observable) do r
     DynamicalSystems.set_parameter!(ds, pindex, r)
-    x[] = DynamicalSystems.trajectory(ds, L[]; Ttr)
+    x[] = DynamicalSystems.trajectory(ds, L[], x0[])
     fobs[1][] = ds.f.(xs, Ref(ds.p), 0)
     for order in 2:O
         fobs[order][] = ds.f.(fobs[order-1][], Ref(ds.p), 0)
@@ -105,8 +99,12 @@ on(r_observable) do r
 end
 
 on(L) do l
-    x[] = DynamicalSystems.trajectory(ds, l; Ttr)
+    x[] = DynamicalSystems.trajectory(ds, l, x0[])
     xlims!(axts, 0, l) # this is better than autolimits
+end
+
+on(x0) do u
+    x[] = DynamicalSystems.trajectory(ds, L[], u)
 end
 
 # Finally add buttons to hide/show elements of the plot
@@ -116,7 +114,7 @@ for i in 1:O
     _b = Button(figure; label = "f$(superscript(i))")
     push!(fbuttons, _b)
 end
-figure[5, :] = buttonlayout = GridLayout(tellwidth = false)
+figure[6, :] = buttonlayout = GridLayout(tellwidth = false)
 buttonlayout[:, 1:O+1] = [cbutton, fbuttons...]
 
 # And add triggering for buttons
@@ -133,4 +131,16 @@ end
 
 display(figure)
 return
+end
+
+function cobweb(t) # transform timeseries x into cobweb (point2D)
+    # TODO: can be optimized to become in-place instead of pushing
+    c = Point2f0[]
+    sizehint!(c, 2length(t))
+    push!(c, Point2f0(t[1], 0))
+    for i ∈ 1:length(t)-1
+        push!(c, Point2f0(t[i], t[i]))
+        push!(c, Point2f0(t[i], t[i+1]))
+    end
+    return c
 end

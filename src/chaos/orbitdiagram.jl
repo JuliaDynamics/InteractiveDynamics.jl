@@ -1,8 +1,10 @@
 export interactive_orbitdiagram, scaleod
 
 """
-    interactive_orbitdiagram(ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
-                             u0 = get_state(ds), parname = "p", title = "")
+    interactive_orbitdiagram(
+        ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
+        u0 = get_state(ds), parname = "p", title = ""
+    )
 
 Open an interactive application for exploring orbit diagrams (ODs) of discrete
 dynamical systems. Requires `DynamicalSystems`.
@@ -41,23 +43,22 @@ even though plotting is `Float32`-based). This however means that it is
 necessary to transform the data in real scale. This is done through the function
 [`scaleod`](@ref) which accepts the 5 arguments returned from the current function:
 ```julia
-oddata = interactive_orbitdiagram(...)
+figure, oddata = interactive_orbitdiagram(...)
 ps, us = scaleod(oddata)
 ```
 """
 function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     u0 = DynamicalSystems.get_state(ds), parname = "p", title = "")
 
-    figure, layout = layoutscene(resolution = (1400, 600), backgroundcolor = DEFAULT_BG)
+    figure = Figure(resolution = (1200, 600), backgroundcolor = DEFAULT_BG)
     display(figure)
-    odax = layout[1,1] = Axis(figure)
+    odax = figure[1,1] = Axis(figure)
     for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
         setproperty!(odax, z, true)
     end
-    controllayout = layout[1, 2] = GridLayout(height = Auto(false))
-    colsize!(layout, 1, Relative(3/5))
+    controllayout = figure[1, 2] = GridLayout()
     display(figure)
-
+    
     controllayout.tellheight[] = false
     odax.tellheight = true
 
@@ -70,7 +71,6 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     p₋, p₊ = p_min, p_max
     odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, p₋, p₊, d[], n[], Ttr[], u0)
     od_obs = Observable(odinit)
-    dinit = d[]; ninit = n[]; Ttrinit = Ttr[]
 
     # History stores the variable index and true diagram limits
     history = [(i[], p₋, p₊, xmin, xmax, n[], Ttr[], d[])]
@@ -165,11 +165,10 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     end
 
     if title ≠ ""
-        layout[0, 1] = Label(figure, title, textsize = 30)
+        figure[0, 1] = Label(figure, title, textsize = 30)
     end
-    MakieLayout.trim!(layout)
 
-    return od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊
+    return figure, (od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
 end
 
 
@@ -280,7 +279,7 @@ function add_controls!(controllayout, figure, D, parname, i0)
     ▢reset = Button(figure, label = "reset")
     imenu = Menu(figure, options = [string(j) for j in 1:D], width = 60)
     imenu.i_selected = i0
-    buttonslayout = controllayout[5, :] = GridLayout(figure; width = Auto(false))
+    buttonslayout = controllayout[5, :] = GridLayout()
     buttonslayout[1, 1:5] = [▢update, ▢back, ▢reset, Label(figure, "variable:"), imenu]
     # Limit boxes. Unfortunately can't be made observables yet...
     ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
