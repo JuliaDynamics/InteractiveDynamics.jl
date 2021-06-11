@@ -12,7 +12,6 @@ Both the trajectory in the cobweb, as well as any iterate `f` can be turned off 
 using some of the buttons.
 
 ## Keywords
-* `Ttr = 0`: transient amount of time to evolve before plotting
 * `fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O]`: plotting keywords
   for each of the plotted iterates of `f`
 * `trajcolor = randomcolor()`: color of the trajectory
@@ -24,7 +23,6 @@ using some of the buttons.
 """
 function interactive_cobweb(
     ds, prange, O::Int = 3;
-    Ttr = 0,
     fkwargs = [(linewidth = 4.0, color = randomcolor()) for i in 1:O],
     trajcolor = randomcolor(),
     pname = "p",
@@ -55,7 +53,7 @@ function seriespoints(x)
     c = [Point2f0(n[i], x[i]) for i in 1:length(x)]
 end
 
-x = Observable(DynamicalSystems.trajectory(ds, L[]; Ttr))
+x = Observable(DynamicalSystems.trajectory(ds, L[]))
 xn = lift(a -> seriespoints(a), x)
 lines!(axts, xn; color = trajcolor, lw = 2.0)
 scatter!(axts, xn; color = trajcolor, markersize = 10)
@@ -82,13 +80,13 @@ cobs = lift(a -> cobweb(a), x)
 ccurve = lines!(axmap, cobs; color = trajcolor)
 # cscatter = scatter!(axmap, cobs; color = trajcolor, markersize = 2)
 
-# xlims!(axmap, 0, 1)
-# ylims!(axmap, 0, 1)
+xlims!(axmap, xmin, xmax)
+ylims!(axmap, xmin, xmax)
 
 # On trigger r-slider update all plots:
 on(r_observable) do r
     DynamicalSystems.set_parameter!(ds, pindex, r)
-    x[] = DynamicalSystems.trajectory(ds, L[]; Ttr)
+    x[] = DynamicalSystems.trajectory(ds, L[])
     fobs[1][] = ds.f.(xs, Ref(ds.p), 0)
     for order in 2:O
         fobs[order][] = ds.f.(fobs[order-1][], Ref(ds.p), 0)
@@ -96,7 +94,7 @@ on(r_observable) do r
 end
 
 on(L) do l
-    x[] = DynamicalSystems.trajectory(ds, l; Ttr)
+    x[] = DynamicalSystems.trajectory(ds, l)
     xlims!(axts, 0, l) # this is better than autolimits
 end
 
