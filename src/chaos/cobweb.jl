@@ -20,6 +20,7 @@ using some of the buttons.
 * `pindex = 1`: parameter index
 * `xmin = 0, xmax = 1`: limits the state of the dynamical system can take
 * `Tmax = 1000`: maximum trajectory length
+* `x0s = range(xmin, xmax; length = 100)`: Possible values for the x0 slider.
 """
 function interactive_cobweb(
     ds, prange, O::Int = 3;
@@ -57,7 +58,7 @@ end
 x = Observable(DynamicalSystems.trajectory(ds, L[]; Ttr))
 xn = lift(a -> seriespoints(a), x)
 lines!(axts, xn; color = trajcolor, lw = 2.0)
-scatter!(axts, xn; color = trajcolor, markersize = 5)
+scatter!(axts, xn; color = trajcolor, markersize = 10)
 xlims!(axts, 0, 20) # this is better than autolimits
 ylims!(axts, xmin, xmax)
 
@@ -75,16 +76,6 @@ fcurves = Any[]
 for i in 1:O
     _c = lines!(axmap, xs, fobs[i]; fkwargs[i]...)
     push!(fcurves, _c)
-end
-
-function cobweb(t) # transform timeseries x into cobweb (point2D)
-    # TODO: can be optimized to become in-place instead of allocating
-    c = Point2f0[]
-    for i ∈ 1:length(t)-1
-        push!(c, Point2f0(t[i], t[i]))
-        push!(c, Point2f0(t[i], t[i+1]))
-    end
-    return c
 end
 
 cobs = lift(a -> cobweb(a), x)
@@ -133,4 +124,16 @@ end
 
 display(figure)
 return
+end
+
+function cobweb(t) # transform timeseries x into cobweb (point2D)
+    # TODO: can be optimized to become in-place instead of pushing
+    c = Point2f0[]
+    sizehint!(c, 2length(t))
+    push!(c, Point2f0(t[1], 0))
+    for i ∈ 1:length(t)-1
+        push!(c, Point2f0(t[i], t[i]))
+        push!(c, Point2f0(t[i], t[i+1]))
+    end
+    return c
 end
