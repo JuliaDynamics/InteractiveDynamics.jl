@@ -1,7 +1,7 @@
 name = "InteractiveDynamics"
 uuid = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 repo = "https://github.com/JuliaDynamics/InteractiveDynamics.jl.git"
-version = "0.15.1"
+version = "0.15.2"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
