@@ -73,7 +73,11 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
-    ax = fig[1,1][1,1] = Axis(fig)
+    ax = fig[1,1][1,1] = if length(size(model.space.s)) == 3
+        Axis3(fig)
+    else
+        Axis(fig)
+    end
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     return fig, abmstepper
 end
@@ -100,7 +104,11 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
     fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = Axis(fig)
+    ax = fig[1,1][1,1] = if length(size(model.space.s)) == 3
+        Axis3(fig)
+    else
+        Axis(fig)
+    end
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
@@ -191,7 +199,11 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
 
     fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
+    ax = fig[1,1][1,1] = if length(size(model.space.s)) == 3
+        Axis3(fig; title = t, titlealign = :left, axiskwargs...)
+    else
+        Axis2(fig; title = t, titlealign = :left, axiskwargs...)
+    end
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
 
     record(fig, file; framerate) do io
