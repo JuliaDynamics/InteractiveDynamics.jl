@@ -72,6 +72,9 @@ function abm_init_stepper_and_plot!(ax, fig, model;
 
     static_preplot!(ax, model)
 
+    if is3d && am == :circle
+        am = Sphere(Point3f0(0), 1)
+    end
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
     sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
@@ -85,23 +88,21 @@ function abm_init_stepper_and_plot!(ax, fig, model;
 
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
-    # TODO: 3D equivalent of poly!
-    if user_used_polygons(am, markers)
-        # For polygons we always need vector, even if all agents are same polygon
-        if markers isa Observable
-            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-        else
-            markers = Observable([translate(am, p) for p in pos])
-        end
-        poly!(ax, markers; color = colors, scatterkwargs...)
+    if is3d
+        meshscatter!(
+            ax, pos;
+            color = colors, marker = markers, markersize = sizes,
+            scatterkwargs...
+        )
     else
-        if is3d
-            # TODO: Mesh markers
-            meshscatter!(
-                ax, pos;
-                color = colors, markersize = sizes,
-                scatterkwargs...
-            )
+        if user_used_polygons(am, markers)
+            # For polygons we always need vector, even if all agents are same polygon
+            if markers isa Observable
+                markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+            else
+                markers = Observable([translate(am, p) for p in pos])
+            end
+            poly!(ax, markers; color = colors, scatterkwargs...)
         else
             scatter!(
                 ax, pos;
@@ -110,7 +111,6 @@ function abm_init_stepper_and_plot!(ax, fig, model;
             )
         end
     end
-
     return ABMStepper(
         ac, am, as, offset, scheduler,
         pos, colors, sizes, markers,
