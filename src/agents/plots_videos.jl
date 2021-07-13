@@ -202,7 +202,7 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     ax = fig[1,1][1,1] = if length(size(model.space.s)) == 3
         Axis3(fig; title = t, titlealign = :left, axiskwargs...)
     else
-        Axis2(fig; title = t, titlealign = :left, axiskwargs...)
+        Axis(fig; title = t, titlealign = :left, axiskwargs...)
     end
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
 

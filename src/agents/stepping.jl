@@ -38,7 +38,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
     o, e = modellims(model) # TODO: extend to 3D
     is3d = length(o) == 3
-    @assert length(o) == 2 || length(o) == 3 "Only 2D and 3D spaces can be plotted."
+    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
     # TODO: once graph plotting is possible, this will be adjusted
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
     # TODO: Point2f0 must be replaced by 3D version in the future
