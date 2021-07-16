@@ -36,21 +36,22 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     )
 
     heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
-    o, e = modellims(model) # TODO: extend to 3D
-    @assert length(o) == 2 "At the moment only 2D spaces can be plotted."
+    o, e = modellims(model)
+    is3d = length(o) == 3
+    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
     # TODO: once graph plotting is possible, this will be adjusted
     @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
-    # TODO: Point2f0 must be replaced by 3D version in the future
-
-    # TODO: This should be expanded into 3D (and also scale and stuff)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
-    ax.aspect = aspect
+    is3d && zlims!(ax, o[3], e[3])
+    is3d || (ax.aspect = aspect)
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
         # get the matrix size, and then make a range for each dimension
         # and do heatmap!(ax, x, y, heatobs)
+        #
+        # TODO: use surface!(heatobs) here?
         matrix = Agents.get_data(model, heatarray, identity)
         if !(matrix isa AbstractMatrix) || size(matrix) ≠ size(model.space)
             error("The heat array property must yield a matrix of same size as the grid!")
@@ -67,34 +68,45 @@ function abm_init_stepper_and_plot!(ax, fig, model;
 
     static_preplot!(ax, model)
 
+    if is3d && am == :circle
+        am = Sphere(Point3f0(0), 1)
+    end
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
     sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
     markers = am isa Function ? Observable([am(model[i]) for i ∈ ids]) : am
+    postype = is3d ? Point3f0 : Point2f0
     if isnothing(offset)
-        pos = Observable(Point2f0[model[i].pos for i ∈ ids])
+        pos = Observable(postype[model[i].pos for i ∈ ids])
     else
-        pos = Observable(Point2f0[model[i].pos .+ offset(model[i]) for i ∈ ids])
+        pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
     end
 
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
-    if user_used_polygons(am, markers)
-        # For polygons we always need vector, even if all agents are same polygon
-        if markers isa Observable
-            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-        else
-            markers = Observable([translate(am, p) for p in pos])
-        end
-        poly!(ax, markers; color = colors, scatterkwargs...)
-    else
-        scatter!(
+    if is3d
+        meshscatter!(
             ax, pos;
-            color = colors, markersize = sizes, marker = markers,
+            color = colors, marker = markers, markersize = sizes,
             scatterkwargs...
         )
+    else
+        if user_used_polygons(am, markers)
+            # For polygons we always need vector, even if all agents are same polygon
+            if markers isa Observable
+                markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+            else
+                markers = Observable([translate(am, p) for p in pos])
+            end
+            poly!(ax, markers; color = colors, scatterkwargs...)
+        else
+            scatter!(
+                ax, pos;
+                color = colors, marker = markers, markersize = sizes,
+                scatterkwargs...
+            )
+        end
     end
-
     return ABMStepper(
         ac, am, as, offset, scheduler,
         pos, colors, sizes, markers,
