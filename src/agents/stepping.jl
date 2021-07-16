@@ -46,8 +46,7 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     # TODO: This should be expanded into 3D (and also scale and stuff)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
-    # TODO: uncomment when fixed
-    # zlims!(ax, o[3], e[3])
+    is3d && zlims!(ax, o[3], e[3])
     is3d || (ax.aspect = aspect)
 
     if !isnothing(heatarray)
