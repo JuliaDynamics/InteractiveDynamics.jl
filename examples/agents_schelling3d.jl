@@ -42,4 +42,5 @@ end
 using InteractiveDynamics, GLMakie
 
 model = initialize()
-fig, step = abm_play(model, agent_step!, dummystep; ac = x -> [:red, :blue][x.group], as = 0.5)
+ac(agent) = (:red, :blue)[agent.group]
+fig, step = abm_play(model, agent_step!, dummystep; ac, as = 0.5)
