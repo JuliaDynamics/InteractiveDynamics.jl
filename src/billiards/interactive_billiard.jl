@@ -31,7 +31,7 @@ position, using the function `particlebeam` from `DynamicalBilliards`.
 * `dx = 0.01` : width of the particle beam.
 * `dt = 0.001` : time resolution of the animation.
 * `tail = 1000` : length of the tail of the particles (multiplies `dt`).
-* `colors = JULIADYNAMICS_COLORS` : If a symbol (colormap name) each particle gets
+* `colors = JULIADYNAMICS_CMAP` : If a symbol (colormap name) each particle gets
   a color from the map. If Vector of length `N`, each particle gets a color form the vector.
   If Vector with length < `N`, linear interpolation across contained colors is done.
 * `tailwidth = 1` : Linewidth of the particle tail.
@@ -54,7 +54,7 @@ function interactive_billiard(bd::Billiard, x::Real, y::Real, φ::Real, ω = not
 end
 
 function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
-        dt = 0.001, tail = 1000, dx = 0.01, colors = JULIADYNAMICS_COLORS,
+        dt = 0.001, tail = 1000, dx = 0.01, colors = JULIADYNAMICS_CMAP,
         plot_particles = true, α = 1.0, N = 100, res = (800, 800),
         intervals = nothing, sleept = nothing, fade = true,
         backgroundcolor = DEFAULT_BG,
@@ -335,7 +335,7 @@ The video is saved directly into `file`.
 function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vector{<:AbstractParticle}, f;
         plot_particles = true, dt = 0.001,
         speed = 5, frames = 1000, framerate = 60,
-        total_span = 10.0, colors = JULIADYNAMICS_COLORS,
+        total_span = 10.0, colors = JULIADYNAMICS_CMAP,
         res = (800, 800), displayfigure = false, ylim = (0, 1),
         ylabel = "f",
         kwargs...
@@ -568,7 +568,7 @@ the interaction part of course. The additional keyword `steps` counts how many
 times to progress the particles (in multiples of `dt`).
 """
 function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
-        ms = 8, plot_particles=true, colors = JULIADYNAMICS_COLORS,
+        ms = 8, plot_particles=true, colors = JULIADYNAMICS_CMAP,
         dt = 0.001, steps = round(Int, 10/dt), kwargs...
     )
 

@@ -2,6 +2,23 @@ export subscript, superscript, randomcolor
 export lighten_color, darken_color
 export record_interaction
 
+# Color scheme
+const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
+const DEFAULT_BG = RGBf0(1.0, 1.0, 1.0)
+using Makie: px
+
+# JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
+COLORSCHEME = [
+    "#2F2F2F",
+    "#6847B9",
+    "#33CBD8",
+    "#E22411",
+    "#968A8A",
+    "#B6D840",
+]
+JULIADYNAMICS_COLORS = to_color.(COLORSCHEME)
+export JULIADYNAMICS_COLORS, JULIADYNAMICS_CMAP
+
 
 """
     record_interaction(file, figure; framerate = 30, total_time = 10)
@@ -139,6 +156,29 @@ function to_alpha(c, α = 1.2)
     c = to_color(c)
     return RGBAf0(c.r, c.g, c.b, α)
 end
+
+JULIADYNAMICS_CMAP = [
+    darken_color(JULIADYNAMICS_COLORS[1], 1.1),
+    darken_color(JULIADYNAMICS_COLORS[2], 1.2),
+    lighten_color(JULIADYNAMICS_COLORS[2], 1.2),
+    lighten_color(JULIADYNAMICS_COLORS[3], 1.3),
+]
+
+struct CyclicContainer{C} <: AbstractVector{C}
+    c::Vector{C}
+    n::Int
+end
+CyclicContainer(c) = CyclicContainer(c, 0)
+Base.length(c::CyclicContainer) = length(c.c)
+Base.size(c::CyclicContainer) = size(c.c)
+Base.getindex(c::CyclicContainer, i) = c.c[mod1(i, length(c.c))]
+function Base.getindex(c::CyclicContainer)
+    c.n += 1
+    c[c.n]
+end
+Base.iterate(c::CyclicContainer, i = 1) = iterate(c.c, i)
+
+CYCLIC_COLORS = CyclicContainer(JULIADYNAMICS_COLORS)
 
 ##########################################################################################
 # Polygon stuff
