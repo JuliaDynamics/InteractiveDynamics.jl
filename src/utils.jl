@@ -1,24 +1,6 @@
-export subscript, superscript, randomcolor
-export lighten_color, darken_color
+export subscript, superscript
 export record_interaction
-
-# Color scheme
-const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
-const DEFAULT_BG = RGBf0(1.0, 1.0, 1.0)
-using Makie: px
-
-# JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
-COLORSCHEME = [
-    "#6F4AC7",
-    "#33CBD8",
-    "#000000",
-    "#E22411",
-    "#968A8A",
-    "#B6D840",
-]
-JULIADYNAMICS_COLORS = to_color.(COLORSCHEME)
-export JULIADYNAMICS_COLORS, JULIADYNAMICS_CMAP
-
+export rotate2D, scale, Polygon, Point2f0
 
 """
     record_interaction(file, figure; framerate = 30, total_time = 10)
@@ -28,7 +10,7 @@ output in `file` (recommended to end in `".mp4"`).
 ## Keywords
 * `framerate = 30`
 * `total_time = 10`: Time to record for, in seconds
-# `sleep_time = 1`: Time to call `sleep()` before starting to save.
+* `sleep_time = 1`: Time to call `sleep()` before starting to save.
 """
 function record_interaction(file, figure; 
         framerate = 30, total_time = 10, sleep_time = 1,
@@ -129,26 +111,6 @@ function pushupdate!(o::Observable, v)
 end
 
 """
-    darken_color(c, f = 1.2)
-Darken given color `c` by a factor `f`.
-If `f` is less than 1, the color is lightened instead.
-"""
-function darken_color(c, f = 1.2)
-    c = to_color(c)
-    return RGBAf0(clamp.((c.r/f, c.g/f, c.b/f, c.alpha), 0, 1)...)
-end
-
-"""
-    lighten_color(c, f = 1.2)
-Lighten given color `c` by a factor `f`.
-If `f` is less than 1, the color is darkened instead.
-"""
-function lighten_color(c, f = 1.2)
-    c = to_color(c)
-    return RGBAf0(clamp.((c.r*f, c.g*f, c.b*f, c.alpha), 0, 1)...)
-end
-
-"""
     to_alpha(c, α = 0.75)
 Create a color same as `c` but with given alpha channel.
 """
@@ -156,13 +118,6 @@ function to_alpha(c, α = 1.2)
     c = to_color(c)
     return RGBAf0(c.r, c.g, c.b, α)
 end
-
-JULIADYNAMICS_CMAP = [
-    darken_color(JULIADYNAMICS_COLORS[1], 1.1),
-    darken_color(JULIADYNAMICS_COLORS[2], 1.2),
-    lighten_color(JULIADYNAMICS_COLORS[2], 1.2),
-    lighten_color(JULIADYNAMICS_COLORS[3], 1.3),
-]
 
 struct CyclicContainer{C} <: AbstractVector{C}
     c::Vector{C}
@@ -184,7 +139,6 @@ CYCLIC_COLORS = CyclicContainer(JULIADYNAMICS_COLORS)
 # Polygon stuff
 ##########################################################################################
 using Makie.GeometryBasics # for using Polygons
-export rotate2D, scale, Polygon, Point2f0
 
 translate(p::Polygon, point) = Polygon(decompose(Point2f0, p.exterior) .+ point)
 

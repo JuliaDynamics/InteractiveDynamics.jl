@@ -2,6 +2,7 @@ module InteractiveDynamics
 
 using Makie, Observables
 
+include("colors.jl")
 include("utils.jl")
 using Requires
 
