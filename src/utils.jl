@@ -9,9 +9,9 @@ using Makie: px
 
 # JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
 COLORSCHEME = [
-    "#2F2F2F",
-    "#6847B9",
+    "#6F4AC7",
     "#33CBD8",
+    "#000000",
     "#E22411",
     "#968A8A",
     "#B6D840",
