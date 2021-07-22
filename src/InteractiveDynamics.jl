@@ -2,15 +2,7 @@ module InteractiveDynamics
 
 using Makie, Observables
 
-const MARKER = Circle(Point2f0(0, 0), Float32(1)) # allows pixel size (zoom independent)
-const DEFAULT_BG = RGBf0(1.0, 1.0, 1.0)
-using Makie: px
-
-# JULIADYNAMICS_COLORS = to_color.(("#7a60bb", "#202020", "#1ba5aa"))
-JULIADYNAMICS_COLORS = to_color.(["#7d53e7", "#202020", "#17c7cd"])
-JULIADYNAMICS_CMAP = to_color.(["#2c1633", "#744cd7", "#00ffc1"])
-export JULIADYNAMICS_COLORS
-
+include("colors.jl")
 include("utils.jl")
 using Requires
 

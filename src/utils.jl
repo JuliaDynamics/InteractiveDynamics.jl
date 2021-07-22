@@ -1,7 +1,6 @@
-export subscript, superscript, randomcolor
-export lighten_color, darken_color
+export subscript, superscript
 export record_interaction
-
+export rotate2D, scale, Polygon, Point2f0
 
 """
     record_interaction(file, figure; framerate = 30, total_time = 10)
@@ -11,7 +10,7 @@ output in `file` (recommended to end in `".mp4"`).
 ## Keywords
 * `framerate = 30`
 * `total_time = 10`: Time to record for, in seconds
-# `sleep_time = 1`: Time to call `sleep()` before starting to save.
+* `sleep_time = 1`: Time to call `sleep()` before starting to save.
 """
 function record_interaction(file, figure; 
         framerate = 30, total_time = 10, sleep_time = 1,
@@ -112,26 +111,6 @@ function pushupdate!(o::Observable, v)
 end
 
 """
-    darken_color(c, f = 1.2)
-Darken given color `c` by a factor `f`.
-If `f` is less than 1, the color is lightened instead.
-"""
-function darken_color(c, f = 1.2)
-    c = to_color(c)
-    return RGBAf0(clamp.((c.r/f, c.g/f, c.b/f, c.alpha), 0, 1)...)
-end
-
-"""
-    lighten_color(c, f = 1.2)
-Lighten given color `c` by a factor `f`.
-If `f` is less than 1, the color is darkened instead.
-"""
-function lighten_color(c, f = 1.2)
-    c = to_color(c)
-    return RGBAf0(clamp.((c.r*f, c.g*f, c.b*f, c.alpha), 0, 1)...)
-end
-
-"""
     to_alpha(c, α = 0.75)
 Create a color same as `c` but with given alpha channel.
 """
@@ -140,11 +119,26 @@ function to_alpha(c, α = 1.2)
     return RGBAf0(c.r, c.g, c.b, α)
 end
 
+struct CyclicContainer{C} <: AbstractVector{C}
+    c::Vector{C}
+    n::Int
+end
+CyclicContainer(c) = CyclicContainer(c, 0)
+Base.length(c::CyclicContainer) = length(c.c)
+Base.size(c::CyclicContainer) = size(c.c)
+Base.getindex(c::CyclicContainer, i) = c.c[mod1(i, length(c.c))]
+function Base.getindex(c::CyclicContainer)
+    c.n += 1
+    c[c.n]
+end
+Base.iterate(c::CyclicContainer, i = 1) = iterate(c.c, i)
+
+CYCLIC_COLORS = CyclicContainer(JULIADYNAMICS_COLORS)
+
 ##########################################################################################
 # Polygon stuff
 ##########################################################################################
 using Makie.GeometryBasics # for using Polygons
-export rotate2D, scale, Polygon, Point2f0
 
 translate(p::Polygon, point) = Polygon(decompose(Point2f0, p.exterior) .+ point)
 

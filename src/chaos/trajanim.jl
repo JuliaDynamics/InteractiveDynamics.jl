@@ -42,7 +42,7 @@ The function returns `figure, obs`. `figure` is the overarching figure
 function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
-        colors = [randomcolor() for i in 1:length(u0s)],
+        colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
@@ -176,7 +176,7 @@ The following additional keywords apply:
 function interactive_evolution_timeseries(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
-        colors = [randomcolor() for i in 1:length(u0s)],
+        colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
