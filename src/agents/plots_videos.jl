@@ -1,5 +1,8 @@
 export abm_plot, abm_play, abm_video
 
+dimensionality(::Agents.ABM{<:Agents.GridSpace{D}}) where {D} = D
+dimensionality(::Agents.ABM{<:Agents.ContinuousSpace{D}}) where {D} = D
+
 """
     abm_plot(model::ABM; kwargs...) → fig, abmstepper
 Plot an agent based model by plotting each individual agent as a marker and using
@@ -35,10 +38,13 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   # am = :diamond
   am(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
   ```
-  Notice that `am` can be/return a `Polygon` instance, which plots each agent as an arbitrary
-  polygon. It is assumed that the origin (0, 0) is the agent's position when creating
-  the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
+  Notice that for 2D models, `am` can be/return a `Polygon` instance, which plots each agent
+  as an arbitrary polygon. It is assumed that the origin (0, 0) is the agent's position when
+  creating the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
   own size. Use the functions `scale, rotate2D` to transform this polygon.
+
+  3D models currently do not support having different markers. As a result, `am` cannot be a function.
+  It should be a `Mesh` or 3D primitive (such as `Sphere` or `Rect3D`).
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
@@ -73,7 +79,7 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 """
 function abm_plot(model; resolution = (600, 600), kwargs...)
     fig = Figure(; resolution)
-    ax = fig[1,1][1,1] = Axis(fig)
+    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     return fig, abmstepper
 end
@@ -100,7 +106,7 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
     fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = Axis(fig)
+    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
@@ -191,7 +197,11 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
 
     fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = Axis(fig; title = t, titlealign = :left, axiskwargs...)
+    ax = fig[1,1][1,1] = if dimensionality(model) == 3
+        Axis3(fig; title = t, titlealign = :left, axiskwargs...)
+    else
+        Axis(fig; title = t, titlealign = :left, axiskwargs...)
+    end
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
 
     record(fig, file; framerate) do io
