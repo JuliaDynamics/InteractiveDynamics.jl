@@ -38,10 +38,13 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   # am = :diamond
   am(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
   ```
-  Notice that `am` can be/return a `Polygon` instance, which plots each agent as an arbitrary
-  polygon. It is assumed that the origin (0, 0) is the agent's position when creating
-  the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
+  Notice that for 2D models, `am` can be/return a `Polygon` instance, which plots each agent
+  as an arbitrary polygon. It is assumed that the origin (0, 0) is the agent's position when
+  creating the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
   own size. Use the functions `scale, rotate2D` to transform this polygon.
+
+  3D models currently do not support having different markers. As a result, `am` cannot be a function.
+  It should be a `Mesh` or 3D primitive (such as `Sphere` or `Rect3D`).
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
