@@ -116,7 +116,7 @@ function abm_data_exploration(
     # Clicking the update button:
     on(update) do clicks
         model = modelobs[]
-        update_abm_parameters!(model, slidervals)
+        update_abm_properties!(model, slidervals)
     end
 
     # Clicking the reset button
@@ -215,7 +215,7 @@ function update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mda
     for ax in axs; autolimits!(ax); end
 end
 
-function update_abm_parameters!(model, slidervals)
+function update_abm_properties!(model, slidervals)
     for l in keys(slidervals)
         v = slidervals[l][]
         if typeof(model.properties)<:Dict || typeof(model.properties)<:NamedTuple
