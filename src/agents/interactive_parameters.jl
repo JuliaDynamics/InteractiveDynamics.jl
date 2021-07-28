@@ -218,7 +218,11 @@ end
 function update_abm_parameters!(model, params, slidervals)
     for l in keys(slidervals)
         v = slidervals[l][]
-        model.properties[l] = v
+        if typeof(model.properties)<:Dict || typeof(model.properties)<:NamedTuple
+            model.properties[l] = v
+        else
+            setproperty!(model.properties, l, v)
+        end
     end
 end
 
