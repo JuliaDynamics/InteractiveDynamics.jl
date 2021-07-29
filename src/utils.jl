@@ -2,6 +2,52 @@ export subscript, superscript
 export record_interaction
 export rotate2D, scale, Polygon, Point2f0
 
+##########################################################################################
+# Check/get/set
+##########################################################################################
+
+"""
+    has_key(p, key)
+Check if `p` has given key. For `AbstractDict` this is `haskey`,
+for anything else it is `hasproperty`.
+    has_key(p, keys...)
+When given multiple keys, `has_key` is called recursively, i.e.
+`has_key(p, key1, key2) = has_key(has_key(p, key1), key2)` and so on.
+"""
+has_key(p, keys...) = has_key(has_key(p, keys[1]), Base.tail(keys)...)
+has_key(p::AbstractDict, key) = haskey(p, key)
+has_key(p, key) = hasproperty(p, key)
+
+"""
+    get_value(p, key)
+Retrieve value of `p` with given key. For `AbstractDict` this is `getindex`,
+for anything else it is `getproperty`.
+    get_value(p, keys...)
+When given multiple keys, `get_value` is called recursively, i.e.
+`get_value(p, key1, key2) = get_value(get_value(p, key1), key2)` and so on.
+For example, if `p, p.k1` are `NamedTuple`s then
+`get_value(p, k1, k2) == p.k1.k2`.
+
+"""
+get_value(p, keys...) = get_value(get_value(p, keys[1]), Base.tail(keys)...)
+get_value(p::AbstractDict, key) = getindex(p, key)
+get_value(p, key) = getproperty(p, key)
+
+"""
+    set_value!(p, key, val)
+Set `key` of `p` to `val`. For `AbstractDict` this is `p[key] = val`,
+for anything else it is `setproperty`. Changing the values of `NamedTuple`s is impossible.
+"""
+set_value!(p::AbstractDict, key, val) = (p[key] = val)
+set_value!(p::NamedTuple, key, val) = error("""
+    Immutable struct of type NamedTuple cannot be changed.
+    Please use a mutable container to interactively change the model properties.""")
+set_value!(p, key, val) = setproperty!(p, key, val)
+
+##########################################################################################
+# Little helpers
+##########################################################################################
+
 """
     record_interaction(file, figure; framerate = 30, total_time = 10)
 Start recording whatever interaction is happening on some `figure` into a video
