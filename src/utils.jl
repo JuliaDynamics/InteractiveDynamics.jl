@@ -1,7 +1,6 @@
 export subscript, superscript
 export record_interaction
 export rotate2D, scale, Polygon, Point2f0
-export has_value, get_value, set_value!
 
 ##########################################################################################
 # Check/get/set
