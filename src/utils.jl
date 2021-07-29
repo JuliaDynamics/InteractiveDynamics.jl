@@ -7,16 +7,16 @@ export rotate2D, scale, Polygon, Point2f0
 ##########################################################################################
 
 """
-    has_value(p, key)
+    has_key(p, key)
 Check if `p` has given key. For `AbstractDict` this is `haskey`,
 for anything else it is `hasproperty`.
-    has_value(p, keys...)
-When given multiple keys, `has_value` is called recursively, i.e.
-`has_value(p, key1, key2) = has_value(has_value(p, key1), key2)` and so on.
+    has_key(p, keys...)
+When given multiple keys, `has_key` is called recursively, i.e.
+`has_key(p, key1, key2) = has_key(has_key(p, key1), key2)` and so on.
 """
-has_value(p, keys...) = has_value(has_value(p, keys[1]), Base.tail(keys)...)
-has_value(p::AbstractDict, key) = haskey(p, key)
-has_value(p, key) = hasproperty(p, key)
+has_key(p, keys...) = has_key(has_key(p, keys[1]), Base.tail(keys)...)
+has_key(p::AbstractDict, key) = haskey(p, key)
+has_key(p, key) = hasproperty(p, key)
 
 """
     get_value(p, key)
