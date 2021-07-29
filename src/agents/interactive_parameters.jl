@@ -134,12 +134,8 @@ end
 function abm_param_controls!(figure, datalayout, model, params, L)
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
-        if typeof(model.properties) <: Dict || typeof(model.properties) <: Tuple
-            startvalue = get(model.properties, l, vals[1])
-        else
-            startvalue = hasproperty(model.properties, l) ?
-                getproperty(model.properties, l) : vals[1]
-        end
+        startvalue = has_value!(model.properties, l) ?
+            get_value!(model.properties, l) : vals[1]
         sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
         datalayout[i+L, :] = sll.layout
@@ -218,10 +214,10 @@ end
 function update_abm_properties!(model, slidervals)
     for l in keys(slidervals)
         v = slidervals[l][]
-        if typeof(model.properties)<:Dict || typeof(model.properties)<:NamedTuple
-            model.properties[l] = v
+        if has_value!(model.properties, l)
+            set_value!(model.properties, l, v)
         else
-            setproperty!(model.properties, l, v)
+            throw(KeyError("$l"))
         end
     end
 end
