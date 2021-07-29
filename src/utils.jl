@@ -1,38 +1,38 @@
 export subscript, superscript
 export record_interaction
 export rotate2D, scale, Polygon, Point2f0
-export has_value!, get_value!, set_value!
+export has_value, get_value, set_value!
 
 ##########################################################################################
 # Check/get/set
 ##########################################################################################
 
 """
-    has_value!(p, key)
+    has_value(p, key)
 Check if `p` has given key. For `AbstractDict` this is `haskey`,
 for anything else it is `hasproperty`.
-    has_value!(p, keys...)
-When given multiple keys, `has_value!` is called recursively, i.e.
-`has_value!(p, key1, key2) = has_value!(has_value!(p, key1), key2)` and so on.
+    has_value(p, keys...)
+When given multiple keys, `has_value` is called recursively, i.e.
+`has_value(p, key1, key2) = has_value(has_value(p, key1), key2)` and so on.
 """
-has_value!(p, keys...) = has_value!(has_value!(p, keys[1]), Base.tail(keys)...)
-has_value!(p::AbstractDict, key) = haskey(p, key)
-has_value!(p, key) = hasproperty(p, key)
+has_value(p, keys...) = has_value(has_value(p, keys[1]), Base.tail(keys)...)
+has_value(p::AbstractDict, key) = haskey(p, key)
+has_value(p, key) = hasproperty(p, key)
 
 """
-    get_value!(p, key)
+    get_value(p, key)
 Retrieve value of `p` with given key. For `AbstractDict` this is `getindex`,
 for anything else it is `getproperty`.
-    get_value!(p, keys...)
-When given multiple keys, `get_value!` is called recursively, i.e.
-`get_value!(p, key1, key2) = get_value!(get_value!(p, key1), key2)` and so on.
+    get_value(p, keys...)
+When given multiple keys, `get_value` is called recursively, i.e.
+`get_value(p, key1, key2) = get_value(get_value(p, key1), key2)` and so on.
 For example, if `p, p.k1` are `NamedTuple`s then
-`get_value!(p, k1, k2) == p.k1.k2`.
+`get_value(p, k1, k2) == p.k1.k2`.
 
 """
-get_value!(p, keys...) = get_value!(get_value!(p, keys[1]), Base.tail(keys)...)
-get_value!(p::AbstractDict, key) = getindex(p, key)
-get_value!(p, key) = getproperty(p, key)
+get_value(p, keys...) = get_value(get_value(p, keys[1]), Base.tail(keys)...)
+get_value(p::AbstractDict, key) = getindex(p, key)
+get_value(p, key) = getproperty(p, key)
 
 """
     set_value!(p, key, val)
