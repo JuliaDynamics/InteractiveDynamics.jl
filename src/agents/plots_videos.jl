@@ -117,13 +117,17 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    speed, slep, run, reset, = abm_controls_play!(fig, model, spu, false)
-    # Functionality of pressing the run button
+    speed, slep, step, run, reset, = abm_controls_play!(fig, model, spu, false)
+    # Clicking the step button
+    on(step) do clicks
+        n = speed[]
+        Agents.step!(abmstepper, model, agent_step!, model_step!, n)
+    end
+    # Clicking the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
         @async while isrunning[]
-        # while isrunning[]
             n = speed[]
             model = modelobs[] # this is useful only for the reset button
             Agents.step!(abmstepper, model, agent_step!, model_step!, n)
@@ -150,17 +154,18 @@ function abm_controls_play!(fig, model, spu, add_update = false)
     slesl = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
     controllayout[2, :] = slesl.layout
+    step = Button(fig, label = "step")
     run = Button(fig, label = "run")
     reset = Button(fig, label = "reset")
     if add_update
         update = Button(fig, label = "update")
-        controllayout[3, :] = MakieLayout.hbox!(run, reset, update; tellwidth = false)
+        controllayout[3, :] = MakieLayout.hbox!(step, run, reset, update; tellwidth = false)
         upret = update.clicks
     else
         upret = nothing
-        controllayout[3, :] = MakieLayout.hbox!(run, reset; tellwidth = false)
+        controllayout[3, :] = MakieLayout.hbox!(step, run, reset; tellwidth = false)
     end
-    return spusl.slider.value, slesl.slider.value, run.clicks, reset.clicks, upret
+    return spusl.slider.value, slesl.slider.value, step.clicks, run.clicks, reset.clicks, upret
 end
 
 
