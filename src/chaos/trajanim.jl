@@ -9,7 +9,7 @@ All initial conditions are evolved in parallel and at exactly the same time.
 Two controls allow you to pause/resume the evolution and to adjust the speed.
 The application can run forever (trajectories are computed on demand).
 
-The function returns `figure, obs`. `figure` is the overarching figure
+The function returns `fig, obs`. `fig` is the overarching fig
 (the entire GUI) and can be recorded.
 `obs` is a vector of observables, each containing the current state of the trajectory.
 
@@ -51,17 +51,17 @@ function interactive_evolution(
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
-    figure = Figure(resolution = (1000, 800), )
+    fig = Figure(resolution = (1000, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
 
     # Initialize main plot with correct dimensionality
-    main = figure[1,1] = init_main_trajectory_plot(
-        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+    main = fig[1,1] = init_main_trajectory_plot(
+        ds, fig, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
 
     # here we define the main updating functionality
-    run, sleslider = trajectory_plot_controls(figure)
+    run, sleslider = trajectory_plot_controls(fig)
 
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -77,11 +77,11 @@ function interactive_evolution(
             end
             finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
-            isopen(figure.scene) || break # crucial, ensures computations stop if closed window
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
     end
-    display(figure)
-    figure, obs
+    display(fig)
+    fig, obs
 end
 
 function init_trajectory_observables(L, pinteg, tail, idxs, transform)
@@ -97,12 +97,12 @@ function init_trajectory_observables(L, pinteg, tail, idxs, transform)
 end
 
 function init_main_trajectory_plot(
-        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+        ds, fig, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 4000 : 15)
-    main = !is3D ? Axis(figure) : Axis3(figure)
+    main = !is3D ? Axis(fig) : Axis3(fig)
     # Initialize trajectory plotted element
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
@@ -127,14 +127,15 @@ function init_main_trajectory_plot(
     if !isnothing(lims)
         main.limits = lims
     end
+    is3D && (ax.protrusions = 50)
     return main
 end
-function trajectory_plot_controls(figure)
-    figure[2, 1] = controllayout = GridLayout(tellwidth = false)
-    run = controllayout[1, 1] = Button(figure; label = "run")
+function trajectory_plot_controls(fig)
+    fig[2, 1] = controllayout = GridLayout(tellwidth = false)
+    run = controllayout[1, 1] = Button(fig; label = "run")
     _s, _v = 10.0 .^ (-5:0.1:0), 0.1
     pushfirst!(_s, 0.0)
-    slesl = labelslider!(figure, "sleep =", _s;
+    slesl = labelslider!(fig, "sleep =", _s;
     sliderkw = Dict(:startvalue => _v), valuekw = Dict(:width => 100),
     format = x -> "$(round(x; digits = 5))")
     controllayout[1, 2] = slesl.layout
@@ -165,37 +166,48 @@ end
 
 
 """
-    interactive_evolution_timeseries(args...; kwargs...)
-Exactly like [`interactive_evolution`](@ref), but in addition to the state space plot
-a panel with the timeseries is also plotted and animated in real time.
+    interactive_evolution_timeseries(ds::DynamicalSystem, u0s, ps = nothing; kwargs...)
+If `ps === nothing`, this function does the same as [`interactive_evolution`](@ref),
+but in addition to the state space plot there is
+a panel with the variable timeseries plotted and animated in real time.
 
-The following additional keywords apply:
+If `ps` is not nothing, then it must be a dictionary, mapping keys
+of the system parameter container (`ds.p`) to possible ranges of values. The app then will 
+add some additional controls on the left side which allow one to interactively change
+system parameters and then click the "update" button to translate the new parameters to
+system evolution. This can be done without stopping the live system evolution.
+Notice that in this scenario it is recommended to provide the `lims` keyword manually.
+
+The following additional keywords also apply:
 - `total_span` : How much the x-axis of the timeseries plots should span (in real time units)
 - `linekwargs = NamedTuple()` : Extra keywords propagated to the timeseries plots.
+- `pnames = Dict(keys(ps) .=> keys(ps))` : Dictionary mapping parameter keys to labels.
+  Only valid if `ps` is a dictionary and not `nothing`.
 """
 function interactive_evolution_timeseries(
-        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
+        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s, ps = nothing;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
         tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
         total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
-        linekwargs = ds isa DynamicalSystems.ContinuousDynamicalSystem ? (linewidth = 4,) : ()
+        linekwargs = ds isa DynamicalSystems.ContinuousDynamicalSystem ? (linewidth = 4,) : (),
+        pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
     ) where {IIP}
 
     N = length(u0s)
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
-    figure = Figure(resolution = (1600, 800), )
+    fig = Figure(resolution = (1600, 800), )
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     tdt = total_span/50
 
     # Initialize main plot with correct dimensionality
-    main = figure[1,1] = init_main_trajectory_plot(
-        ds, figure, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
+    main = fig[1,1] = init_main_trajectory_plot(
+        ds, fig, idxs, lims, pinteg, colors, obs, plotkwargs, finalpoints, m
     )
 
     # Initialize timeseries data:
@@ -205,7 +217,7 @@ function interactive_evolution_timeseries(
         for j in 1:N
             cb = CircularBuffer{Point2f0}(tail)
             fill!(cb, Point2f0(
-                pinteg.t, transform(DynamicalSystems.get_state(pinteg, i))[idxs][i])
+                pinteg.t, transform(DynamicalSystems.get_state(pinteg, j))[idxs][i])
             )
             push!(individual_ts, Observable(cb))
         end
@@ -213,14 +225,12 @@ function interactive_evolution_timeseries(
     end
 
     # here we define the main updating functionality
-    run, sleslider = trajectory_plot_controls(figure)
+    run, sleslider = trajectory_plot_controls(fig)
 
     # Initialize timeseries plots:
-    # tslayout = GridLayout(figure)
-    # figure[:, 2] = tslayout
     ts_axes = []
     for i in 1:length(idxs)
-        ax = figure[:, 2][i, 1] = Axis(figure)
+        ax = fig[:, 2][i, 1] = Axis(fig)
         push!(ts_axes, ax)
         individual_ts = allts[i]
         for j in 1:N
@@ -232,13 +242,12 @@ function interactive_evolution_timeseries(
         ax.ylabel = string(('x':'z')[i])
         ylims!(ax, lims[i])
     end
-
-    # linkxaxes!(ts_axes[1], ts_axes[2:length(idxs)]...)
     for i in 1:length(idxs)-1;
         hidexdecorations!(ts_axes[i], grid = false)
     end
     for i in 1:length(idxs); xlims!(ts_axes[i], pinteg.t - tdt, total_span+tdt); end
 
+    # Functionality of live evolution
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
@@ -258,9 +267,40 @@ function interactive_evolution_timeseries(
             t_current = pinteg.t
             t_prev = max(0, t_current - total_span)
             for i in 1:length(idxs); xlims!(ts_axes[i], t_prev-tdt, max(t_current, total_span)+tdt); end
-            isopen(figure.scene) || break # crucial, ensures computations stop if closed window
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
     end
-    display(figure)
-    return figure, obs
+
+    # Live parameter changing
+    if !isnothing(ps)
+        playout = fig[:, 3] = GridLayout(tellheight = false)
+        slidervals = add_param_controls!(fig, playout, ps, copy(ds.p), pnames)
+        update = Button(fig, label = "update", tellwidth = false)
+        playout[length(ps)+1, :] = update
+        on(update.clicks) do clicks
+            update_ds_parameters!(ds, slidervals)
+        end
+    end
+
+    display(fig)
+    return fig, obs
+end
+
+function add_param_controls!(fig, playout, ps, p0, pnames)
+    slidervals = Dict{keytype(ps), Observable}()
+    for (i, (l, vals)) in enumerate(ps)
+        startvalue = p0[l]
+        label = string(pnames[l])
+        sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
+        slidervals[l] = sll.slider.value # directly add the observable
+        playout[i, :] = sll.layout
+    end
+    return slidervals
+end
+
+function update_ds_parameters!(ds, slidervals)
+    for l in keys(slidervals)
+        v = slidervals[l][]
+        DynamicalSystems.set_parameter!(ds, l, v)
+    end
 end
