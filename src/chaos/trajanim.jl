@@ -143,12 +143,12 @@ end
 
 
 function traj_lim_estimator(ds, u0s, diffeq, idxs, transform)
-    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; dt = 1, diffeq..., dtmax = Inf)
+    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1, diffeq..., dtmax = Inf)
     tr = DynamicalSystems.Dataset(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; dt = 1, diffeq..., dtmax = Inf)
+        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1, diffeq..., dtmax = Inf)
         tr = DynamicalSystems.Dataset(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]

@@ -1,7 +1,5 @@
 export brainscan_poincaresos
 
-# TODO: Would be nice to extend this to have multiple datasets...
-
 """
     brainscan_poincaresos(A::Dataset, j::Int; kwargs...)
     brainscan_poincaresos(As::Vector{Dataset}, j::Int; kwargs...)
