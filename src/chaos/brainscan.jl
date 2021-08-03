@@ -1,7 +1,5 @@
 export brainscan_poincaresos
 
-# TODO: Would be nice to extend this to have multiple datasets...
-
 """
     brainscan_poincaresos(A::Dataset, j::Int; kwargs...)
     brainscan_poincaresos(As::Vector{Dataset}, j::Int; kwargs...)
@@ -28,7 +26,7 @@ end
 function brainscan_poincaresos(
     As::Vector{<:DynamicalSystems.AbstractDataset}, j::Int;
     linekw = (), scatterkw = (), direction = -1,
-    colors = [JULIADYNAMICS_COLORS[mod1(i, 6)] for i in 1:length(As)]
+    colors = [CYCLIC_COLORS[i] for i in 1:length(As)]
 )
 
 for A in As; @assert size(A, 2) == 3; end

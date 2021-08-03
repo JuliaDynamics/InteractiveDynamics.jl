@@ -32,6 +32,33 @@ figure, obs = interactive_evolution_timeseries(
     ds, u0s; idxs, tail = 1000, diffeq
 )
 
+# %% Lorenz with timeseries and parameters
+ps = Dict(
+    1 => 1:0.1:30,
+    2 => 10:0.1:100,
+    3 => 1:0.01:10.0,
+)
+pnames = Dict(1 => "σ", 2 => "ρ", 3 => "β")
+
+lims = (
+    (-30, 30),
+    (-30, 30),
+    (0, 100),
+)
+
+ds = Systems.lorenz()
+
+u1 = [10,20,40.0]
+u3 = [20,10,40.0]
+u0s = [u1, u3]
+
+idxs = (1, 2, 3)
+diffeq = (alg = Tsit5(), dtmax = 0.01)
+
+figure, obs = interactive_evolution_timeseries(
+    ds, u0s, ps; idxs, tail = 1000, diffeq, pnames, lims
+)
+
 # %% towel
 ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
