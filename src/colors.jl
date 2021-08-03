@@ -7,11 +7,10 @@ using Makie: px
 
 COLORSCHEME = [
     "#6F4AC7",
-    "#33CBD8",
-    "#000000",
-    "#E22411",
-    "#968A8A",
-    "#B6D840",
+    "#2DB9C5",
+    "#1B1B1B",
+    "#E82727",
+    "#004E41",
 ]
 JULIADYNAMICS_COLORS = to_color.(COLORSCHEME)
 
