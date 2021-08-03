@@ -95,8 +95,12 @@ The agents are plotted exactly like in [`abm_plot`](@ref), while the two functio
 `agent_step!, model_step!` decide how the model will evolve, as in the standard
 approach of Agents.jl and its `step!` function.
 
-The application has two buttons: "run" and "reset" which starts/stops the time evolution
-and resets the model to its original configuration.
+The application has three buttons:
+
+* "step": advances the simulation once for `spu` steps.
+* "run": starts/stops the continuous evolution of the model.
+* "reset": resets the model to its original configuration. 
+
 Two sliders control the animation speed: "spu" decides how many model steps should be done
 before the plot is updated, and "sleep" the `sleep()` time between updates.
 
