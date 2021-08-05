@@ -127,7 +127,7 @@ function init_main_trajectory_plot(
     if !isnothing(lims)
         main.limits = lims
     end
-    is3D && (ax.protrusions = 50)
+    is3D && (main.protrusions = 50)
     return main
 end
 function trajectory_plot_controls(fig)
