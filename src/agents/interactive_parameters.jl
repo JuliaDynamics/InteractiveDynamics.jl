@@ -79,9 +79,9 @@ function abm_data_exploration(
         Axis(figure)
     end
 
-    # initialize the ABM plot stuff
+    # Initialize the ABM plot stuff
     abmstepper = abm_init_stepper_and_plot!(abmax, figure, model; kwargs...)
-    speed, slep, run, reset, update = abm_controls_play!(figure, model, spu, true)
+    speed, slep, step, run, reset, update = abm_controls_play!(figure, model, spu, true)
 
     # Initialize parameter controls & data plots
     datalayout = figure[:, 2] = GridLayout(tellheight = false)
@@ -93,7 +93,13 @@ function abm_data_exploration(
         )
     end
 
-    # Running the simulation:
+    # Clicking the step button
+    on(step) do clicks
+        n = speed[]
+        Agents.step!(abmstepper, model, agent_step!, model_step!, n)
+    end
+    
+    # Clicking the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
@@ -113,18 +119,18 @@ function abm_data_exploration(
         end
     end
 
-    # Clicking the update button:
-    on(update) do clicks
-        model = modelobs[]
-        update_abm_properties!(model, slidervals)
-    end
-
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         Agents.step!(abmstepper, model, agent_step!, model_step!, 0)
         L > 0 && add_reset_line!(axs, s)
         update[] = update[] + 1 # also trigger parameter updates
+    end
+    
+    # Clicking the update button
+    on(update) do clicks
+        model = modelobs[]
+        update_abm_properties!(model, slidervals)
     end
 
     display(figure)
