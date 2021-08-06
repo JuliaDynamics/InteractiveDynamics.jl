@@ -97,6 +97,13 @@ function abm_data_exploration(
     on(step) do clicks
         n = speed[]
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
+        if L > 0
+            s += n
+            if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
+                push!(N.val, s)
+                update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+            end
+        end
     end
     
     # Clicking the run button
