@@ -11,7 +11,7 @@ showing the evolution of collected data over time (if any are asked for, see bel
 The agent based model is plotted and animated exactly as in [`abm_play`](@ref),
 and the arguments `model, agent_step!, model_step!` are propagated there as-is.
 
-Calling `abm_data_exploration` returns: `figure, agent_df, model_df`. So you can save the
+Calling `abm_data_exploration` returns: `fig, agent_df, model_df`. So you can save the
 figure, but you can also access the collected data (if any).
 
 ## Interaction
@@ -78,6 +78,10 @@ function abm_data_exploration(
     # Initialize data plots and define button behavior
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu=spu, when=when)
 
+    display(fig)
+    return fig, df_agent, df_model
+end
+
 function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
     speed, slep, step, run, reset, update = abm_controls_play!(fig, model, spu, true)
 
@@ -141,12 +145,12 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
     return nothing
 end
 
-function abm_param_controls!(figure, datalayout, model, params, L)
+function abm_param_controls!(fig, datalayout, model, params, L)
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
         startvalue = has_key(model.properties, l) ?
             get_value(model.properties, l) : vals[1]
-        sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
+        sll = labelslider!(fig, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
         datalayout[i+L, :] = sll.layout
     end
@@ -154,7 +158,7 @@ function abm_param_controls!(figure, datalayout, model, params, L)
 end
 
 function init_abm_data_plots!(
-        figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+        fig, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
     )
     Agents.collect_agent_data!(df_agent, model, adata, 0)
     Agents.collect_model_data!(df_model, model, mdata, 0)
@@ -168,7 +172,7 @@ function init_abm_data_plots!(
         x = Agents.aggname(adata[i])
         val = Observable([df_agent[end, x]])
         push!(data, val)
-        ax = datalayout[i, :] = Axis(figure)
+        ax = datalayout[i, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
         c = colorscheme[mod1(i, 3)]
@@ -182,7 +186,7 @@ function init_abm_data_plots!(
         x = Agents.aggname(mdata[i])
         val = Observable([df_model[end, x]])
         push!(data, val)
-        ax = datalayout[i+La, :] = Axis(figure)
+        ax = datalayout[i+La, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = colorscheme[mod1(i+La, 3)]
