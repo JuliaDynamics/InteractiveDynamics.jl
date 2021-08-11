@@ -56,7 +56,8 @@ function abm_data_exploration(
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
+    colorscheme = get(kwargs, :colorscheme, JULIADYNAMICS_COLORS)
+    ac = get(kwargs, :ac, colorscheme[1])
     as = get(kwargs, :as, 10)
     am = get(kwargs, :am, :circle)
     scheduler = get(kwargs, :scheduler, model.scheduler)
@@ -174,7 +175,7 @@ function init_abm_data_plots!(
         ax = datalayout[i, :] = Axis(figure)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
-        c = JULIADYNAMICS_COLORS[mod1(i, 3)]
+        c = colorscheme[mod1(i, 3)]
         lines!(ax, N, val, color = c)
         scatter!(
             ax, N, val; marker = MARKER, markersize = 5Makie.px,
@@ -188,7 +189,7 @@ function init_abm_data_plots!(
         ax = datalayout[i+La, :] = Axis(figure)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
-        c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
+        c = colorscheme[mod1(i+La, 3)]
         lines!(ax, N, val, color = c)
         scatter!(ax, N, val, marker = MARKER, markersize = 5Makie.px, color = c,
                  strokewidth = 0.5)
