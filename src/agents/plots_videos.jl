@@ -77,8 +77,12 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   end
   ```
 """
-function abm_plot(model; resolution = (600, 600), kwargs...)
-    fig = Figure(; resolution)
+function abm_plot(model; 
+        resolution = (600, 600), 
+        backgroundcolor=DEFAULT_BG, 
+        kwargs...
+    )
+    fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
     return fig, abmstepper
@@ -122,11 +126,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
     speed, slep, step, run, reset, = abm_controls_play!(fig, model, spu, false)
+    
     # Clicking the step button
     on(step) do clicks
         n = speed[]
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
     end
+    
     # Clicking the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -139,11 +145,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
+    
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
     end
+    
     return nothing
 end
 
