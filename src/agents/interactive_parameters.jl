@@ -73,7 +73,7 @@ function abm_data_exploration(
     P = length(params)
 
     # Initialize main layout
-    fig, abmstepper, inspector = abm_plot(model; resolution=(1600,800); kwargs...)
+    fig, abmstepper, inspector = abm_plot(model; resolution=(1600,800), kwargs...)
 
     # Initialize data plots and define button behavior
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu=spu, when=when)
