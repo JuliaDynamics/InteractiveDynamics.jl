@@ -75,18 +75,19 @@ function abm_data_exploration(
     # Initialize main layout
     fig, abmstepper, inspector = abm_plot(model; resolution=(1600,800); kwargs...)
 
+    # Initialize data plots and define button behavior
+    abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu=spu, when=when)
 
-    # Initialize the ABM plot stuff
-    abmstepper = abm_init_stepper_and_plot!(abmax, figure, model; kwargs...)
-    speed, slep, step, run, reset, update = abm_controls_play!(figure, model, spu, true)
+function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
+    speed, slep, step, run, reset, update = abm_controls_play!(fig, model, spu, true)
 
     # Initialize parameter controls & data plots
-    datalayout = figure[:, 2] = GridLayout(tellheight = false)
-    slidervals = abm_param_controls!(figure, datalayout, model, params, L)
+    datalayout = fig[:, 2] = GridLayout(tellheight = false)
+    slidervals = abm_param_controls!(fig, datalayout, model, params, L)
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
         data, axs = init_abm_data_plots!(
-            figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+            fig, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
         )
     end
 
@@ -119,7 +120,7 @@ function abm_data_exploration(
                 end
             end
             slep[] == 0 ? yield() : sleep(slep[])
-            isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
 
@@ -137,8 +138,7 @@ function abm_data_exploration(
         update_abm_properties!(model, slidervals)
     end
 
-    display(figure)
-    return figure, df_agent, df_model
+    return nothing
 end
 
 function abm_param_controls!(figure, datalayout, model, params, L)
