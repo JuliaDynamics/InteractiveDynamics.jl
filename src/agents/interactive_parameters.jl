@@ -72,13 +72,9 @@ function abm_data_exploration(
     s = 0 # current step
     P = length(params)
 
-    # Initialize main layout and abm axis
-    figure = Figure(; resolution = (1600, 800), backgroundcolor = DEFAULT_BG)
-    abmax = figure[1,1][1,1] = if dimensionality(model) == 3
-        Axis3(figure)
-    else
-        Axis(figure)
-    end
+    # Initialize main layout
+    fig, abmstepper, inspector = abm_plot(model; resolution=(1600,800); kwargs...)
+
 
     # Initialize the ABM plot stuff
     abmstepper = abm_init_stepper_and_plot!(abmax, figure, model; kwargs...)
