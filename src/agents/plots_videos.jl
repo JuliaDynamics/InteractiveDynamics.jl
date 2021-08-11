@@ -85,7 +85,8 @@ function abm_plot(model;
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
-    return fig, abmstepper
+    inspector = DataInspector(fig.scene)
+    return fig, abmstepper, inspector
 end
 
 ##########################################################################################
@@ -113,12 +114,10 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
-    fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+    fig, abmstepper, inspector = abm_plot(model; resolution=(600,700))
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
-    return fig, abmstepper
+    return fig, abmstepper, inspector
 end
 
 function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
