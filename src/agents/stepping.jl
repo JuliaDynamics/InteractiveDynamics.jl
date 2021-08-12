@@ -20,7 +20,7 @@ Base.show(io::IO, ::ABMStepper) =
 println(io, "Helper structure for stepping and updating the plot of an agent based model. ",
 "It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
-"Initialize the abmstepper and the plotted observables. return the stepper"
+"Initialize the abmstepper and the plotted observables. Return the stepper."
 function abm_init_stepper_and_plot!(ax, fig, model;
         ac = JULIADYNAMICS_COLORS[1],
         as = 10,
