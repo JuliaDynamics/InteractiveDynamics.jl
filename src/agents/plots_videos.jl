@@ -110,7 +110,7 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
-    fig, abmstepper, inspector = abm_plot(model; resolution=(600,700))
+    fig, abmstepper, inspector = abm_plot(model; resolution=(600,700), kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
     return fig, abmstepper, inspector
