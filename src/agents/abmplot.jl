@@ -20,6 +20,17 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}})
     return abmplot
 end
 
+# 3D space
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}})
+    meshscatter!(abmplot, abmplot[:pos];
+        color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
+        abmplot[:scatterkwargs]...
+    )
+    return abmplot
+end
+
+# TODO: Add poly plotting method
+
 ##########################################################################################
 # Agent inspection on mouse hover
 ##########################################################################################
@@ -44,6 +55,29 @@ function Makie.show_data(inspector::DataInspector,
 
     return true
 end
+
+# TODO: Test 3D version
+function Makie.show_data(inspector::DataInspector, 
+            plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
+            idx, ::Scatter)
+    a = inspector.plot.attributes
+    scene = Makie.parent_scene(plot)
+
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    Makie.update_tooltip_alignment!(inspector, proj_pos)
+    as = plot.as[]
+
+    pos = (plot[1][][idx].data[1], plot[1][][idx].data[2], plot[1][][idx].data[3]) .|> Int
+    a._display_text[] = agent2string(plot.model[], pos)
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
+    a._px_bbox_visible[] = true
+    a._bbox_visible[] = false
+    a._visible[] = true
+
+    return true
+end
+
+# TODO: Add poly show_data method
 
 """
 Convert agent data into a string.
