@@ -91,7 +91,8 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
         data, axs = init_abm_data_plots!(
-            fig, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+            fig, datalayout, model, df_agent, df_model,
+            adata, mdata, N, alabels, mlabels, colorscheme
         )
     end
 
@@ -158,7 +159,8 @@ function abm_param_controls!(fig, datalayout, model, params, L)
 end
 
 function init_abm_data_plots!(
-        fig, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+        fig, datalayout, model, df_agent, df_model,
+        adata, mdata, N, alabels, mlabels, colorscheme
     )
     Agents.collect_agent_data!(df_agent, model, adata, 0)
     Agents.collect_model_data!(df_model, model, mdata, 0)
