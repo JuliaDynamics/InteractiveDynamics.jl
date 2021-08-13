@@ -84,28 +84,22 @@ function abm_init_stepper_and_plot!(ax, fig, model;
 
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
-    if is3d
-        meshscatter!(
-            ax, pos;
-            color = colors, marker = markers, markersize = sizes,
+    if user_used_polygons(am, markers)
+        # For polygons we always need vector, even if all agents are same polygon
+        if markers isa Observable
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers = Observable([translate(am, p) for p in pos])
+        end
+        poly!(ax, markers;
+            color=colors,
             scatterkwargs...
         )
     else
-        if user_used_polygons(am, markers)
-            # For polygons we always need vector, even if all agents are same polygon
-            if markers isa Observable
-                markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-            else
-                markers = Observable([translate(am, p) for p in pos])
-            end
-            poly!(ax, markers; color = colors, scatterkwargs...)
-        else
-            scatter!(
-                ax, pos;
-                color = colors, marker = markers, markersize = sizes,
-                scatterkwargs...
-            )
-        end
+        abmplot!(ax, pos, model;
+            ac=colors, am=markers, as=sizes, 
+            scatterkwargs=scatterkwargs
+        )
     end
     return ABMStepper(
         ac, am, as, offset, scheduler,
