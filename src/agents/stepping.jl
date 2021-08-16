@@ -22,11 +22,7 @@ println(io, "Helper structure for stepping and updating the plot of an agent bas
 
 "Initialize the abmstepper and the plotted observables. Return the stepper."
 function abm_init_stepper_and_plot!(ax, fig, model;
-        ac = JULIADYNAMICS_COLORS[1],
-        as = 10,
-        am = :circle,
-        scheduler = model.scheduler,
-        offset = nothing,
+        ac, as, am, scheduler, offset,
         aspect = DataAspect(),
         scatterkwargs = NamedTuple(),
         heatarray = nothing,
