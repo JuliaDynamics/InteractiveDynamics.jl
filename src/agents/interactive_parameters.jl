@@ -160,20 +160,20 @@ function abm_param_controls!(fig, datalayout, model, params, L)
 end
 
 function init_abm_data_plots!(
-        fig, datalayout, model, df_agent, df_model,
+        fig, datalayout, model, adf, mdf,
         adata, mdata, N, alabels, mlabels, colorscheme
     )
-    Agents.collect_agent_data!(df_agent, model, adata, 0)
-    Agents.collect_model_data!(df_model, model, mdata, 0)
-    La = isnothing(adata) ? 0 : size(df_agent)[2]-1
-    Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
+    Agents.collect_agent_data!(adf, model, adata, 0)
+    Agents.collect_model_data!(mdf, model, mdata, 0)
+    La = isnothing(adata) ? 0 : size(adf)[2]-1
+    Lm = isnothing(mdata) ? 0 : size(mdf)[2]-1
     data, axs = [], []
 
     # Plot all quantities
     # TODO: make scatter+line plot 1.
     for i in 1:La
         x = Agents.aggname(adata[i])
-        val = Observable([df_agent[end, x]])
+        val = Observable([adf[end, x]])
         push!(data, val)
         ax = datalayout[i, :] = Axis(fig)
         push!(axs, ax)
@@ -187,7 +187,7 @@ function init_abm_data_plots!(
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
-        val = Observable([df_model[end, x]])
+        val = Observable([mdf[end, x]])
         push!(data, val)
         ax = datalayout[i+La, :] = Axis(fig)
         push!(axs, ax)
@@ -204,23 +204,23 @@ function init_abm_data_plots!(
     return data, axs
 end
 
-function update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
-    Agents.collect_agent_data!(df_agent, model, adata, N[][end])
-    Agents.collect_model_data!(df_model, model, mdata, N[][end])
-    La = isnothing(adata) ? 0 : size(df_agent)[2]-1
-    Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
+function update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
+    Agents.collect_agent_data!(adf, model, adata, N[][end])
+    Agents.collect_model_data!(mdf, model, mdata, N[][end])
+    La = isnothing(adata) ? 0 : size(adf)[2]-1
+    Lm = isnothing(mdata) ? 0 : size(mdf)[2]-1
 
     for i in 1:La
         o = data[i]
         x = Agents.aggname(adata[i])
-        val = df_agent[end, x]
+        val = adf[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
     for i in 1:Lm
         o = data[i+La]
         x = Agents.aggname(mdata[i])
-        val = df_model[end, x]
+        val = mdf[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
