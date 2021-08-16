@@ -77,7 +77,10 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   end
   ```
 """
-function abm_plot(model; resolution = (600, 600), backgroundcolor=DEFAULT_BG, kwargs...)
+function abm_plot(model; 
+        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        kwargs...
+    )
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)

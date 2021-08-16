@@ -50,6 +50,7 @@ function abm_data_exploration(
         mlabels = nothing,
         when = true,
         spu = 1:100,
+        colorscheme = JULIADYNAMICS_COLORS,
         kwargs...
     )
 
