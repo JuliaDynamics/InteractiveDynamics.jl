@@ -81,9 +81,17 @@ function abm_plot(model;
         resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
         kwargs...
     )
+    backgroundcolor = get(kwargs, :backgroundcolor, DEFAULT_BG)
+    ac = get(kwargs, :ac, colorscheme[1])
+    as = get(kwargs, :as, 10)
+    am = get(kwargs, :am, :circle)
+    scheduler = get(kwargs, :scheduler, model.scheduler)
+    offset = get(kwargs, :offset, nothing)
+
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+    abmstepper = abm_init_stepper_and_plot!(ax, fig, model;
+        ac, as, am, scheduler, offset, kwargs...)
     inspector = DataInspector(fig.scene)
     return fig, abmstepper, inspector
 end
@@ -113,7 +121,7 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:100`: The values of the "spu" slider.
 """
 function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
-    fig, abmstepper, inspector = abm_plot(model; resolution=(600,700), kwargs...)
+    fig, abmstepper, inspector = abm_plot(model; resolution = (600, 700), kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
     return fig, abmstepper, inspector
@@ -200,6 +208,11 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
         title = "", showstep = true, axiskwargs = NamedTuple(), kwargs...
     )
+    ac = get(kwargs, :ac, colorscheme[1])
+    as = get(kwargs, :as, 10)
+    am = get(kwargs, :am, :circle)
+    scheduler = get(kwargs, :scheduler, model.scheduler)
+    offset = get(kwargs, :offset, nothing)
 
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -217,7 +230,8 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     else
         Axis(fig; title = t, titlealign = :left, axiskwargs...)
     end
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+    abmstepper = abm_init_stepper_and_plot!(ax, fig, model;
+        ac, as, am, scheduler, offset, kwargs...)
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
