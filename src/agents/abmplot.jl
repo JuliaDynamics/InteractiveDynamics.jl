@@ -56,6 +56,7 @@ function Makie.show_data(inspector::DataInspector,
     return true
 end
 
+# TODO: Properly implement 3D version
 # TODO: Test 3D version
 function Makie.show_data(inspector::DataInspector, 
             plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
@@ -67,6 +68,7 @@ function Makie.show_data(inspector::DataInspector,
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
+    # TODO: Generalise for use with both GridSpace and ContinuousSpace
     pos = (plot[1][][idx].data[1], plot[1][][idx].data[2], plot[1][][idx].data[3]) .|> Int
     a._display_text[] = agent2string(plot.model[], pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
@@ -78,6 +80,7 @@ function Makie.show_data(inspector::DataInspector,
 end
 
 # TODO: Add poly show_data method
+# TODO: Test 2D model with polygons
 
 """
 Convert agent data into a string.
@@ -85,6 +88,7 @@ Convert agent data into a string.
 Concatenate strings if there are multiple agents at given `pos`.
 """
 function agent2string(model::Agents.ABM, pos::NTuple{2, Int})
+    # TODO: pos type needs to be more lenient for use with other model spaces
     ids = Agents.ids_in_position(pos, model)
     s = ""
     for id in ids
