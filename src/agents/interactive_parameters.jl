@@ -53,36 +53,36 @@ function abm_data_exploration(
         kwargs...
     )
 
+    # Initialize main layout
+    fig, abmstepper, inspector = abm_plot(model;
+        resolution=(1600,800), colorscheme, kwargs...
+    )
+
+    # Initialize agent and model dataframes
+    adf = Agents.init_agent_dataframe(model, adata)
+    mdf = Agents.init_model_dataframe(model, mdata)
+
+    # Initialize data plots and define button behavior
+    abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params; 
+        spu, when, mdata, adata, alabels, mlabels, adf, mdf, colorscheme
+    )
+
+    display(fig)
+    return fig, adf, mdf
+end
+
+function abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params; 
+        spu, when, mdata, adata, alabels, mlabels, adf, mdf, colorscheme)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    colorscheme = get(kwargs, :colorscheme, JULIADYNAMICS_COLORS)
-    ac = get(kwargs, :ac, colorscheme[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
-    scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
 
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    df_agent = Agents.init_agent_dataframe(model, adata)
-    df_model = Agents.init_model_dataframe(model, mdata)
-    L = (isnothing(adata) ? 0 : size(df_agent)[2]-1) + (isnothing(mdata) ? 0 : size(df_model)[2]-1)
+    L = (isnothing(adata) ? 0 : size(adf)[2]-1) + (isnothing(mdata) ? 0 : size(mdf)[2]-1)
     s = 0 # current step
-    P = length(params)
 
-    # Initialize main layout
-    fig, abmstepper, inspector = abm_plot(model; resolution=(1600,800), kwargs...)
-
-    # Initialize data plots and define button behavior
-    abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu=spu, when=when)
-
-    display(fig)
-    return fig, df_agent, df_model
-end
-
-function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
     speed, slep, step, run, reset, update = abm_controls_play!(fig, model, spu, true)
 
     # Initialize parameter controls & data plots
@@ -91,7 +91,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
         data, axs = init_abm_data_plots!(
-            fig, datalayout, model, df_agent, df_model,
+            fig, datalayout, model, adf, mdf,
             adata, mdata, N, alabels, mlabels, colorscheme
         )
     end
@@ -104,7 +104,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
             s += n
             if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
                 push!(N.val, s)
-                update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
             end
         end
     end
@@ -121,7 +121,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu, when)
                 s += n
                 if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
                     push!(N.val, s)
-                    update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                    update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
                 end
             end
             slep[] == 0 ? yield() : sleep(slep[])
