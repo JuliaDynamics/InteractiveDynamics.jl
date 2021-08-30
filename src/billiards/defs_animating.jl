@@ -10,8 +10,17 @@ mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     T::T         # total time
     # Fields used in plotting
     tail::Observable{CircularBuffer{Point2f0}}
-    ξsin::Observable{Point2f0}
+    ξsin::Observable{Point2f0}   # Only used when plotting in boundary map
 end
+
+mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
+    allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
+    balls::Observable{Vector{Point2f0}}
+    vels::Observable{Vector{Point2f0}}
+    visible::Observable{Bool}
+end
+
+
 function ParticleObservable(p::P, bd, n, ξsin = Point2f0(0, 0)) where {P<:AbstractParticle}
     T = eltype(p.pos)
     i, tmin, cp = DynamicalBilliards.next_collision(p, bd)
