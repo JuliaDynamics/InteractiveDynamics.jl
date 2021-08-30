@@ -1,5 +1,9 @@
 using DataStructures
 
+######################################################################################
+# Observable for single particle, which auto-steps its plotted tail/boundary map
+######################################################################################
+
 mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     # Fields necessary for simulation
     p::P         # particle
@@ -12,23 +16,15 @@ mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     tail::Observable{CircularBuffer{Point2f0}}
     ξsin::Observable{Point2f0}   # Only used when plotting in boundary map
 end
-
-mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
-    allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
-    balls::Observable{Vector{Point2f0}}
-    vels::Observable{Vector{Point2f0}}
-    visible::Observable{Bool}
-end
-
+const ParObs = ParticleObservable
 
 function ParticleObservable(p::P, bd, n, ξsin = Point2f0(0, 0)) where {P<:AbstractParticle}
     T = eltype(p.pos)
     i, tmin, cp = DynamicalBilliards.next_collision(p, bd)
     cb = CircularBuffer{Point2f0}(n)
-    for i in 1:n; push!(cb, Point2f0(p.pos)); end
+    fill!(cb, Point2f0(p.pos))
     ParticleObservable{T,P}(p, i, tmin, 0, 0, 0, Observable(cb), Observable(ξsin))
 end
-const ParObs = ParticleObservable
 
 function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin = p.ξsin[])
     i, tmin, cp = DynamicalBilliards.next_collision(p0, bd)
@@ -40,7 +36,7 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin 
     L = length(p.tail[])
     append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
-    if ξsin ≠ nothing
+    if ξsin !== nothing
         p.ξsin[] = ξsin # This can only be updated from bmap, which gives selection directly
     end
 end
@@ -65,7 +61,8 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     DynamicalBilliards._correct_pos!(parobs.p, bd[parobs.i])
     DynamicalBilliards.resolvecollision!(parobs.p, bd[parobs.i])
     DynamicalBilliards.ismagnetic(parobs.p) && (parobs.p.center = DynamicalBilliards.find_cyclotron(parobs.p))
-    if intervals ≠ nothing
+    # `intervals` are the boundary map intervals (needs knowledge of DynamicalBilliards.jl)
+    if intervals !== nothing
         ξ, sφ = DynamicalBilliards.to_bcoords(parobs.p.pos, parobs.p.vel, bd[parobs.i])
         ξ += intervals[parobs.i]
         parobs.ξsin[] = (ξ, sφ)
@@ -82,3 +79,84 @@ function animbounce!(parobs, bd, rt, updateplot = true, intervals = nothing)
     end
     return
 end
+
+
+######################################################################################
+# Animation stepper for a group of particles. Includes plotted quiver field
+######################################################################################
+
+mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
+    allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
+    balls::Observable{Vector{Point2f0}}
+    vels::Observable{Vector{Point2f0}}
+    visible::Bool
+    # TODO: REMOVE functionality to show/hide particles. Too much extra code. 
+    # Instead, just give the possibility to plot or not in the first place.
+    # Just check if `visible` is true, then update balls/vels.
+end
+
+
+function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
+    # Internal keyword arguments (e.g. a second axis for boundary map plot)
+    
+    # Remaining arguments for tuning plotting, e.g. color, linewidths, etc.
+    kwargs...  # keywords from `interactive_billiard`
+    )
+
+    N = length(ps)
+    allparobs = [ParObs(p, bd, tail) for p in ps]
+
+    cs = if !(colors isa Vector) || length(colors) ≠ N
+        colors_from_map(colors, α, N)
+    else
+        to_color.(colors)
+    end
+
+
+    # Plot tails
+    for (i, p) in enumerate(allparobs)
+        x = to_color(cs[i])
+        if fade
+            x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
+        end
+        lines!(ax, p.tail; color = x, linewidth = tailwidth)
+    end
+    
+    balls = Observable([Point2f0(p.p.pos) for p in allparobs])
+    vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
+    visible = Observable(true) # visible must be triggered by a button
+
+    if plot_particles # plot ball and arrow as a particle
+        # TODO: Allow adjusting width etc of quiver markers with individual multiplier
+        particle_plots = (
+            scatter!(
+                ax, balls; color = darken_color.(cs),
+                marker = MARKER, markersize = 8*particle_size*Makie.px,
+                strokewidth = 0.0,
+            ),
+            arrows!(
+                ax, balls, vels; arrowcolor = darken_color.(cs),
+                linecolor = darken_color.(cs),
+                normalize = false, arrowsize = particle_size*vr/3,
+                linewidth  = particle_size*4,
+            )
+        )
+
+        on(visible) do val # TODO: Visible is triggered on button
+            particle_plots[1].visible[] = val
+            for i in 1:2
+            particle_plots[2].plots[i].visible[] = val
+            end
+        end
+    end
+
+    # TODO: actually make struct
+
+
+
+end
+
+
+# TODO: Animation stepping function.
+
+# TODO: Rebind stepper function.
