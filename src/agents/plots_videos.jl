@@ -190,7 +190,7 @@ end
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
 saved at given path `file`, by recording the behavior of [`abm_play`](@ref) (without sliders).
-The plotting is identical as in [`abm_plot`](@ref).
+The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are propagated.
 
 ## Keywords
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
@@ -204,13 +204,12 @@ The plotting is identical as in [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
-        title = "", showstep = true, axiskwargs = NamedTuple(), kwargs...
+        colorscheme = JULIADYNAMICS_COLORS, backgroundcolor = DEFAULT_BG,
+        as = 10, am = :circle, offset = nothing, showstep = true, 
+        title = "", axiskwargs = NamedTuple(), kwargs...
     )
     ac = get(kwargs, :ac, colorscheme[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
     scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
 
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -221,15 +220,12 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     else
         t = title
     end
+    axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
-    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = if dimensionality(model) == 3
-        Axis3(fig; title = t, titlealign = :left, axiskwargs...)
-    else
-        Axis(fig; title = t, titlealign = :left, axiskwargs...)
-    end
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model;
-        ac, as, am, scheduler, offset, kwargs...)
+    fig, abmstepper, inspector = abm_plot(model; 
+        resolution, colorscheme, backgroundcolor, ac, as, am, scheduler, offset, 
+        axiskwargs, kwargs...
+    )
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
