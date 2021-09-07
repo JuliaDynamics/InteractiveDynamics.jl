@@ -79,14 +79,11 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 """
 function abm_plot(model; 
         resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        backgroundcolor = DEFAULT_BG, as = 10, am = :circle, offset = nothing, 
         kwargs...
     )
-    backgroundcolor = get(kwargs, :backgroundcolor, DEFAULT_BG)
     ac = get(kwargs, :ac, colorscheme[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
     scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
 
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
