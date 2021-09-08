@@ -45,14 +45,14 @@ function Makie.show_data(inspector::DataInspector,
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
-    pos = (plot[1][][idx].data[1], plot[1][][idx].data[2])
+    cursor_pos = (plot[1][][idx].data[1], plot[1][][idx].data[2])
     s = typeof(plot.model[].space)
     if s <: Agents.ContinuousSpace
-        pos = Float64.(pos)
+        cursor_pos = Float64.(cursor_pos)
     elseif s <: Agents.GridSpace
-        pos = Int.(pos)
+        cursor_pos = Int.(cursor_pos)
     end
-    a._display_text[] = agent2string(plot.model[], pos)
+    a._display_text[] = agent2string(plot.model[], cursor_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
