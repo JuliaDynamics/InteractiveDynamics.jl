@@ -92,26 +92,35 @@ end
 # TODO: Add poly show_data method
 # TODO: Test 2D model with polygons
 
+DiscretePos = Union{NTuple{2, Int}, NTuple{3, Int}}
+ContinuousPos = Union{NTuple{2, Float64}, NTuple{3, Float64}}
+
 """
 Convert agent data into a string.
 
 Concatenate strings if there are multiple agents at given `pos`.
 """
-function agent2string(model::Agents.ABM, pos::NTuple{2, Int})
-    ids = Agents.ids_in_position(pos, model)
+function agent2string(model::Agents.ABM, 
+        cursor_pos::DiscretePos)
+    ids = Agents.ids_in_position(cursor_pos, model)
     s = ""
+    
     for id in ids
         s *= agent2string(model[id]) * "\n"
     end
+
     return s
 end
 
-function agent2string(model::Agents.ABM, pos::NTuple{2, Float64})
-    ids = Agents.nearby_ids(pos, model, 0.01)
+function agent2string(model::Agents.ABM, 
+        cursor_pos::ContinuousPos)
+    ids = Agents.nearby_ids(cursor_pos, model, 0.01)
     s = ""
+    
     for id in ids
         s *= agent2string(model[id]) * "\n"
     end
+    
     return s
 end
 
