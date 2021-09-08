@@ -62,7 +62,8 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
 
-    static_preplot!(ax, model)
+    static_plot = static_preplot!(ax, model)
+    static_plot.inspectable[] = false
 
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
