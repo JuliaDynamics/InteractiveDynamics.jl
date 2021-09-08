@@ -138,10 +138,9 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
         if field != :pos
             agentstring *= "$(field): $(getproperty(agent, field))\n"
         else
-            if typeof(field) == DiscretePos
-                agent_pos = getproperty(agent, field)
-            else 
-                agent_pos = round.(getproperty(agent, field), digits=2)
+            agent_pos = getproperty(agent, field)
+            if typeof(agent_pos) <: ContinuousPos
+                agent_pos = round.(agent_pos, digits=2)
             end
             agentstring *= "$(field): $agent_pos\n"
         end
