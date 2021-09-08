@@ -64,9 +64,6 @@ function abm_init_stepper_and_plot!(ax, fig, model;
 
     static_preplot!(ax, model)
 
-    if is3d && am == :circle
-        am = Sphere(Point3f0(0), 1)
-    end
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
     sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as

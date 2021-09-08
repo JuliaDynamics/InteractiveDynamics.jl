@@ -1,3 +1,7 @@
+##########################################################################################
+# ABMPlot recipe
+##########################################################################################
+
 "Define ABMPlot plotting function with some attribute defaults."
 @recipe(ABMPlot, pos, model) do scene
     Theme(
@@ -17,15 +21,19 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}})
         color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
         abmplot[:scatterkwargs]...
     )
+    
     return abmplot
 end
 
 # 3D space
 function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}})
+    abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f0(0), 1))
+    
     meshscatter!(abmplot, abmplot[:pos];
         color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
         abmplot[:scatterkwargs]...
     )
+    
     return abmplot
 end
 
@@ -61,11 +69,10 @@ function Makie.show_data(inspector::DataInspector,
     return true
 end
 
-# TODO: Properly implement 3D version
 # TODO: Test 3D version
 function Makie.show_data(inspector::DataInspector, 
             plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
-            idx, ::Scatter)
+            idx, ::MeshScatter)
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
@@ -73,14 +80,14 @@ function Makie.show_data(inspector::DataInspector,
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
-    pos = (plot[1][][idx].data[1], plot[1][][idx].data[2], plot[1][][idx].data[3])
+    cursor_pos = (plot[1][][idx].data[1], plot[1][][idx].data[2], plot[1][][idx].data[3])
     s = typeof(plot.model[].space)
     if s <: Agents.ContinuousSpace
-        pos = Float64.(pos)
+        cursor_pos = Float64.(cursor_pos)
     elseif s <: Agents.GridSpace
-        pos = Int.(pos)
+        cursor_pos = Int.(cursor_pos)
     end
-    a._display_text[] = agent2string(plot.model[], pos)
+    a._display_text[] = agent2string(plot.model[], cursor_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
