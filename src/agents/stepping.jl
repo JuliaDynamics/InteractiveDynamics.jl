@@ -63,7 +63,9 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     end
 
     static_plot = static_preplot!(ax, model)
-    static_plot.inspectable[] = false
+    if !isnothing(static_plot)
+        static_plot.inspectable[] = false
+    end
 
     ids = scheduler(model)
     colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
