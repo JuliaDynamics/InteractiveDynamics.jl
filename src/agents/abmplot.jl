@@ -117,8 +117,19 @@ end
 
 function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring = "▶ $(nameof(A))\n"
+    
     for field in fieldnames(A)
-        agentstring *= "$(field): $(getproperty(agent, field))\n"
+        if field != :pos
+            agentstring *= "$(field): $(getproperty(agent, field))\n"
+        else
+            if typeof(field) == DiscretePos
+                agent_pos = getproperty(agent, field)
+            else 
+                agent_pos = round.(getproperty(agent, field), digits=2)
+            end
+            agentstring *= "$(field): $agent_pos\n"
+        end
     end
+    
     return agentstring
 end
