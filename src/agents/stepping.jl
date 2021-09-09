@@ -87,9 +87,9 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         else
             markers = Observable([translate(am, p) for p in pos])
         end
-        poly!(ax, markers;
-            color=colors,
-            scatterkwargs...
+        abmplot!(ax, markers, model;
+            ac=colors,
+            scatterkwargs=scatterkwargs
         )
     else
         abmplot!(ax, pos, model;
