@@ -69,7 +69,6 @@ function Makie.show_data(inspector::DataInspector,
     return true
 end
 
-# TODO: Test 3D version
 function Makie.show_data(inspector::DataInspector, 
             plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
             idx, ::MeshScatter)
@@ -97,7 +96,6 @@ function Makie.show_data(inspector::DataInspector,
 end
 
 # TODO: Add poly show_data method
-# TODO: Test 2D model with polygons
 
 DiscretePos = Union{NTuple{2, Int}, NTuple{3, Int}}
 ContinuousPos = Union{NTuple{2, Float64}, NTuple{3, Float64}}
