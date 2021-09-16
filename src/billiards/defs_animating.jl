@@ -89,25 +89,30 @@ mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
     allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
     balls::Observable{Vector{Point2f0}}
     vels::Observable{Vector{Point2f0}}
+    update_balls::Bool # true if the particles were plotted
+    N::Int
+    vellength::Float32
 end
 
-
 function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
-    # Internal keyword arguments (e.g. a second axis for boundary map plot)
+        # Internal keyword arguments (e.g. a second axis for boundary map plot)
     
-    # Remaining arguments for tuning plotting, e.g. color, linewidths, etc.
-    kwargs...  # keywords from `interactive_billiard`
+        # Remaining arguments for tuning plotting, e.g. color, linewidths, etc.
+        α = 1.0, colors = JULIADYNAMICS_CMAP, fade = true, tailwidth = 1,
+        # Keywords for plotting the particles
+        plot_particles = true, 
+        arrowsize = 1, particlewidth = 3tailwidth, particlesize = 1, vellength = 2.0
+        # boundary map arguments
+        axbmap = nothing, 
     )
 
     N = length(ps)
     allparobs = [ParObs(p, bd, tail) for p in ps]
-
     cs = if !(colors isa Vector) || length(colors) ≠ N
         colors_from_map(colors, α, N)
     else
         to_color.(colors)
     end
-
 
     # Plot tails
     for (i, p) in enumerate(allparobs)
@@ -119,32 +124,50 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
     end
     
     balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-    vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
-
+    vels = Observable([vellength*Point2f0(p.p.vel) for p in allparobs])
     if plot_particles # plot ball and arrow as a particle
-        # TODO: Allow adjusting width etc of quiver markers with individual multiplier
-        particle_plots = (
-            scatter!(
-                ax, balls; color = darken_color.(cs),
-                marker = MARKER, markersize = 8*particle_size*Makie.px,
-                strokewidth = 0.0,
-            ),
-            arrows!(
-                ax, balls, vels; arrowcolor = darken_color.(cs),
-                linecolor = darken_color.(cs),
-                normalize = false, arrowsize = particle_size*vr/3,
-                linewidth  = particle_size*4,
-            )
+        scatter!(
+            ax, balls; color = darken_color.(cs),
+            marker = MARKER, markersize = 8*particlesize*Makie.px,
+            strokewidth = 0.0,
+        ),
+        arrows!(
+            ax, balls, vels; arrowcolor = darken_color.(cs),
+            linecolor = darken_color.(cs),
+            arrowsize = arrowsize,
+            linewidth  = particlewidth*4,
         )
     end
 
-    # TODO: actually make struct
+    # TODO: Boundary map
+    # probably `lift` the `balls`
 
+    update_balls = plot_particles || plot_boundarymap
+    return ParticleStepper(allparobs, balls, vels, update_balls, length(ps), vellength)
+end
 
+function animstep!(stepper::ParticleStepper, bd, dt, n, intervals = nothing)
+    for _ in 1:n
+        for i in 1:stepper.N
+            parobs = stepper.allparobs[i]
+            animstep!(parobs, bd, dt, false, intervals)
+        end
+    end
 
+    for i in 1:stepper.N
+        parobs = stepper.allparobs[i]
+        animstep!(parobs, bd, dt, false, intervals)
+        if stepper.update_balls
+            balls[][i] = parobs.p.pos
+            vels[][i] = stepper.vellength * parobs.p.vel
+        end
+    end
+    if stepper.update_balls
+        balls[] = balls[]
+        vels[] = vels[]
+    end
+    # TODO: Boundary map here.
 end
 
 
-# TODO: Animation stepping function.
-
-# TODO: Rebind stepper function.
+# TODO: Rebind stepper function, from `interactive_billiard`.
