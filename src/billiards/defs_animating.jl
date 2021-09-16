@@ -89,10 +89,6 @@ mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
     allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
     balls::Observable{Vector{Point2f0}}
     vels::Observable{Vector{Point2f0}}
-    visible::Bool
-    # TODO: REMOVE functionality to show/hide particles. Too much extra code. 
-    # Instead, just give the possibility to plot or not in the first place.
-    # Just check if `visible` is true, then update balls/vels.
 end
 
 
@@ -124,7 +120,6 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
     
     balls = Observable([Point2f0(p.p.pos) for p in allparobs])
     vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
-    visible = Observable(true) # visible must be triggered by a button
 
     if plot_particles # plot ball and arrow as a particle
         # TODO: Allow adjusting width etc of quiver markers with individual multiplier
@@ -141,13 +136,6 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
                 linewidth  = particle_size*4,
             )
         )
-
-        on(visible) do val # TODO: Visible is triggered on button
-            particle_plots[1].visible[] = val
-            for i in 1:2
-            particle_plots[2].plots[i].visible[] = val
-            end
-        end
     end
 
     # TODO: actually make struct
