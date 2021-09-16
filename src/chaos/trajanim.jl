@@ -196,6 +196,9 @@ function interactive_evolution_timeseries(
         pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
     ) where {IIP}
 
+    # TODO: Separate into traj_idxs and ts_idxs, in case one wants to plot
+    # more timeseries than the ones in the state space plot
+
     N = length(u0s)
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
@@ -230,7 +233,7 @@ function interactive_evolution_timeseries(
     # Initialize timeseries plots:
     ts_axes = []
     for i in 1:length(idxs)
-        ax = fig[:, 2][i, 1] = Axis(fig)
+        ax = fig[:, 2][i, 1] = Axis(fig; xticks = LinearTicks(5))
         push!(ts_axes, ax)
         individual_ts = allts[i]
         for j in 1:N
@@ -239,13 +242,15 @@ function interactive_evolution_timeseries(
                 scatter!(ax, individual_ts[j]; color = colors[j])
             end
         end
+        tight_xticklabel_spacing!(ax)
         ax.ylabel = string(('x':'z')[i])
         ylims!(ax, lims[i])
     end
-    for i in 1:length(idxs)-1;
+    for i in 1:length(idxs)-1
+        linkxaxes!(ts_axes[i], ts_axes[end]) 
         hidexdecorations!(ts_axes[i], grid = false)
     end
-    for i in 1:length(idxs); xlims!(ts_axes[i], pinteg.t - tdt, total_span+tdt); end
+    xlims!(ts_axes[end], pinteg.t - tdt, total_span+tdt)
 
     # Functionality of live evolution
     isrunning = Observable(false)
@@ -266,7 +271,7 @@ function interactive_evolution_timeseries(
             sleslider[] == 0 ? yield() : sleep(sleslider[])
             t_current = pinteg.t
             t_prev = max(0, t_current - total_span)
-            for i in 1:length(idxs); xlims!(ts_axes[i], t_prev-tdt, max(t_current, total_span)+tdt); end
+            xlims!(ts_axes[end], t_prev-tdt, max(t_current, total_span)+tdt)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
     end
