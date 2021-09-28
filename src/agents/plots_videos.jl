@@ -91,6 +91,12 @@ function abm_plot(model;
     abmstepper = abm_init_stepper_and_plot!(ax, fig, model;
         ac, as, am, scheduler, offset, kwargs...)
     inspector = DataInspector(fig.scene)
+    
+    # temporarily disable inspector for poly plots
+    if user_used_polygons(am, abmstepper.markers)
+        inspector.plot.enabled = false
+    end
+    
     return fig, abmstepper, inspector
 end
 
