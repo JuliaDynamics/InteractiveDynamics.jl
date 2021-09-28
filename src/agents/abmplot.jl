@@ -139,8 +139,7 @@ Convert agent data into a string.
 
 Concatenate strings if there are multiple agents at given `pos`.
 """
-function agent2string(model::Agents.ABM, 
-        cursor_pos::DiscretePos)
+function agent2string(model::Agents.ABM, cursor_pos::DiscretePos)
     ids = Agents.ids_in_position(cursor_pos, model)
     s = ""
     
@@ -151,8 +150,7 @@ function agent2string(model::Agents.ABM,
     return s
 end
 
-function agent2string(model::Agents.ABM, 
-        cursor_pos::ContinuousPos)
+function agent2string(model::Agents.ABM, cursor_pos::ContinuousPos)
     ids = Agents.nearby_ids(cursor_pos, model, 0.01)
     s = ""
     
@@ -166,16 +164,23 @@ end
 function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring = "▶ $(nameof(A))\n"
     
-    for field in fieldnames(A)
-        if field != :pos
-            agentstring *= "$(field): $(getproperty(agent, field))\n"
-        else
-            agent_pos = getproperty(agent, field)
-            if typeof(agent_pos) <: ContinuousPos
-                agent_pos = round.(agent_pos, digits=2)
-            end
-            agentstring *= "$(field): $agent_pos\n"
+    agentstring *= "id: $(getproperty(agent, :id))\n"
+    
+    agent_pos = getproperty(agent, :pos)
+    typeof(agent_pos) <: ContinuousPos && (agent_pos = round.(agent_pos, digits=2))
+    agentstring *= "pos: $(agent_pos)\n"
+    
+    for field in fieldnames(A)[3:end]
+        val = getproperty(agent, field)
+        V = typeof(val)
+        if V <: AbstractFloat
+            val = round(val, digits=2)
+        elseif V <: AbstractArray{<:AbstractFloat}
+            val = round.(val, digits=2)
+        elseif V <: Tuple && V <: NTuple{length(val), <:AbstractFloat}
+            val = round.(val, digits=2)
         end
+        agentstring *= "$(field): $val\n"
     end
     
     return agentstring
