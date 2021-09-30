@@ -88,8 +88,10 @@ function abm_plot(model;
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = dimensionality(model) == 3 ? 
         Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model;
-        ac, as, am, scheduler, offset, kwargs...)
+    abmstepper = abm_init_stepper(model;
+        ac, as, am, scheduler, offset, heatarray)
+    abm_init_plot!(ax, fig, model, abmstepper;
+        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
     inspector = DataInspector(fig.scene)
     
     # temporarily disable inspector for poly plots

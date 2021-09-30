@@ -21,26 +21,8 @@ println(io, "Helper structure for stepping and updating the plot of an agent bas
 "It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
 "Initialize the abmstepper and the plotted observables. Return the stepper."
-function abm_init_stepper_and_plot!(ax, fig, model;
-        ac, as, am, scheduler, offset,
-        aspect = DataAspect(),
-        scatterkwargs = NamedTuple(),
-        heatarray = nothing,
-        heatkwargs = NamedTuple(),
-        add_colorbar = true,
-        static_preplot! = default_static_preplot,
-    )
-
-    heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
-    o, e = modellims(model)
-    is3d = length(o) == 3
-    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
-    # TODO: once graph plotting is possible, this will be adjusted
-    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    is3d && zlims!(ax, o[3], e[3])
-    is3d || (ax.aspect = aspect)
+function abm_init_stepper(model; 
+        ac, am, as, scheduler, offset, heatarray)
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
@@ -53,24 +35,16 @@ function abm_init_stepper_and_plot!(ax, fig, model;
             error("The heat array property must yield a matrix of same size as the grid!")
         end
         heatobs = Observable(matrix)
-        hmap = heatmap!(ax, heatobs; heatkwargs...)
     else
         heatobs = nothing
     end
-    if add_colorbar && !isnothing(heatobs)
-        Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
-    end
-
-    static_plot = static_preplot!(ax, model)
-    if !isnothing(static_plot)
-        static_plot.inspectable[] = false
-    end
 
     ids = scheduler(model)
-    colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
-    sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
-    markers = am isa Function ? Observable([am(model[i]) for i ∈ ids]) : am
+    colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
+    sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
+    markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
+    
+    is3d = length(modellims(model)[1]) == 3
     postype = is3d ? Point3f0 : Point2f0
     if isnothing(offset)
         pos = Observable(postype[model[i].pos for i ∈ ids])
@@ -78,30 +52,58 @@ function abm_init_stepper_and_plot!(ax, fig, model;
         pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
     end
 
-    # Here we make the decision of whether the user has provided markers, and thus use
-    # `scatter`, or polygons, and thus use `poly`:
     if user_used_polygons(am, markers)
         # For polygons we always need vector, even if all agents are same polygon
-        if markers isa Observable
-            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-        else
-            markers = Observable([translate(am, p) for p in pos])
-        end
-        abmplot!(ax, markers, model;
-            ac=colors,
-            scatterkwargs=scatterkwargs
-        )
-    else
-        abmplot!(ax, pos, model;
-            ac=colors, am=markers, as=sizes, 
-            scatterkwargs=scatterkwargs
-        )
+        markers[] = [translate(m, p) for (m, p) in zip(markers, pos[])]
     end
+
     return ABMStepper(
         ac, am, as, offset, scheduler,
         pos, colors, sizes, markers,
         heatarray, heatobs
     )
+end
+
+"Initialize the ABM plot and return it."
+function abm_init_plot!(ax, fig, model, abmstepper;
+        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
+    
+    o, e = modellims(model)
+    is3d = length(o) == 3
+    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
+    # TODO: once graph plotting is possible, this will be adjusted
+    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
+    xlims!(ax, o[1], e[1])
+    ylims!(ax, o[2], e[2])
+    is3d && zlims!(ax, o[3], e[3])
+    is3d || (ax.aspect = aspect)
+
+    if !isnothing(abmstepper.heatobs)
+        heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
+        hmap = heatmap!(ax, abmstepper.heatobs[]; heatkwargs...)
+
+        add_colorbar && Colorbar(fig[1, 1][1, 2], hmap, width = 20)
+        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
+    end
+
+    static_plot = static_preplot!(ax, model)
+    !isnothing(static_plot) && (static_plot.inspectable[] = false)
+
+    # Here we make the decision of whether the user has provided markers, and thus use
+    # `scatter`, or polygons, and thus use `poly`:
+    if user_used_polygons(abmstepper.am, abmstepper.markers)
+        return abmplot!(ax, abmstepper.markers, model;
+            ac = abmstepper.colors,
+            scatterkwargs
+        )
+    else
+        return abmplot!(ax, abmstepper.pos, model;
+            ac = abmstepper.colors,
+            am = abmstepper.markers,
+            as = abmstepper.sizes,
+            scatterkwargs
+        )
+    end
 end
 
 default_static_preplot(ax, model) = nothing
