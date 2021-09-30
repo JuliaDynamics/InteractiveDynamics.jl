@@ -1,3 +1,5 @@
+export agent2string
+
 ##########################################################################################
 # ABMPlot recipe
 ##########################################################################################
@@ -134,11 +136,6 @@ end
 DiscretePos = Union{NTuple{2, Int}, NTuple{3, Int}}
 ContinuousPos = Union{NTuple{2, Float64}, NTuple{3, Float64}}
 
-"""
-Convert agent data into a string.
-
-Concatenate strings if there are multiple agents at given `pos`.
-"""
 function agent2string(model::Agents.ABM, cursor_pos::DiscretePos)
     ids = Agents.ids_in_position(cursor_pos, model)
     s = ""
@@ -161,6 +158,28 @@ function agent2string(model::Agents.ABM, cursor_pos::ContinuousPos)
     return s
 end
 
+"""
+Convert agent data into a string which is used to display all agent variables and their 
+values in the tooltip on mouse hover.  
+Concatenates strings if there are multiple agents at one position.
+
+Custom tooltips for agents can be implemented by adding a specialised method 
+for `agent2string`.
+
+Example:
+
+```
+import InteractiveDynamics.agent2string
+
+function agent2string(agent::SpecialAgent)
+    \"\"\"
+    ✨ SpecialAgent ✨
+    ID = $(agent.id)
+    Main weapon = $(agent.charisma)
+    Side weapon = $(agent.pistol)
+    \"\"\"
+```
+"""
 function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring = "▶ $(nameof(A))\n"
     
