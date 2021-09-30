@@ -160,8 +160,8 @@ end
 
 """
 Convert agent data into a string which is used to display all agent variables and their 
-values in the tooltip on mouse hover.  
-Concatenates strings if there are multiple agents at one position.
+values in the tooltip on mouse hover. Concatenates strings if there are multiple agents 
+at one position.
 
 Custom tooltips for agents can be implemented by adding a specialised method 
 for `agent2string`.
@@ -174,10 +174,11 @@ import InteractiveDynamics.agent2string
 function agent2string(agent::SpecialAgent)
     \"\"\"
     ✨ SpecialAgent ✨
-    ID = $(agent.id)
-    Main weapon = $(agent.charisma)
-    Side weapon = $(agent.pistol)
+    ID = \$(agent.id)
+    Main weapon = \$(agent.charisma)
+    Side weapon = \$(agent.pistol)
     \"\"\"
+end
 ```
 """
 function agent2string(agent::A) where {A<:Agents.AbstractAgent}
