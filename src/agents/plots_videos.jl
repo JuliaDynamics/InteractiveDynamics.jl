@@ -50,10 +50,18 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position vector to be added to the agent's position
   (which matters only if there is overlap).
-* `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
-  If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
+* `scatterkwargs = ()`: Additional keyword arguments propagated to the resulting ABMPlot.
 
-## Model and figure related keywords
+## Figure related keywords
+* `resolution = (600, 600)`: Resolution of the figure.
+* `colorscheme = JULIADYNAMICS_COLORS`: Vector of colors which is used as default colorscheme
+  in the figure.
+* `backgroundcolor = DEFAULT_BG`: Background color of the figure.
+* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
+  setting `xticksvisible = false`.
+* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
+
+## Preplot related keywords
 * `heatarray = nothing` : A keyword that plots a heatmap over the space.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
@@ -62,10 +70,8 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   But you could also define `f(model) = create_some_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
-* `heatkwargs = (colormap=:tokyo,)` : Keywords given to `Makie.heatmap` function
+* `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
-* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
-* `resolution = (600, 600)`: Resolution of the figugre.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents. Notice that you can still make objects of this plot be visible
   above the agents using a translation in the third dimension like below:
@@ -208,9 +214,8 @@ The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are p
   frame.
 * `framerate = 30`: The frame rate of the exported video.
 * `frames = 300`: How many frames to record in total, including the starting frame.
-* `resolution = (600, 600)`: Resolution of the fig.
-* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
-  setting `xticksvisible = false`.
+* `title = ""`: The title of the figure.
+* `showstep = true`: If current step should be shown in title.
 * `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
