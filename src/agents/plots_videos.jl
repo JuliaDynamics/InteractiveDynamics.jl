@@ -97,7 +97,7 @@ function abm_plot(model;
         inspector.plot.enabled = false
     end
     
-    return fig, abmstepper, inspector
+    return fig, abmstepper
 end
 
 ##########################################################################################
@@ -128,7 +128,7 @@ function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
     fig, abmstepper, inspector = abm_plot(model; resolution = (600, 700), kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
-    return fig, abmstepper, inspector
+    return fig, abmstepper
 end
 
 function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)

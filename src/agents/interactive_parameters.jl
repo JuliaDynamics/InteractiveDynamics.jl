@@ -55,7 +55,7 @@ function abm_data_exploration(
     )
 
     # Initialize main layout
-    fig, abmstepper, inspector = abm_plot(model;
+    fig, abmstepper = abm_plot(model;
         resolution=(1600,800), colorscheme, kwargs...
     )
 
