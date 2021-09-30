@@ -44,7 +44,9 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{<:Polygon{2}}, <:Agents.ABM
     poly!(abmplot, abmplot[:agent_pos];
         color=abmplot[:ac],
         abmplot[:scatterkwargs]...
-    )    
+    )
+    
+    return abmplot
 end
 
 ##########################################################################################
