@@ -79,8 +79,11 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 """
 function abm_plot(model; 
         resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
-        backgroundcolor = DEFAULT_BG, as = 10, am = :circle, offset = nothing, 
-        axiskwargs = NamedTuple(), kwargs...
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+        as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        kwargs...
     )
     ac = get(kwargs, :ac, colorscheme[1])
     scheduler = get(kwargs, :scheduler, model.scheduler)
@@ -211,10 +214,13 @@ The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are p
 * `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
-        spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
-        colorscheme = JULIADYNAMICS_COLORS, backgroundcolor = DEFAULT_BG,
-        as = 10, am = :circle, offset = nothing, showstep = true, 
-        title = "", axiskwargs = NamedTuple(), kwargs...
+        spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
+        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+        as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        kwargs...
     )
     ac = get(kwargs, :ac, colorscheme[1])
     scheduler = get(kwargs, :scheduler, model.scheduler)
@@ -230,9 +236,11 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     end
     axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
-    fig, abmstepper, inspector = abm_plot(model; 
-        resolution, colorscheme, backgroundcolor, ac, as, am, scheduler, offset, 
-        axiskwargs, kwargs...
+    fig, abmstepper = abm_plot(model; 
+        resolution, colorscheme, backgroundcolor, axiskwargs, aspect,
+        ac, as, am, scheduler, offset,
+        heatarray, heatkwargs, add_colorbar, 
+        static_preplot!, scatterkwargs
     )
 
     record(fig, file; framerate) do io
