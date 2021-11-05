@@ -15,3 +15,17 @@ abm_play
 abm_video
 abm_data_exploration
 ```
+
+## Agent inspection
+
+It is possible to inspect agents at a given position by hovering the mouse cursor over the scatter points in the agent plot.
+A tooltip will appear which by default provides the name of the agent type, its `id`, `pos`, and all other fieldnames together with their current values.
+This is especially useful for interactive exploration of micro data on the agent level.
+
+For this functionality, we draw on the powerful features of Makie's [`DataInspector`](https://makie.juliaplots.org/v0.15.1/documentation/inspector/).
+
+The tooltip can be customized both with regards to its content and its style by extending a single function and creating a specialized method for a given `A<:AbstractAgent`.
+
+```@docs
+agent2string
+```
