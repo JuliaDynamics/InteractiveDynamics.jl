@@ -3,6 +3,7 @@ uuid = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 repo = "https://github.com/JuliaDynamics/InteractiveDynamics.jl.git"
 version = "0.18.0"
 
+
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
