@@ -11,7 +11,7 @@ showing the evolution of collected data over time (if any are asked for, see bel
 The agent based model is plotted and animated exactly as in [`abm_play`](@ref),
 and the arguments `model, agent_step!, model_step!` are propagated there as-is.
 
-Calling `abm_data_exploration` returns: `figure, agent_df, model_df`. So you can save the
+Calling `abm_data_exploration` returns: `fig, agent_df, model_df`. So you can save the
 figure, but you can also access the collected data (if any).
 
 ## Interaction
@@ -50,46 +50,50 @@ function abm_data_exploration(
         mlabels = nothing,
         when = true,
         spu = 1:100,
+        colorscheme = JULIADYNAMICS_COLORS,
         kwargs...
     )
 
+    # Initialize main layout
+    fig, abmstepper = abm_plot(model;
+        resolution=(1600,800), colorscheme, kwargs...
+    )
+
+    # Initialize agent and model dataframes
+    adf = Agents.init_agent_dataframe(model, adata)
+    mdf = Agents.init_model_dataframe(model, mdata)
+
+    # Initialize data plots and define button behavior
+    abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params; 
+        spu, when, mdata, adata, alabels, mlabels, adf, mdf, colorscheme
+    )
+
+    display(fig)
+    return fig, adf, mdf
+end
+
+function abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params; 
+        spu, when, mdata, adata, alabels, mlabels, adf, mdf, colorscheme)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    ac = get(kwargs, :ac, JULIADYNAMICS_COLORS[1])
-    as = get(kwargs, :as, 10)
-    am = get(kwargs, :am, :circle)
-    scheduler = get(kwargs, :scheduler, model.scheduler)
-    offset = get(kwargs, :offset, nothing)
 
     !isnothing(adata) && @assert adata[1] isa Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    df_agent = Agents.init_agent_dataframe(model, adata)
-    df_model = Agents.init_model_dataframe(model, mdata)
-    L = (isnothing(adata) ? 0 : size(df_agent)[2]-1) + (isnothing(mdata) ? 0 : size(df_model)[2]-1)
+    L = (isnothing(adata) ? 0 : size(adf)[2]-1) + (isnothing(mdata) ? 0 : size(mdf)[2]-1)
     s = 0 # current step
-    P = length(params)
 
-    # Initialize main layout and abm axis
-    figure = Figure(; resolution = (1600, 800), backgroundcolor = DEFAULT_BG)
-    abmax = figure[1,1][1,1] = if dimensionality(model) == 3
-        Axis3(figure)
-    else
-        Axis(figure)
-    end
-
-    # Initialize the ABM plot stuff
-    abmstepper = abm_init_stepper_and_plot!(abmax, figure, model; kwargs...)
-    speed, slep, step, run, reset, update = abm_controls_play!(figure, model, spu, true)
+    speed, slep, step, run, reset, update = abm_controls_play!(fig, model, spu, true)
 
     # Initialize parameter controls & data plots
-    datalayout = figure[:, 2] = GridLayout(tellheight = false)
-    slidervals = abm_param_controls!(figure, datalayout, model, params, L)
+    datalayout = fig[:, 2] = GridLayout(tellheight = false)
+    slidervals = abm_param_controls!(fig, datalayout, model, params, L)
     if L > 0
         N = Observable([0]) # steps that data are recorded at.
         data, axs = init_abm_data_plots!(
-            figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+            fig, datalayout, model, adf, mdf,
+            adata, mdata, N, alabels, mlabels, colorscheme
         )
     end
 
@@ -101,7 +105,7 @@ function abm_data_exploration(
             s += n
             if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
                 push!(N.val, s)
-                update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
             end
         end
     end
@@ -118,11 +122,11 @@ function abm_data_exploration(
                 s += n
                 if L > 0 && Agents.should_we_collect(s, model, when) # update collected data
                     push!(N.val, s)
-                    update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
+                    update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
                 end
             end
             slep[] == 0 ? yield() : sleep(slep[])
-            isopen(figure.scene) || break # crucial, ensures computations stop if closed window.
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
 
@@ -140,16 +144,15 @@ function abm_data_exploration(
         update_abm_properties!(model, slidervals)
     end
 
-    display(figure)
-    return figure, df_agent, df_model
+    return nothing
 end
 
-function abm_param_controls!(figure, datalayout, model, params, L)
+function abm_param_controls!(fig, datalayout, model, params, L)
     slidervals = Dict{Symbol, Observable}()
     for (i, (l, vals)) in enumerate(params)
         startvalue = has_key(model.properties, l) ?
             get_value(model.properties, l) : vals[1]
-        sll = labelslider!(figure, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
+        sll = labelslider!(fig, string(l), vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
         datalayout[i+L, :] = sll.layout
     end
@@ -157,24 +160,25 @@ function abm_param_controls!(figure, datalayout, model, params, L)
 end
 
 function init_abm_data_plots!(
-        figure, datalayout, model, df_agent, df_model, adata, mdata, N, alabels, mlabels
+        fig, datalayout, model, adf, mdf,
+        adata, mdata, N, alabels, mlabels, colorscheme
     )
-    Agents.collect_agent_data!(df_agent, model, adata, 0)
-    Agents.collect_model_data!(df_model, model, mdata, 0)
-    La = isnothing(adata) ? 0 : size(df_agent)[2]-1
-    Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
+    Agents.collect_agent_data!(adf, model, adata, 0)
+    Agents.collect_model_data!(mdf, model, mdata, 0)
+    La = isnothing(adata) ? 0 : size(adf)[2]-1
+    Lm = isnothing(mdata) ? 0 : size(mdf)[2]-1
     data, axs = [], []
 
     # Plot all quantities
     # TODO: make scatter+line plot 1.
     for i in 1:La
         x = Agents.aggname(adata[i])
-        val = Observable([df_agent[end, x]])
+        val = Observable([adf[end, x]])
         push!(data, val)
-        ax = datalayout[i, :] = Axis(figure)
+        ax = datalayout[i, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
-        c = JULIADYNAMICS_COLORS[mod1(i, 3)]
+        c = colorscheme[mod1(i, 3)]
         lines!(ax, N, val, color = c)
         scatter!(
             ax, N, val; marker = MARKER, markersize = 5Makie.px,
@@ -183,12 +187,12 @@ function init_abm_data_plots!(
     end
     for i in 1:Lm
         x = Agents.aggname(mdata[i])
-        val = Observable([df_model[end, x]])
+        val = Observable([mdf[end, x]])
         push!(data, val)
-        ax = datalayout[i+La, :] = Axis(figure)
+        ax = datalayout[i+La, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
-        c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
+        c = colorscheme[mod1(i+La, 3)]
         lines!(ax, N, val, color = c)
         scatter!(ax, N, val, marker = MARKER, markersize = 5Makie.px, color = c,
                  strokewidth = 0.5)
@@ -200,23 +204,23 @@ function init_abm_data_plots!(
     return data, axs
 end
 
-function update_abm_data_plots!(data, axs, model, df_agent, df_model, adata, mdata, N)
-    Agents.collect_agent_data!(df_agent, model, adata, N[][end])
-    Agents.collect_model_data!(df_model, model, mdata, N[][end])
-    La = isnothing(adata) ? 0 : size(df_agent)[2]-1
-    Lm = isnothing(mdata) ? 0 : size(df_model)[2]-1
+function update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
+    Agents.collect_agent_data!(adf, model, adata, N[][end])
+    Agents.collect_model_data!(mdf, model, mdata, N[][end])
+    La = isnothing(adata) ? 0 : size(adf)[2]-1
+    Lm = isnothing(mdata) ? 0 : size(mdf)[2]-1
 
     for i in 1:La
         o = data[i]
         x = Agents.aggname(adata[i])
-        val = df_agent[end, x]
+        val = adf[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
     for i in 1:Lm
         o = data[i+La]
         x = Agents.aggname(mdata[i])
-        val = df_model[end, x]
+        val = mdf[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end

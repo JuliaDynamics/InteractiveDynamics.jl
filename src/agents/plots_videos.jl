@@ -50,10 +50,18 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position vector to be added to the agent's position
   (which matters only if there is overlap).
-* `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
-  If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
+* `scatterkwargs = ()`: Additional keyword arguments propagated to the resulting ABMPlot.
 
-## Model and figure related keywords
+## Figure related keywords
+* `resolution = (600, 600)`: Resolution of the figure.
+* `colorscheme = JULIADYNAMICS_COLORS`: Vector of colors which is used as default colorscheme
+  in the figure.
+* `backgroundcolor = DEFAULT_BG`: Background color of the figure.
+* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
+  setting `xticksvisible = false`.
+* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
+
+## Preplot related keywords
 * `heatarray = nothing` : A keyword that plots a heatmap over the space.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
@@ -62,10 +70,8 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   But you could also define `f(model) = create_some_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
-* `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `Makie.heatmap` function
+* `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
-* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
-* `resolution = (600, 600)`: Resolution of the figugre.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents. Notice that you can still make objects of this plot be visible
   above the agents using a translation in the third dimension like below:
@@ -77,10 +83,31 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   end
   ```
 """
-function abm_plot(model; resolution = (600, 600), kwargs...)
-    fig = Figure(; resolution)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+function abm_plot(model; 
+        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+        as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        kwargs...
+    )
+    ac = get(kwargs, :ac, colorscheme[1])
+    scheduler = get(kwargs, :scheduler, model.scheduler)
+
+    fig = Figure(; resolution, backgroundcolor)
+    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? 
+        Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
+    abmstepper = abm_init_stepper(model;
+        ac, as, am, scheduler, offset, heatarray)
+    abm_init_plot!(ax, fig, model, abmstepper;
+        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
+    inspector = DataInspector(fig.scene)
+    
+    # temporarily disable inspector for poly plots
+    if user_used_polygons(am, abmstepper.markers)
+        inspector.plot.enabled = false
+    end
+    
     return fig, abmstepper
 end
 
@@ -122,11 +149,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
     speed, slep, step, run, reset, = abm_controls_play!(fig, model, spu, false)
+    
     # Clicking the step button
     on(step) do clicks
         n = speed[]
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
     end
+    
     # Clicking the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -139,11 +168,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
+    
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
     end
+    
     return nothing
 end
 
@@ -178,22 +209,28 @@ end
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
 saved at given path `file`, by recording the behavior of [`abm_play`](@ref) (without sliders).
-The plotting is identical as in [`abm_plot`](@ref).
+The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are propagated.
 
 ## Keywords
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
 * `framerate = 30`: The frame rate of the exported video.
 * `frames = 300`: How many frames to record in total, including the starting frame.
-* `resolution = (600, 600)`: Resolution of the fig.
-* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
-  setting `xticksvisible = false`.
+* `title = ""`: The title of the figure.
+* `showstep = true`: If current step should be shown in title.
 * `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
-        spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
-        title = "", showstep = true, axiskwargs = NamedTuple(), kwargs...
+        spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
+        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+        as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        kwargs...
     )
+    ac = get(kwargs, :ac, colorscheme[1])
+    scheduler = get(kwargs, :scheduler, model.scheduler)
 
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -204,14 +241,14 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     else
         t = title
     end
+    axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
-    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = if dimensionality(model) == 3
-        Axis3(fig; title = t, titlealign = :left, axiskwargs...)
-    else
-        Axis(fig; title = t, titlealign = :left, axiskwargs...)
-    end
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+    fig, abmstepper = abm_plot(model; 
+        resolution, colorscheme, backgroundcolor, axiskwargs, aspect,
+        ac, as, am, scheduler, offset,
+        heatarray, heatkwargs, add_colorbar, 
+        static_preplot!, scatterkwargs
+    )
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
