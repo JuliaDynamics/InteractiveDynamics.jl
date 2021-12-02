@@ -34,7 +34,7 @@ agent2string
 
 Tracking model variables is already made easy by adding them to the `adata`/`mdata` vectors.
 
-```
+```julia
 using Agents
 using Statistics
 using InteractiveDynamics
@@ -62,7 +62,7 @@ This is done by using `Observable`s.
 We can simply add the variable in question as an `Observable` and update it after each simulation step.
 This can be done by adding a new stepping function which wraps the original `model_step!` function and the updating of the `Observable`'s value.
 
-```
+```julia
 # add the new variable as an observable
 happiness = collect(a.mood for a in allagents(model)) |> Observable
 
