@@ -29,3 +29,54 @@ The tooltip can be customized both with regards to its content and its style by 
 ```@docs
 agent2string
 ```
+
+## Adding custom plots
+
+Tracking model variables is already made easy by adding them to the `adata`/`mdata` vectors.
+
+```
+using Agents
+using Statistics
+using InteractiveDynamics
+using GLMakie
+
+# initialise model
+model, agent_step!, model_step! = Models.schelling()
+
+# define a parameter slider
+params = Dict(:min_to_be_happy => 1:1:5)
+
+# define data to collect and plot
+adata= [(:mood, mean)]
+
+# open the interactive app
+fig, adf, mdf = abm_data_exploration(model, agent_step!, model_step!, params; adata)
+```
+
+TODO: screenshot of output
+
+This will always display the data as scatterpoints connected with lines.
+In cases where more granular control over the displayed plots is needed, we need to take a few extra steps.
+Makie plots have to know which changes in the underlying data to watch.
+This is done by using `Observable`s.
+We can simply add the variable in question as an `Observable` and update it after each simulation step.
+This can be done by adding a new stepping function which wraps the original `model_step!` function and the updating of the `Observable`'s value.
+
+```
+# add the new variable as an observable
+happiness = collect(a.mood for a in allagents(model)) |> Observable
+
+# update its value after each model step
+function new_model_step!(model, count_unhappy = count_unhappy)
+    model_step!(model)
+    happiness[] = collect(a.mood for a in allagents(model))
+end
+
+# open the interactive app and use the enhanced stepping function as an argument
+fig, adf, mdf = abm_data_exploration(model, agent_step!, new_model_step!, params; adata)
+
+# add the desired plot to a newly created column on the right
+hist(fig[:,3], happiness)
+```
+
+TODO: screenshot of output
