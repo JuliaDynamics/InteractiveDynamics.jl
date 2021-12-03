@@ -53,7 +53,7 @@ adata= [(:mood, mean)]
 fig, adf, mdf = abm_data_exploration(model, agent_step!, model_step!, params; adata)
 ```
 
-TODO: screenshot of output
+![Regular interactive app for data exploration][https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/custom_plots.png]
 
 This will always display the data as scatterpoints connected with lines.
 In cases where more granular control over the displayed plots is needed, we need to take a few extra steps.
@@ -62,21 +62,32 @@ This is done by using `Observable`s.
 We can simply add the variable in question as an `Observable` and update it after each simulation step.
 This can be done by adding a new stepping function which wraps the original `model_step!` function and the updating of the `Observable`'s value.
 
+For the sake of a simple example, let's assume we want to add a barplot showing the current amount of happy and unhappy agents in our Schelling segregation model.
+
 ```julia
 # add the new variable as an observable
-happiness = collect(a.mood for a in allagents(model)) |> Observable
+happiness = [count(a.mood == false for a in allagents(model)),
+    count(a.mood == true for a in allagents(model))] |> Observable
 
 # update its value after each model step
-function new_model_step!(model, count_unhappy = count_unhappy)
+function new_model_step!(model; happiness = happiness)
     model_step!(model)
-    happiness[] = collect(a.mood for a in allagents(model))
+    happiness[] = [count(a.mood == false for a in allagents(model)),
+        count(a.mood == true for a in allagents(model))]
 end
 
 # open the interactive app and use the enhanced stepping function as an argument
 fig, adf, mdf = abm_data_exploration(model, agent_step!, new_model_step!, params; adata)
 
 # add the desired plot to a newly created column on the right
-hist(fig[:,3], happiness)
+barplot(fig[:,3], [0,1], happiness; bar_labels = ["Unhappy", "Happy"])
+
+# as usual, we can also style this new plot to our liking
+hidexdecorations!(current_axis())
 ```
 
-TODO: screenshot of output
+```@raw html
+<video width="100%" height="auto" controls autoplay loop>
+<source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/custom_plots.mp4?raw=true" type="video/mp4">
+</video>
+```
