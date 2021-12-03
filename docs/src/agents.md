@@ -53,7 +53,9 @@ adata= [(:mood, mean)]
 fig, adf, mdf = abm_data_exploration(model, agent_step!, model_step!, params; adata)
 ```
 
-![Regular interactive app for data exploration][https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/custom_plots.png]
+```@raw html
+<img width="100%" height="auto" alt="Regular interactive app for data exploration" src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/custom_plots.png">
+```
 
 This will always display the data as scatterpoints connected with lines.
 In cases where more granular control over the displayed plots is needed, we need to take a few extra steps.
