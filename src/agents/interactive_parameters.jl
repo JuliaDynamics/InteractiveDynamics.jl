@@ -63,7 +63,8 @@ function abm_data_exploration(
 
     # Initialize data plots and define button behavior
     abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params;
-        spu, when, adata, mdata, alabels, mlabels, adf, mdf, colorscheme)
+        spu, when, adata, mdata, alabels, mlabels, adf, mdf, colorscheme
+    )
 
     display(fig)
     return fig, adf, mdf
