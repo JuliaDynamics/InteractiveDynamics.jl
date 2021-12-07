@@ -188,8 +188,8 @@ function init_abm_data_plots!(
         ax.ylabel = isnothing(alabels) ? x : alabels[i]
         c = colorscheme[mod1(i, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val; marker = MARKER, markersize = 4Makie.px, color = c,
-            strokewidth = 0.4)
+        scatter!(ax, N, val; marker = MARKER, markersize = 5Makie.px, color = c,
+            strokewidth = 0.5)
     end
     for i = 1:Lm
         x = Agents.aggname(mdata[i])
@@ -200,8 +200,8 @@ function init_abm_data_plots!(
         ax.ylabel = isnothing(mlabels) ? x : mlabels[i]
         c = colorscheme[mod1(i + La, 3)]
         lines!(ax, N, val, color = c)
-        scatter!(ax, N, val, marker = MARKER, markersize = 4Makie.px, color = c,
-            strokewidth = 0.4)
+        scatter!(ax, N, val, marker = MARKER, markersize = 5Makie.px, color = c,
+            strokewidth = 0.5)
     end
     if La + Lm > 1
         for ax in @view(axs[1:end-1])
