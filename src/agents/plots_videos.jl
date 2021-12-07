@@ -151,31 +151,31 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     modelobs = Observable(model) # only useful for resetting
     speed, slep, step, run, reset, = abm_controls!(fig, model, spu, false)
 
-    # Clicking the step button
+    # Clicking the "step" button
     on(step) do clicks
         n = speed[]
+        model = modelobs[] # necessary after resetting the model
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
     end
 
-    # Clicking the run button
+    # Clicking the "run" button
     isrunning = Observable(false)
     on(run) do clicks
         isrunning[] = !isrunning[]
     end
     on(run) do clicks
         @async while isrunning[]
-            n = speed[]
-            model = modelobs[] # this is useful only for the reset button
-            Agents.step!(abmstepper, model, agent_step!, model_step!, n)
+            step[] = step[] + 1
             slep[] == 0 ? yield() : sleep(slep[])
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
 
-    # Clicking the reset button
+    # Clicking the "reset" button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
-        Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
+        model = modelobs[]
+        Agents.step!(abmstepper, model, agent_step!, model_step!, 0)
     end
 
     return nothing
