@@ -147,7 +147,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
-    speed, slep, step, run, reset, = abm_controls_play!(fig, model, spu, false)
+    speed, slep, step, run, reset, = abm_controls!(fig, model, spu, false)
     
     # Clicking the step button
     on(step) do clicks
@@ -173,11 +173,11 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
         modelobs[] = deepcopy(model0)
         Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
     end
-    
+
     return nothing
 end
 
-function abm_controls_play!(fig, model, spu, add_update = false)
+function abm_controls!(fig, model, spu, data_exploration = false)
     controllayout = fig[2, 1] = GridLayout(tellheight = true)
     spusl = labelslider!(fig, "spu =", spu; tellwidth = true)
     if model.space isa Agents.ContinuousSpace
@@ -191,15 +191,21 @@ function abm_controls_play!(fig, model, spu, add_update = false)
     step = Button(fig, label = "step")
     run = Button(fig, label = "run")
     reset = Button(fig, label = "reset")
-    if add_update
+    if data_exploration
+        clear = Button(fig, label = "clear\nall")
         update = Button(fig, label = "update")
-        controllayout[3, :] = MakieLayout.hbox!(step, run, reset, update; tellwidth = false)
+        controllayout[3, :][:, 1] = MakieLayout.hbox!(clear; tellwidth = false)
+        controllayout[3, :][:, 2] = MakieLayout.hbox!(step, run; tellwidth = false)
+        controllayout[3, :][:, 3] = MakieLayout.hbox!(reset, update; tellwidth = false)
         upret = update.clicks
+        clearret = clear.clicks
     else
+        controllayout[3, :][:, 2] = MakieLayout.hbox!(step, run; tellwidth = false)
+        controllayout[3, :][:, 3] = MakieLayout.hbox!(reset; tellwidth = false)
         upret = nothing
-        controllayout[3, :] = MakieLayout.hbox!(step, run, reset; tellwidth = false)
+        clearret = nothing
     end
-    return spusl.slider.value, slesl.slider.value, step.clicks, run.clicks, reset.clicks, upret
+    return spusl.slider.value, slesl.slider.value, step.clicks, run.clicks, reset.clicks, clearret, upret
 end
 
 
