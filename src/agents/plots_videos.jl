@@ -83,31 +83,31 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   end
   ```
 """
-function abm_plot(model; 
-        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
-        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
-        as = 10, am = :circle, offset = nothing,
-        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
-        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
-        kwargs...
-    )
+function abm_plot(model;
+    resolution = (600, 600), colorscheme = JULIADYNAMICS_COLORS,
+    backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+    as = 10, am = :circle, offset = nothing,
+    heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
+    static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+    kwargs...
+)
     ac = get(kwargs, :ac, colorscheme[1])
     scheduler = get(kwargs, :scheduler, model.scheduler)
 
     fig = Figure(; resolution, backgroundcolor)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? 
-        Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
+    ax = fig[1, 1][1, 1] = dimensionality(model) == 3 ?
+                           Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
     abmstepper = abm_init_stepper(model;
         ac, as, am, scheduler, offset, heatarray)
     abm_init_plot!(ax, fig, model, abmstepper;
         aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
     inspector = DataInspector(fig.scene)
-    
+
     # temporarily disable inspector for poly plots
     if user_used_polygons(am, abmstepper.markers)
         inspector.plot.enabled = false
     end
-    
+
     return fig, abmstepper
 end
 
@@ -135,8 +135,10 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `ac, am, as, scheduler, offset, aspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spu = 1:100`: The values of the "spu" slider.
 """
-function abm_play(model, agent_step!, model_step! = Agents.dummystep;
-        spu = 1:100, kwargs...)
+function abm_play(
+    model, agent_step!, model_step! = Agents.dummystep;
+    spu = 1:100, kwargs...
+)
     fig, abmstepper = abm_plot(model; resolution = (600, 700), kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
@@ -148,16 +150,18 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
     speed, slep, step, run, reset, = abm_controls!(fig, model, spu, false)
-    
+
     # Clicking the step button
     on(step) do clicks
         n = speed[]
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
     end
-    
+
     # Clicking the run button
     isrunning = Observable(false)
-    on(run) do clicks; isrunning[] = !isrunning[]; end
+    on(run) do clicks
+        isrunning[] = !isrunning[]
+    end
     on(run) do clicks
         @async while isrunning[]
             n = speed[]
@@ -167,7 +171,7 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
-    
+
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
@@ -225,41 +229,43 @@ The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are p
 * `showstep = true`: If current step should be shown in title.
 * `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
-function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
-        spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
-        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
-        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
-        as = 10, am = :circle, offset = nothing,
-        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
-        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
-        kwargs...
-    )
+function abm_video(
+    file, model, agent_step!, model_step! = Agents.dummystep;
+    spf = 1, framerate = 30, frames = 300, title = "", showstep = true,
+    resolution = (600, 600), colorscheme = JULIADYNAMICS_COLORS,
+    backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+    as = 10, am = :circle, offset = nothing,
+    heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
+    static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+    kwargs...
+)
     ac = get(kwargs, :ac, colorscheme[1])
     scheduler = get(kwargs, :scheduler, model.scheduler)
 
     # add some title stuff
     s = Observable(0) # counter of current step
     if title ≠ "" && showstep
-        t = lift(x -> title*", step = "*string(x), s)
+        t = lift(x -> title * ", step = " * string(x), s)
     elseif showstep
-        t = lift(x -> "step = "*string(x), s)
+        t = lift(x -> "step = " * string(x), s)
     else
         t = title
     end
     axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
-    fig, abmstepper = abm_plot(model; 
+    fig, abmstepper = abm_plot(model;
         resolution, colorscheme, backgroundcolor, axiskwargs, aspect,
         ac, as, am, scheduler, offset,
-        heatarray, heatkwargs, add_colorbar, 
+        heatarray, heatkwargs, add_colorbar,
         static_preplot!, scatterkwargs
     )
 
     record(fig, file; framerate) do io
-        for j in 1:frames-1
+        for j = 1:frames-1
             recordframe!(io)
             Agents.step!(abmstepper, model, agent_step!, model_step!, spf)
-            s[] += spf; s[] = s[]
+            s[] += spf
+            s[] = s[]
         end
         recordframe!(io)
     end

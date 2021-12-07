@@ -42,9 +42,17 @@ data plots when resetting, for visual guidance.
 * `when = true`: When to perform data collection, as in `Agents.run!`.
 * `spu = 1:100`: Values that the "spu" slider will obtain.
 """
-function abm_data_exploration(model, agent_step!, model_step!, params = Dict();
-    adata = nothing, mdata = nothing, alabels = nothing, mlabels = nothing, when = true,
-    spu = 1:100, colorscheme = JULIADYNAMICS_COLORS, kwargs...)
+function abm_data_exploration(
+    model, agent_step!, model_step!, params = Dict();
+    adata = nothing,
+    mdata = nothing,
+    alabels = nothing,
+    mlabels = nothing,
+    when = true,
+    spu = 1:100,
+    colorscheme = JULIADYNAMICS_COLORS,
+    kwargs...
+)
 
     # Initialize main layout
     fig, abmstepper = abm_plot(model; resolution = (1600, 800), colorscheme, kwargs...)
@@ -61,8 +69,10 @@ function abm_data_exploration(model, agent_step!, model_step!, params = Dict();
     return fig, adf, mdf
 end
 
-function abm_data_exploration!(fig, abmstepper, model, agent_step!, model_step!, params;
-    spu, when, adata, mdata, alabels, mlabels, adf, mdf, colorscheme)
+function abm_data_exploration!(
+    fig, abmstepper, model, agent_step!, model_step!, params;
+    spu, when, adata, mdata, alabels, mlabels, adf, mdf, colorscheme
+)
     # preinitialize a bunch of stuff
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
@@ -156,8 +166,10 @@ function init_abm_param_controls!(fig, datalayout, model, params, L)
     return slidervals
 end
 
-function init_abm_data_plots!(fig, datalayout, model, adf, mdf,
-    adata, mdata, N, alabels, mlabels, colorscheme)
+function init_abm_data_plots!(
+    fig, datalayout, model, adf, mdf,
+    adata, mdata, N, alabels, mlabels, colorscheme
+)
     Agents.collect_agent_data!(adf, model, adata, 0)
     Agents.collect_model_data!(mdf, model, mdata, 0)
     La = isnothing(adata) ? 0 : size(adf)[2] - 1
@@ -202,25 +214,27 @@ end
 function update_abm_data_plots!(data, axs, model, adf, mdf, adata, mdata, N)
     Agents.collect_agent_data!(adf, model, adata, N[][end])
     Agents.collect_model_data!(mdf, model, mdata, N[][end])
-    La = isnothing(adata) ? 0 : size(adf)[2]-1
-    Lm = isnothing(mdata) ? 0 : size(mdf)[2]-1
+    La = isnothing(adata) ? 0 : size(adf)[2] - 1
+    Lm = isnothing(mdata) ? 0 : size(mdf)[2] - 1
 
-    for i in 1:La
+    for i = 1:La
         o = data[i]
         x = Agents.aggname(adata[i])
         val = adf[end, x]
         push!(o[], val)
         o[] = o[] #update plot
     end
-    for i in 1:Lm
+    for i = 1:Lm
         o = data[i+La]
         x = Agents.aggname(mdata[i])
         val = mdf[end, x]
-        push!(o[], val) 
+        push!(o[], val)
         o[] = o[] #update plot
     end
     # TODO: Maybe we can optimize this by setting the limits ourselves (we have the data)
-    for ax in axs; autolimits!(ax); end 
+    for ax in axs
+        autolimits!(ax)
+    end
 end
 
 function update_abm_properties!(model, slidervals)
