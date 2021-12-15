@@ -100,7 +100,7 @@ function abm_plot(model;
     abmstepper = abm_init_stepper(model;
         ac, as, am, scheduler, offset, heatarray)
     abm_init_plot!(ax, fig, model, abmstepper;
-        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
+        aspect, heatkwargs..., add_colorbar, static_preplot!, scatterkwargs...)
     inspector = DataInspector(fig.scene)
     
     # temporarily disable inspector for poly plots
@@ -243,10 +243,10 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
     fig, abmstepper = abm_plot(model; 
-        resolution, colorscheme, backgroundcolor, axiskwargs, aspect,
+        resolution, colorscheme, backgroundcolor, axiskwargs..., aspect,
         ac, as, am, scheduler, offset,
-        heatarray, heatkwargs, add_colorbar, 
-        static_preplot!, scatterkwargs
+        heatarray, heatkwargs..., add_colorbar, 
+        static_preplot!, scatterkwargs...
     )
 
     record(fig, file; framerate) do io
