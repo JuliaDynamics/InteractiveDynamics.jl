@@ -3,7 +3,6 @@ uuid = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 repo = "https://github.com/JuliaDynamics/InteractiveDynamics.jl.git"
 version = "0.18.1"
 
-
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
@@ -14,7 +13,7 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 DataStructures = "0.17, 0.18"
-Makie = "0.15"
+Makie = "0.15, 0.16"
 Observables = "0.2, 0.3, 0.4"
 Requires = "0.5, 1.0"
 StatsBase = "0.32.0, 0.33"
