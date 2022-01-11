@@ -279,33 +279,38 @@ function interactive_evolution_timeseries(
     # Live parameter changing
     if !isnothing(ps)
         playout = fig[:, 3] = GridLayout(tellheight = false)
-        slidervals = add_param_controls!(fig, playout, ps, copy(ds.p), pnames)
+        slidervals, returnvals = add_param_controls!(fig, playout, ps, copy(ds.p), pnames)
         update = Button(fig, label = "update", tellwidth = false)
         playout[length(ps)+1, :] = update
         on(update.clicks) do clicks
-            update_ds_parameters!(ds, slidervals)
+            update_ds_parameters!(ds, slidervals, returnvals)
         end
+    else
+        returnvals = nothing
     end
 
     display(fig)
-    return fig, obs
+    return fig, obs, returnvals
 end
 
 function add_param_controls!(fig, playout, ps, p0, pnames)
     slidervals = Dict{keytype(ps), Observable}()
+    returnvals = Dict{keytype(ps), Observable}()
     for (i, (l, vals)) in enumerate(ps)
         startvalue = p0[l]
         label = string(pnames[l])
         sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
+        returnvals[l] = Observable(sll.slider.value[]) # will only get updated on button
         playout[i, :] = sll.layout
     end
-    return slidervals
+    return slidervals, returnvals
 end
 
-function update_ds_parameters!(ds, slidervals)
+function update_ds_parameters!(ds, slidervals, returnvals)
     for l in keys(slidervals)
         v = slidervals[l][]
+        returnvals[l][] = v
         DynamicalSystems.set_parameter!(ds, l, v)
     end
 end
