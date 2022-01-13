@@ -122,13 +122,12 @@ function abm_init_plot!(ax, model, abmstepper::ABMStepper;
     # `scatter`, or polygons, and thus use `poly`:
     if user_used_polygons(abmstepper.am, abmstepper.markers)
         poly!(ax, abmstepper.markers; color = abmstepper.ac, scatterkwargs...)
-        return
+    else
+        scatter!(ax, abmstepper.pos; 
+            color = abmstepper.colors, marker = abmstepper.markers, 
+            markersize = abmstepper.sizes, scatterkwargs...
+        )
     end
-
-    scatter!(ax, abmstepper.pos; 
-        color = abmstepper.colors, marker = abmstepper.markers, 
-        markersize = abmstepper.sizes, scatterkwargs...
-    )
     return
 end
 
