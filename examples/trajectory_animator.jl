@@ -59,6 +59,24 @@ figure, obs, slidervals = interactive_evolution_timeseries(
     ds, u0s, ps; idxs, tail = 1000, diffeq, pnames, lims
 )
 
+# Use the `slidervals` observable to plot fixed points
+lorenzfp(ρ,β) = [
+    Point3f0(0,0,0),
+    Point3f0(sqrt(β*(ρ-1)), sqrt(β*(ρ-1)), ρ-1),
+    Point3f0(-sqrt(β*(ρ-1)), -sqrt(β*(ρ-1)), ρ-1),
+]
+
+# fpobs = Observable(lorenzfp(ds.p[2], ds.p[3]))
+fpobs = lift(lorenzfp, slidervals[2], slidervals[3])
+
+ax = content(figure[1,1])
+scatter!(ax, fpobs; markersize = 5000, marker = diamond)
+
+# onany(slidervals[2], slidervals[3]) do ρ, β
+    
+
+# end
+
 # %% towel
 ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]

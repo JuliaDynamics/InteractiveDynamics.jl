@@ -30,7 +30,7 @@ The function returns `fig, obs`. `fig` is the overarching fig
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
   gets different arguments.
 * `tail = 1000` : Length of plotted trajectory (in step units).
-* `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
+* `diffeq = NamedTuple()` : Named tuple of keyword arguments propagated to
   the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
   are not pre-computed and interpolated, it is recommended to use a combination of
   arguments that limit maximum stepsize, to ensure smooth curves. For example:
@@ -43,7 +43,7 @@ function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
-        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        tail = 1000, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
     ) where {IIP}
@@ -52,7 +52,7 @@ function interactive_evolution(
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     fig = Figure(resolution = (1000, 800), )
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
 
     # Initialize main plot with correct dimensionality
@@ -144,12 +144,13 @@ end
 
 
 function traj_lim_estimator(ds, u0s, diffeq, idxs, transform)
-    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1, diffeq..., dtmax = Inf)
+    largedt_diffeq = merge(diffeq, (;dtmax = Inf))
+    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1, diffeq = largedt_diffeq)
     tr = DynamicalSystems.Dataset(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1, diffeq..., dtmax = Inf)
+        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1, diffeq = largedt_diffeq)
         tr = DynamicalSystems.Dataset(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
@@ -188,7 +189,7 @@ function interactive_evolution_timeseries(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s, ps = nothing;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
-        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        tail = 1000, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
         total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
@@ -204,7 +205,7 @@ function interactive_evolution_timeseries(
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     fig = Figure(resolution = (1600, 800), )
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     tdt = total_span/50
 
