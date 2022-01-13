@@ -43,18 +43,7 @@ function abm_init_stepper(model;
     colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
     sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
     markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
-    
-    is3d = length(modellims(model)[1]) == 3
-
-    # TODO: Make a function (or closure) that returns the vector of positions
-    # both for source code clarity but also for accomodating different spaces
-    postype = is3d ? Point3f0 : Point2f0
-    if isnothing(offset)
-        pos = Observable(postype[model[i].pos for i ∈ ids])
-    else
-        pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
-    end
-
+    pos = Observable(agents_pos_for_plotting(model, scheduler, offset))
     if user_used_polygons(am, markers)
         # For polygons we always need vector, even if all agents are same polygon
         markers[] = [translate(m, p) for (m, p) in zip(markers, pos[])]
@@ -66,6 +55,33 @@ function abm_init_stepper(model;
         heatarray, heatobs
     )
 end
+
+function agents_pos_for_plotting(model, scheduler, offset)
+    ids = scheduler(model)
+    if model.space isa Agents.OpenStreetMapSpace
+        if isnothing(offset)
+            pos = Point2f[OSM.lonlat(model[i].pos, model) for i in ids]
+        else
+            pos = postype[OSM.lonlat(model[i].pos, model) .+ offset(model[i]) for i ∈ ids]
+        end
+    end
+    # standard space case
+    postype = agents_space_dimensionality(model) == 3 ? Point3f0 : Point2f0
+    if isnothing(offset)
+        pos = Observable(postype[model[i].pos for i ∈ ids])
+    else
+        pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
+    end
+    return pos
+end
+
+agents_pos_for_plotting(abms::ABMStepper, model) = 
+agents_pos_for_plotting(model, abms.scheduler, abms.offset)
+
+agents_space_dimensionality(::Agents.GridSpace{D}) = D
+agents_space_dimensionality(::Agents.ContinuousSpace{D}) = D
+agents_space_dimensionality(::Agents.OpenSTreetMapSpace) = 2
+
 
 SUPPORTED_AGENTS_SPACES =  Union{
     Agents.DiscreteSpace,
@@ -161,12 +177,7 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     if Agents.nagents(model) == 0
         @warn "The model has no agents"
     end
-    ids = abmstepper.scheduler(model)
-    if isnothing(offset)
-        pos[] = [model[i].pos for i in ids]
-    else
-        pos[] = [model[i].pos .+ offset(model[i]) for i in ids]
-    end
+    pos[] = agents_pos_for_plotting(abmstepper, model)
     if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
