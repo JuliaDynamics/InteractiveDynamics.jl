@@ -45,6 +45,9 @@ function abm_init_stepper(model;
     markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
     
     is3d = length(modellims(model)[1]) == 3
+
+    # TODO: Make a function (or closure) that returns the vector of positions
+    # both for source code clarity but also for accomodating different spaces
     postype = is3d ? Point3f0 : Point2f0
     if isnothing(offset)
         pos = Observable(postype[model[i].pos for i ∈ ids])
@@ -109,7 +112,7 @@ end
 "Plot space and/or set axis limits."
 function plot_agents_space!(ax, model, aspect)
     if model.space isa Agents.OpenStreetMapSpace
-        # osmplot!()
+        OSMMakie.osmplot!(ax, model.space.map)
         return
     end
     if model.space isa Agents.ContinuousSpace
