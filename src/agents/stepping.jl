@@ -44,8 +44,12 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
     markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
     pos = Observable(agents_pos_for_plotting(model, offset, ids))
     if user_used_polygons(am, markers)
+        if am isa Function
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers[] = [translate(am, p) for p in pos[]]
+        end
         # For polygons we always need vector, even if all agents are same polygon
-        markers[] = [translate(m, p) for (m, p) in zip(markers, pos[])]
     end
 
     return ABMStepper(
