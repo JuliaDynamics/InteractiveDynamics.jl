@@ -10,7 +10,7 @@ mutable struct Daisy <: AbstractAgent
     albedo::Float64 # 0-1 fraction
 end
 
-const DaisyWorld = ABM{<:GridSpace, Daisy};
+DaisyWorld = ABM{<:GridSpace, Daisy};
 
 function update_surface_temperature!(pos, model::DaisyWorld)
     ids = ids_in_position(pos, model)

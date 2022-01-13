@@ -21,8 +21,7 @@ println(io, "Helper structure for stepping and updating the plot of an agent bas
 "It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
 "Initialize the abmstepper and the plotted observables. Return the stepper."
-function abm_init_stepper(model; 
-        ac, am, as, scheduler, offset, heatarray)
+function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
@@ -66,7 +65,7 @@ function agents_pos_for_plotting(model, scheduler, offset)
         end
     end
     # standard space case
-    postype = agents_space_dimensionality(model) == 3 ? Point3f0 : Point2f0
+    postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
     if isnothing(offset)
         pos = Observable(postype[model[i].pos for i ∈ ids])
     else
@@ -78,10 +77,9 @@ end
 agents_pos_for_plotting(abms::ABMStepper, model) = 
 agents_pos_for_plotting(model, abms.scheduler, abms.offset)
 
-agents_space_dimensionality(::Agents.GridSpace{D}) = D
-agents_space_dimensionality(::Agents.ContinuousSpace{D}) = D
-agents_space_dimensionality(::Agents.OpenSTreetMapSpace) = 2
-
+agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
+agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
+agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 
 SUPPORTED_AGENTS_SPACES =  Union{
     Agents.DiscreteSpace,
@@ -168,7 +166,6 @@ without doing any stepping.
 function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n)
     @assert (n isa Int) "Only stepping with integer `n` is possible with `abmstepper`."
     ac, am, as = abmstepper.ac, abmstepper.am, abmstepper.as
-    offset = abmstepper.offset
     pos, colors = abmstepper.pos, abmstepper.colors
     sizes, markers =  abmstepper.sizes, abmstepper.markers
 
