@@ -38,6 +38,11 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
         heatobs = nothing
     end
 
+    # We do this change so the agent sphere size changes with depth in 3D
+    if agents_space_dimensionality(model) == 3 && am == :circle
+        am = Sphere(Point3f0(0), 1)
+    end
+
     ids = scheduler(model)
     colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
     sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
@@ -118,9 +123,6 @@ function abm_init_plot!(ax, model, abmstepper::ABMStepper;
     if user_used_polygons(abmstepper.am, abmstepper.markers)
         poly!(ax, abmstepper.markers; color = abmstepper.ac, scatterkwargs...)
         return
-    end
-    if agents_space_dimensionality(model.space) == 3
-        abmstepper.am[] == :circle && (abmstepper.am = Sphere(Point3f0(0), 1))
     end
 
     scatter!(ax, abmstepper.pos; 
