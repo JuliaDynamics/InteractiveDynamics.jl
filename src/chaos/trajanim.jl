@@ -178,6 +178,10 @@ add some additional controls on the left side which allow one to interactively c
 system parameters and then click the "update" button to translate the new parameters to
 system evolution. This can be done without stopping the live system evolution.
 Notice that in this scenario it is recommended to provide the `lims` keyword manually.
+An extra argument is returned in this case: a dictionary mapping parameter keys 
+to _observables_ containing their current values. You can use this to generate additional
+plot elements that may depend on system parameters and thus need to be changed
+if the sliders are changed.
 
 The following additional keywords also apply:
 - `total_span` : How much the x-axis of the timeseries plots should span (in real time units)
