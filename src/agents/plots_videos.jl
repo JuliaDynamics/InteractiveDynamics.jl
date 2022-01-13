@@ -100,7 +100,8 @@ function abm_plot(model;
     abmstepper = abm_init_stepper(model;
         ac, as, am, scheduler, offset, heatarray)
     abm_init_plot!(ax, fig, model, abmstepper;
-        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
+        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    )
     inspector = DataInspector(fig.scene)
     
     # temporarily disable inspector for poly plots

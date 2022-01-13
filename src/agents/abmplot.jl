@@ -172,9 +172,7 @@ for `agent2string`.
 Example:
 
 ```julia
-import InteractiveDynamics.agent2string
-
-function agent2string(agent::SpecialAgent)
+function InteractiveDynamics.agent2string(agent::SpecialAgent)
     \"\"\"
     ✨ SpecialAgent ✨
     ID = \$(agent.id)

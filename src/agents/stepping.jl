@@ -64,19 +64,19 @@ function abm_init_stepper(model;
     )
 end
 
+SUPPORTED_AGENTS_SPACES =  Union{
+    Agents.DiscreteSpace,
+    Agents.ContinuousSpace,
+    Agents.OpenStreetMapSpace,
+}
+
 "Initialize the ABM plot and return it."
 function abm_init_plot!(ax, fig, model, abmstepper;
-        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
+        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    )
     
-    o, e = modellims(model)
-    is3d = length(o) == 3
-    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
-    # TODO: once graph plotting is possible, this will be adjusted
-    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    is3d && zlims!(ax, o[3], e[3])
-    is3d || (ax.aspect = aspect)
+    @assert typeof(model.space) <: SUPPORTED_AGENTS_SPACES
+    plot_agents_space!(ax, model, aspect)
 
     if !isnothing(abmstepper.heatobs)
         heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
@@ -106,16 +106,27 @@ function abm_init_plot!(ax, fig, model, abmstepper;
     end
 end
 
-default_static_preplot(ax, model) = nothing
-
-function modellims(model)
+"Plot space and/or set axis limits."
+function plot_agents_space!(ax, model, aspect)
+    if model.space isa Agents.OpenStreetMapSpace
+        # osmplot!()
+        return
+    end
     if model.space isa Agents.ContinuousSpace
         e = model.space.extent
     elseif model.space isa Agents.DiscreteSpace
         e = size(model.space.s) .+ 1
     end
-    return zero.(e), e
+    o = zero.(e)
+    xlims!(ax, o[1], e[1])
+    ylims!(ax, o[2], e[2])
+    is3d = length(o) == 3
+    is3d && zlims!(ax, o[3], e[3])
+    is3d || (ax.aspect = aspect)
+    return
 end
+
+default_static_preplot(ax, model) = nothing
 
 function user_used_polygons(am, markers)
     if (am isa Polygon)
