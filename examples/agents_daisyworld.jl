@@ -153,16 +153,16 @@ model = daisyworld()
 daisycolor(a::Daisy) = a.breed
 
 plotkwargs = (
-    ac=daisycolor, as = 12, am = '♠',
+    ac = daisycolor, as = 12, am = '♠',
     heatarray = :temperature,
     heatkwargs = (colorrange = (-20, 60),),
 )
-fig, _ = abm_plot(model; plotkwargs...)
+fig, abmstepper = abm_plot(model; plotkwargs...)
 fig
 
 # And after a couple of steps
 Agents.step!(model, daisy_step!, daisyworld_step!, 5)
-fig, _ = abm_plot(model; heatarray = model.temperature, plotkwargs...)
+fig, abmstepper = abm_plot(model; heatarray = model.temperature, plotkwargs...)
 fig
 
 # %% Video

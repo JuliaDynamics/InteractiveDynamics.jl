@@ -42,7 +42,7 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
     colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
     sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
     markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
-    pos = Observable(agents_pos_for_plotting(model, scheduler, offset))
+    pos = Observable(agents_pos_for_plotting(model, offset, ids))
     if user_used_polygons(am, markers)
         # For polygons we always need vector, even if all agents are same polygon
         markers[] = [translate(m, p) for (m, p) in zip(markers, pos[])]
@@ -55,8 +55,7 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
     )
 end
 
-function agents_pos_for_plotting(model, scheduler, offset)
-    ids = scheduler(model)
+function agents_pos_for_plotting(model, offset, ids)
     if model.space isa Agents.OpenStreetMapSpace
         if isnothing(offset)
             pos = Point2f[OSM.lonlat(model[i].pos, model) for i in ids]
@@ -67,15 +66,15 @@ function agents_pos_for_plotting(model, scheduler, offset)
     # standard space case
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
     if isnothing(offset)
-        pos = Observable(postype[model[i].pos for i ∈ ids])
+        pos = [postype(model[i].pos) for i ∈ ids]
     else
-        pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
+        pos = [postype(model[i].pos .+ offset(model[i])) for i ∈ ids]
     end
     return pos
 end
 
-agents_pos_for_plotting(abms::ABMStepper, model) = 
-agents_pos_for_plotting(model, abms.scheduler, abms.offset)
+agents_pos_for_plotting(abms::ABMStepper, model, ids = abms.scheduler(model)) = 
+agents_pos_for_plotting(model, abms.offset, ids)
 
 agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
@@ -88,7 +87,7 @@ SUPPORTED_AGENTS_SPACES =  Union{
 }
 
 "Initialize the ABM plot and return it."
-function abm_init_plot!(ax, fig, model, abmstepper;
+function abm_init_plot!(ax, fig, model, abmstepper::ABMStepper;
         aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs
     )
     
@@ -109,19 +108,20 @@ function abm_init_plot!(ax, fig, model, abmstepper;
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
     if user_used_polygons(abmstepper.am, abmstepper.markers)
-        return abmplot!(ax, abmstepper.markers, model;
-            ac = abmstepper.colors,
-            scatterkwargs
-        )
-    else
-        return abmplot!(ax, abmstepper.pos, model;
-            ac = abmstepper.colors,
-            am = abmstepper.markers,
-            as = abmstepper.sizes,
-            scatterkwargs
-        )
+        poly!(ax, abmstepper.pos; color = abmstepper.ac, scatterkwargs...)
+        return
     end
+    if agents_space_dimensionality(model.space) == 3
+        abmstepper.am[] == :circle && (abmstepper.am = Sphere(Point3f0(0), 1))
+    end
+
+    scatter!(ax, abmstepper.pos; 
+        color = abmstepper.colors, marker = abmstepper.markers, 
+        markersize = abmstepper.sizes, scatterkwargs...
+    )
+    return
 end
+
 
 "Plot space and/or set axis limits."
 function plot_agents_space!(ax, model, aspect)
@@ -174,7 +174,8 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     if Agents.nagents(model) == 0
         @warn "The model has no agents"
     end
-    pos[] = agents_pos_for_plotting(abmstepper, model)
+    ids = abmstepper.scheduler(model)
+    pos[] = agents_pos_for_plotting(abmstepper, model, ids)
     if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
