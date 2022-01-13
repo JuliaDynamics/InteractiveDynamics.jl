@@ -83,7 +83,8 @@ These only matter for `abm_plot` and not for `abm_plot!`.
 function abm_plot(model; 
         resolution = (600,600),
         backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), 
-        aspect = DataAspect(), kwargs...
+        aspect = model.space isa Agents.OpenStreetMapSpace ? AxisAspect(1) : DataAspect(), 
+        kwargs...
     )
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 

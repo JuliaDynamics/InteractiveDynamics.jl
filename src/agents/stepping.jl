@@ -62,10 +62,11 @@ end
 function agents_pos_for_plotting(model, offset, ids)
     if model.space isa Agents.OpenStreetMapSpace
         if isnothing(offset)
-            pos = Point2f[OSM.lonlat(model[i].pos, model) for i in ids]
+            pos = [Point2f0(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
         else
-            pos = postype[OSM.lonlat(model[i].pos, model) .+ offset(model[i]) for i ∈ ids]
+            pos = [Point2f0(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i ∈ ids]
         end
+        return pos
     end
     # standard space case
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
@@ -133,7 +134,7 @@ end
 "Plot space and/or set axis limits."
 function plot_agents_space!(ax, model)
     if model.space isa Agents.OpenStreetMapSpace
-        OSMMakie.osmplot!(ax, model.space.map)
+        Main.OSMMakie.osmplot!(ax, model.space.map)
         return
     end
     if model.space isa Agents.ContinuousSpace
