@@ -80,6 +80,7 @@ end
 agents_pos_for_plotting(abms::ABMStepper, model, ids = abms.scheduler(model)) = 
 agents_pos_for_plotting(model, abms.offset, ids)
 
+agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
 agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
@@ -114,7 +115,7 @@ function abm_init_plot!(ax, model, abmstepper::ABMStepper;
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
     if user_used_polygons(abmstepper.am, abmstepper.markers)
-        poly!(ax, abmstepper.pos; color = abmstepper.ac, scatterkwargs...)
+        poly!(ax, abmstepper.markers; color = abmstepper.ac, scatterkwargs...)
         return
     end
     if agents_space_dimensionality(model.space) == 3
@@ -186,8 +187,11 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
     # If we use Polygons as markers, do a final update:
     if user_used_polygons(am, markers)
-        # translate all polygons according to pos
-        markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        if am isa Function
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers[] = [translate(am, p) for p in pos[]]
+        end
     end
     # Finally update the heat array, if any
     if !isnothing(abmstepper.heatarray)
