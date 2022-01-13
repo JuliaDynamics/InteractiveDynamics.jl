@@ -144,7 +144,6 @@ end
 
 # ## Visualizing & animating
 # %% #src
-
 using InteractiveDynamics
 using GLMakie
 
@@ -169,6 +168,16 @@ fig
 model = daisyworld()
 abm_video(
     "daisyworld.mp4",
+    model,
+    daisy_step!,
+    daisyworld_step!;
+    title = "Daisy World",
+    plotkwargs...,
+)
+
+# %% Play
+model = daisyworld()
+abm_play(
     model,
     daisy_step!,
     daisyworld_step!;
