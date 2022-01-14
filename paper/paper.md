@@ -37,8 +37,7 @@ It reuses general structures.
 # Features and Functionality
 specifically CaosDB [@Fitschen2019], which has been developed specifically to handle large data bases connecting several scientific projects.
 
-# Conclusion
-In summary, DrWatson combines several functionalities, all communicating excellently with each other and almost all being entirely opt-in, while it goes well beyond only aiding data provenance or simply providing a default folder structure.
-This results in an efficient scientific workflow, taking time off of project management and giving it to doing science.
+# Acknowledgements
+InteractiveDynamics.jl has had contributions from various users that we would like to acknowledge here: Tim DuBois (`@libbum`), Frederik Banning (`@fbanning`), Sebastian Micluța-Câmpeanu (`@SebastianM-C`), Simon Danish (`@SimonDanisch`), Julius Krumbiegel (`@jkrumbiegel`).
 
 # References
