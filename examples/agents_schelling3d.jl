@@ -8,7 +8,7 @@ mutable struct SchellingAgent <: AbstractAgent
 end
 
 using Random # for reproducibility
-function initialize(; numagents = 320, griddims = (20, 20, 20), min_to_be_happy = 3, seed = 125)
+function initialize(; numagents = 520, griddims = (20, 20, 20), min_to_be_happy = 2, seed = 125)
     space = GridSpace(griddims, periodic = false)
     properties = Dict(:min_to_be_happy => min_to_be_happy)
     rng = Random.MersenneTwister(seed)
@@ -43,4 +43,5 @@ using InteractiveDynamics, GLMakie
 
 model = initialize()
 ac(agent) = (:red, :blue)[agent.group]
-fig, step = abm_play(model, agent_step!, dummystep; ac, as = 0.5)
+am(agent) = (:circle, :rect)[agent.group]
+fig, step = abm_play(model, agent_step!, dummystep; ac, am, as = 5000)

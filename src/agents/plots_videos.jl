@@ -89,7 +89,7 @@ function abm_plot(model;
     fig = Figure(; resolution, backgroundcolor)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 
         Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
-    ax.aspect = aspect
+    ax isa Axis && (ax.aspect = aspect)
     abmstepper = abm_plot!(ax, model; kwargs...)
     return fig, abmstepper
 end
