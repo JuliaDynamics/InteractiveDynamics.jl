@@ -116,7 +116,7 @@ function abm_init_plot!(ax, model, abmstepper::ABMStepper;
     # Here we make the decision of whether the user has provided markers, and thus use
     # `scatter`, or polygons, and thus use `poly`:
     if user_used_polygons(abmstepper.am, abmstepper.markers)
-        poly!(ax, abmstepper.markers; color = abmstepper.ac, scatterkwargs...)
+        poly!(ax, abmstepper.markers; color = abmstepper.colors, scatterkwargs...)
     else
         scatter!(ax, abmstepper.pos; 
             color = abmstepper.colors, marker = abmstepper.markers, 
