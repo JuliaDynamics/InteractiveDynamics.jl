@@ -32,7 +32,6 @@ function abm_init_plot!(ax, model, abmstepper::ABMStepper;
     return
 end
 
-
 "Plot space and/or set axis limits."
 function plot_agents_space!(ax, model)
     if model.space isa Agents.OpenStreetMapSpace
