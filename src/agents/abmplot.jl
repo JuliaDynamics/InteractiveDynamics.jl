@@ -5,11 +5,12 @@ export agent2string
 ##########################################################################################
 
 "Define ABMPlot plotting function with some attribute defaults."
-@recipe(ABMPlot, agent_pos, model) do scene
+@recipe(ABMPlot, model) do scene
     Theme(
         # insert InteractiveDynamics theme here?   
     )
     Attributes(
+        pos = nothing,
         ac = JULIADYNAMICS_COLORS[1],
         as = 10,
         am = :circle,
@@ -17,34 +18,34 @@ export agent2string
     )
 end
 
-# 2D space
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}})
-    scatter!(abmplot, abmplot[:agent_pos];
-        color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
-        abmplot[:scatterkwargs]...
-    )
-    
-    return abmplot
-end
+const GridOrContinuous = Union{Agents.GridSpace,Agents.ContinuousSpace}
 
-# 3D space
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}})
-    abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f0(0), 1))
+# ContinuousSpace and GridSpace
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}})
+    T = typeof(abmplot[:pos][])
+    if T<:Vector{Point2f0} # 2d space
+        scatter!(abmplot, abmplot[:pos];
+            color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
+            abmplot[:scatterkwargs]...
+        )
+    elseif T<:Vector{Point3f0} # 3d space
+        abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f0(0), 1))
     
-    meshscatter!(abmplot, abmplot[:agent_pos];
-        color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
-        abmplot[:scatterkwargs]...
-    )
-    
-    return abmplot
-end
-
-# 2D polygons
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{<:Polygon{2}}, <:Agents.ABM}})
-    poly!(abmplot, abmplot[:agent_pos];
-        color=abmplot[:ac],
-        abmplot[:scatterkwargs]...
-    )
+        meshscatter!(abmplot, abmplot[:pos];
+            color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
+            abmplot[:scatterkwargs]...
+        )
+    elseif T<:Vector{<:Polygon{2}}
+        poly!(abmplot, abmplot[:pos];
+            color=abmplot[:ac],
+            abmplot[:scatterkwargs]...
+        )
+    else
+        error("""
+            Cannot resolve agent positions: $(T)
+            Please verify the correctness of the `pos` field of your agent struct.
+            """)
+    end
     
     return abmplot
 end
@@ -55,21 +56,53 @@ end
 
 # 2D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}},
-            idx, ::Scatter)
+    plot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}}, idx, source::Scatter)
+    if typeof(plot[:pos][]) == Vector{<:Polygon{2}}
+        return show_data_poly(inspector, plot, idx, source)
+    else
+        return show_data_2D(inspector, plot, idx, source)
+    end
+end
+
+function show_data_2D(inspector::DataInspector, 
+            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}}, 
+            idx, ::Scatter) where {S<:GridOrContinuous}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
-    cursor_pos = (plot[1][][idx].data[1], plot[1][][idx].data[2])
-    s = typeof(plot.model[].space)
-    if s <: Agents.ContinuousSpace
-        cursor_pos = Float64.(cursor_pos)
-    elseif s <: Agents.GridSpace
-        cursor_pos = Int.(cursor_pos)
+    if S <: Agents.ContinuousSpace
+        cursor_pos = Tuple(plot[:pos][][idx])
+    elseif S <: Agents.GridSpace
+        cursor_pos = Tuple(Int.(plot[:pos][][idx]))
+    end
+    a._display_text[] = agent2string(plot.model[], cursor_pos)
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
+    a._px_bbox_visible[] = true
+    a._bbox_visible[] = false
+    a._visible[] = true
+
+    return true
+end
+
+# TODO: Fix this tooltip
+function show_data_poly(inspector::DataInspector, 
+            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
+            idx, ::Makie.Poly) where {S<:GridOrContinuous}
+    a = inspector.plot.attributes
+    scene = Makie.parent_scene(plot)
+
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
+    Makie.update_tooltip_alignment!(inspector, proj_pos)
+    as = plot.as[]
+
+    if S <: Agents.ContinuousSpace
+        cursor_pos = Tuple(plot[:pos][][idx])
+    elseif S <: Agents.GridSpace
+        cursor_pos = Tuple(Int.(plot[:pos][][idx]))
     end
     a._display_text[] = agent2string(plot.model[], cursor_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
@@ -82,21 +115,24 @@ end
 
 # 3D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
-            idx, ::MeshScatter)
+    plot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}}, idx, source::MeshScatter)
+    return show_data_3D(inspector, plot, idx, source)
+end
+
+function show_data_3D(inspector::DataInspector, 
+            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
+            idx, ::MeshScatter) where {S<:GridOrContinuous}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
-    cursor_pos = (plot[1][][idx].data[1], plot[1][][idx].data[2], plot[1][][idx].data[3])
-    s = typeof(plot.model[].space)
-    if s <: Agents.ContinuousSpace
-        cursor_pos = Float64.(cursor_pos)
-    elseif s <: Agents.GridSpace
-        cursor_pos = Int.(cursor_pos)
+    if S <: Agents.ContinuousSpace
+        cursor_pos = Tuple(plot[:pos][][idx])
+    elseif S <: Agents.GridSpace
+        cursor_pos = Tuple(Int.(plot[:pos][][idx]))
     end
     a._display_text[] = agent2string(plot.model[], cursor_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
@@ -107,38 +143,12 @@ function Makie.show_data(inspector::DataInspector,
     return true
 end
 
-# 2D polygons
-# TODO: Fix this tooltip
-function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{Vector{<:Polygon{2}}, <:Agents.ABM}},
-            idx, ::Makie.Poly)
-    a = inspector.plot.attributes
-    scene = Makie.parent_scene(plot)
+##########################################################################################
+# Agent to string conversion
+##########################################################################################
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
-    Makie.update_tooltip_alignment!(inspector, proj_pos)
-    as = plot.as[]
-
-    cursor_pos = (plot[1][][idx].data[1], plot[1][][idx].data[2])
-    s = typeof(plot.model[].space)
-    if s <: Agents.ContinuousSpace
-        cursor_pos = Float64.(cursor_pos)
-    elseif s <: Agents.GridSpace
-        cursor_pos = Int.(cursor_pos)
-    end
-    a._display_text[] = agent2string(plot.model[], cursor_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
-    a._px_bbox_visible[] = true
-    a._bbox_visible[] = false
-    a._visible[] = true
-
-    return true
-end
-
-DiscretePos = Union{NTuple{2, Int}, NTuple{3, Int}}
-ContinuousPos = Union{NTuple{2, Float64}, NTuple{3, Float64}}
-
-function agent2string(model::Agents.ABM, cursor_pos::DiscretePos)
+function agent2string(model::Agents.ABM, 
+            cursor_pos::Union{NTuple{2, Int}, NTuple{3, Int}})
     ids = Agents.ids_in_position(cursor_pos, model)
     s = ""
     
@@ -149,7 +159,8 @@ function agent2string(model::Agents.ABM, cursor_pos::DiscretePos)
     return s
 end
 
-function agent2string(model::Agents.ABM, cursor_pos::ContinuousPos)
+function agent2string(model::Agents.ABM, 
+            cursor_pos::Union{NTuple{2, Float32}, NTuple{3, Float32}})
     ids = Agents.nearby_ids(cursor_pos, model, 0.01)
     s = ""
     
@@ -165,14 +176,12 @@ end
 Convert agent data into a string which is used to display all agent variables and their 
 values in the tooltip on mouse hover. Concatenates strings if there are multiple agents 
 at one position.
-
 Custom tooltips for agents can be implemented by adding a specialised method 
 for `agent2string`.
-
 Example:
-
 ```julia
-function InteractiveDynamics.agent2string(agent::SpecialAgent)
+import InteractiveDynamics.agent2string
+function agent2string(agent::SpecialAgent)
     \"\"\"
     ✨ SpecialAgent ✨
     ID = \$(agent.id)
@@ -188,7 +197,9 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring *= "id: $(getproperty(agent, :id))\n"
     
     agent_pos = getproperty(agent, :pos)
-    typeof(agent_pos) <: ContinuousPos && (agent_pos = round.(agent_pos, digits=2))
+    if typeof(agent_pos) <: Union{NTuple{2, Float64}, NTuple{3, Float64}}
+        agent_pos = round.(agent_pos, digits=2)
+    end
     agentstring *= "pos: $(agent_pos)\n"
     
     for field in fieldnames(A)[3:end]
