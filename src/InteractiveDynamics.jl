@@ -22,10 +22,11 @@ function __init__()
         include("billiards/interactive_billiard.jl")
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
-        include("agents/abmplot.jl")
+        include("agents/abmplot_recipe.jl")
         include("agents/stepping.jl")
-        include("agents/plots_videos.jl")
-        include("agents/interactive_parameters.jl")
+        include("agents/plotting.jl")
+        include("agents/plot_play_video.jl")
+        include("agents/data_exploration.jl")
     end
 end
 
