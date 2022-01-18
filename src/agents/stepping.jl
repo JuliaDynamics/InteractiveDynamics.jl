@@ -79,7 +79,7 @@ agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 
 function agents_markers_for_plotting(model, am, pos, ids)
-    markers = am isa Function ? [am(model[i]) for i ∈ ids] : am
+    markers = am isa Function ? [am(model[i]) for i in ids] : am
     if user_used_polygons(am, markers)
         if am isa Function
             markers = [translate(m, p) for (m, p) in zip(markers, pos)]
@@ -123,15 +123,7 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
     pos[] = agents_pos_for_plotting(abmstepper, model, ids)
     if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
-    if am isa Function; markers[] = [am(model[i]) for i in ids]; end
-    # If we use Polygons as markers, do a final update:
-    if user_used_polygons(am, markers)
-        if am isa Function
-            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-        else
-            markers[] = [translate(am, p) for p in pos[]]
-        end
-    end
+    if am isa Function; markers[] = agents_markers_for_plotting(model, am, pos[], ids); end
     # Finally update the heat array, if any
     if !isnothing(abmstepper.heatarray)
         newmatrix = Agents.get_data(model, abmstepper.heatarray, identity)
