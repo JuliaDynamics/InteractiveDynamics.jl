@@ -1,4 +1,4 @@
-SUPPORTED_AGENTS_SPACES =  Union{
+const SUPPORTED_AGENTS_SPACES =  Union{
     Agents.DiscreteSpace,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
