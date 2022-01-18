@@ -106,9 +106,9 @@ function abm_plot!(ax, model;
         heatkwargs, add_colorbar, static_preplot!, scatterkwargs
     )
     # temporarily disable inspector for poly plots
-    if user_used_polygons(am, abmstepper.markers)
+    if user_used_polygons(am, abmstepper.markers[])
         for p in ax.scene.plots
-            p isa ABMPlot && (p.inspectable[] = false)
+            p isa ABMPlot && (p.plots[1].inspectable[] = false)
         end
     end
     return abmstepper
