@@ -42,26 +42,13 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
     colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
     sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
     pos = Observable(agents_pos_for_plotting(model, offset, ids))
-    markers = Observable(agents_markers_for_plotting(model, am, pos))
+    markers = Observable(agents_markers_for_plotting(model, am, pos, ids))
 
     return ABMStepper(
         ac, am, as, offset, scheduler,
         pos, colors, sizes, markers,
         heatarray, heatobs
     )
-end
-
-function agents_markers_for_plotting(model, am, pos)
-    markers = am isa Function ? [am(model[i]) for i ∈ ids] : am
-    if user_used_polygons(am, markers)
-        # For polygons we always need vector, even if all agents are same polygon
-        if am isa Function
-            markers = [translate(m, p) for (m, p) in zip(markers, pos)]
-        else
-            markers = [translate(am, p) for p in pos]
-        end
-    end
-    return markers
 end
 
 function agents_pos_for_plotting(model, offset, ids)
@@ -84,79 +71,30 @@ function agents_pos_for_plotting(model, offset, ids)
 end
 
 agents_pos_for_plotting(abms::ABMStepper, model, ids = abms.scheduler(model)) = 
-agents_pos_for_plotting(model, abms.offset, ids)
+    agents_pos_for_plotting(model, abms.offset, ids)
 
 agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
 agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 
-SUPPORTED_AGENTS_SPACES =  Union{
-    Agents.DiscreteSpace,
-    Agents.ContinuousSpace,
-    Agents.OpenStreetMapSpace,
-}
-
-"Initialize the ABM plot and return it."
-function abm_init_plot!(ax, model, abmstepper::ABMStepper;
-        heatkwargs, add_colorbar, static_preplot!, scatterkwargs
-    )
-
-    @assert typeof(model.space) <: SUPPORTED_AGENTS_SPACES
-    plot_agents_space!(ax, model)
-
-    if !isnothing(abmstepper.heatobs)
-        heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
-        hmap = heatmap!(ax, abmstepper.heatobs[]; heatkwargs...)
-        if add_colorbar 
-            fig = ax.parent
-            Colorbar(fig[1, 1][1, 2], hmap, width = 20)
+function agents_markers_for_plotting(model, am, pos, ids)
+    markers = am isa Function ? [am(model[i]) for i ∈ ids] : am
+    if user_used_polygons(am, markers)
+        # For polygons we always need vector, even if all agents are same polygon
+        if am isa Function
+            markers = [translate(m, p) for (m, p) in zip(markers, pos)]
+        else
+            markers = [translate(am, p) for p in pos]
         end
-        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
     end
-
-    static_plot = static_preplot!(ax, model)
-    !isnothing(static_plot) && (static_plot.inspectable[] = false)
-
-    # Here we make the decision of whether the user has provided markers, and thus use
-    # `scatter`, or polygons, and thus use `poly`:
-    if user_used_polygons(abmstepper.am, abmstepper.markers)
-        poly!(ax, abmstepper.markers; color = abmstepper.colors, scatterkwargs...)
-    else
-        scatter!(ax, abmstepper.pos; 
-            color = abmstepper.colors, marker = abmstepper.markers, 
-            markersize = abmstepper.sizes, scatterkwargs...
-        )
-    end
-    return
+    return markers
 end
-
-
-"Plot space and/or set axis limits."
-function plot_agents_space!(ax, model)
-    if model.space isa Agents.OpenStreetMapSpace
-        Main.OSMMakie.osmplot!(ax, model.space.map)
-        return
-    end
-    if model.space isa Agents.ContinuousSpace
-        e = model.space.extent
-    elseif model.space isa Agents.DiscreteSpace
-        e = size(model.space.s) .+ 1
-    end
-    o = zero.(e)
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    is3d = length(o) == 3
-    is3d && zlims!(ax, o[3], e[3])
-    return
-end
-
-default_static_preplot(ax, model) = nothing
 
 function user_used_polygons(am, markers)
     if (am isa Polygon)
         return true
-    elseif (am isa Function) && (markers[][1] isa Polygon)
+    elseif (am isa Function) && (markers isa Vector{Polygon})
         return true
     else
         return false
