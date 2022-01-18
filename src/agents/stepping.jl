@@ -42,7 +42,7 @@ function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
     colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
     sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
     pos = Observable(agents_pos_for_plotting(model, offset, ids))
-    markers = Observable(agents_markers_for_plotting(model, am, pos, ids))
+    markers = Observable(agents_markers_for_plotting(model, am, pos[], ids))
 
     return ABMStepper(
         ac, am, as, offset, scheduler,
@@ -81,10 +81,9 @@ agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 function agents_markers_for_plotting(model, am, pos, ids)
     markers = am isa Function ? [am(model[i]) for i ∈ ids] : am
     if user_used_polygons(am, markers)
-        # For polygons we always need vector, even if all agents are same polygon
         if am isa Function
             markers = [translate(m, p) for (m, p) in zip(markers, pos)]
-        else
+        else # for polygons we always need vector, even if all agents are same polygon
             markers = [translate(am, p) for p in pos]
         end
     end
@@ -94,7 +93,7 @@ end
 function user_used_polygons(am, markers)
     if (am isa Polygon)
         return true
-    elseif (am isa Function) && (markers isa Vector{Polygon})
+    elseif (am isa Function) && (markers isa Vector{<:Polygon})
         return true
     else
         return false
