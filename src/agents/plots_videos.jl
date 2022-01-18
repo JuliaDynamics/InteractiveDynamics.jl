@@ -1,10 +1,8 @@
 export abm_plot, abm_play, abm_video
 
-dimensionality(::Agents.ABM{<:Agents.GridSpace{D}}) where {D} = D
-dimensionality(::Agents.ABM{<:Agents.ContinuousSpace{D}}) where {D} = D
-
 """
     abm_plot(model::ABM; kwargs...) → fig, abmstepper
+    abm_plot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmstepper
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
 
@@ -48,18 +46,9 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
-  agent and outputting an offset position vector to be added to the agent's position
+  agent and outputting an offset position tuple to be added to the agent's position
   (which matters only if there is overlap).
-* `scatterkwargs = ()`: Additional keyword arguments propagated to the resulting ABMPlot.
-
-## Figure related keywords
-* `resolution = (600, 600)`: Resolution of the figure.
-* `colorscheme = JULIADYNAMICS_COLORS`: Vector of colors which is used as default colorscheme
-  in the figure.
-* `backgroundcolor = DEFAULT_BG`: Background color of the figure.
-* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
-  setting `xticksvisible = false`.
-* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
+* `scatterkwargs = ()`: Additional keyword arguments propagated to the `scatter!` call.
 
 ## Preplot related keywords
 * `heatarray = nothing` : A keyword that plots a heatmap over the space.
@@ -77,38 +66,52 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   above the agents using a translation in the third dimension like below:
   ```julia
   function static_preplot!(ax, model)
-      obj = CairoMakie.scatter!([50 50]; color = :red) # Show position of teacher
-      CairoMakie.hidedecorations!(ax) # hide tick labels etc.
-      CairoMakie.translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
+      obj = scatter!(ax, [50 50]; color = :red) # Show position of teacher
+      hidedecorations!(ax) # hide tick labels etc.
+      translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
+
+## Figure related keywords
+These only matter for `abm_plot` and not for `abm_plot!`.
+* `resolution = (600, 600)`: Resolution of the figure.
+* `backgroundcolor = DEFAULT_BG`: Background color of the figure.
+* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
+  setting `xticksvisible = false`.
+* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
 """
 function abm_plot(model; 
-        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
-        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
-        as = 10, am = :circle, offset = nothing,
-        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
-        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        resolution = (600,600),
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), 
+        aspect = model.space isa Agents.OpenStreetMapSpace ? AxisAspect(1) : DataAspect(), 
         kwargs...
     )
-    ac = get(kwargs, :ac, colorscheme[1])
-    scheduler = get(kwargs, :scheduler, model.scheduler)
-
     fig = Figure(; resolution, backgroundcolor)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? 
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 
         Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
+    ax isa Axis && (ax.aspect = aspect)
+    abmstepper = abm_plot!(ax, model; kwargs...)
+    return fig, abmstepper
+end
+
+function abm_plot!(ax, model;
+        ac = JULIADYNAMICS_COLORS[1], as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        scheduler = model.scheduler,
+        kwargs...
+    )
     abmstepper = abm_init_stepper(model;
-        ac, as, am, scheduler, offset, heatarray)
-    abm_init_plot!(ax, fig, model, abmstepper;
-        aspect, heatkwargs, add_colorbar, static_preplot!, scatterkwargs)
-    inspector = DataInspector(fig.scene)
-    
+    ac, as, am, scheduler, offset, heatarray)
+    abm_init_plot!(ax, model, abmstepper;
+        heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    )
     # temporarily disable inspector for poly plots
     if user_used_polygons(am, abmstepper.markers)
+        inspector = DataInspector(ax.parent.scene)
         inspector.plot.enabled = false
     end
-    
-    return fig, abmstepper
+    return abmstepper
 end
 
 ##########################################################################################
@@ -183,7 +186,7 @@ function abm_controls_play!(fig, model, spu, add_update = false)
     if model.space isa Agents.ContinuousSpace
         _s, _v = 0:0.01:1, 0
     else
-        _s, _v = 0:0.1:10, 1
+        _s, _v = 0:0.01:2, 1
     end
     slesl = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
