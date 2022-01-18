@@ -11,9 +11,9 @@ export agent2string
     )
     Attributes(
         pos = nothing,
-        ac = JULIADYNAMICS_COLORS[1],
-        as = 10,
-        am = :circle,
+        colors = JULIADYNAMICS_COLORS[1],
+        markers = :circle,
+        sizes = 10,
         scatterkwargs = NamedTuple(),
     )
 end
@@ -24,21 +24,22 @@ const GridOrContinuous = Union{Agents.GridSpace,Agents.ContinuousSpace}
 function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}})
     T = typeof(abmplot[:pos][])
     if T<:Vector{Point2f0} # 2d space
-        scatter!(abmplot, abmplot[:pos];
-            color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
-            abmplot[:scatterkwargs]...
-        )
+        if typeof(abmplot[:markers][])<:Vector{<:Polygon{2}}
+            poly!(abmplot, abmplot[:markers];
+                color=abmplot[:colors], abmplot[:scatterkwargs]...
+            )
+        else
+            scatter!(abmplot, abmplot[:pos];
+                color = abmplot[:colors], marker = abmplot[:markers], 
+                markersize = abmplot[:sizes], abmplot[:scatterkwargs]...
+            )
+        end
     elseif T<:Vector{Point3f0} # 3d space
-        abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f0(0), 1))
+        abmplot.markers[] == :circle && (abmplot.markers = Sphere(Point3f0(0), 1))
     
         meshscatter!(abmplot, abmplot[:pos];
-            color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
-            abmplot[:scatterkwargs]...
-        )
-    elseif T<:Vector{<:Polygon{2}}
-        poly!(abmplot, abmplot[:pos];
-            color=abmplot[:ac],
-            abmplot[:scatterkwargs]...
+            color = abmplot[:colors], marker = abmplot[:markers], 
+            markersize = abmplot[:sizes], abmplot[:scatterkwargs]...
         )
     else
         error("""
@@ -57,7 +58,7 @@ end
 # 2D space
 function Makie.show_data(inspector::DataInspector, 
     plot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}}, idx, source::Scatter)
-    if typeof(plot[:pos][]) == Vector{<:Polygon{2}}
+    if plot[:pos][] isa Vector{<:Polygon{2}}
         return show_data_poly(inspector, plot, idx, source)
     else
         return show_data_2D(inspector, plot, idx, source)
@@ -72,7 +73,7 @@ function show_data_2D(inspector::DataInspector,
 
     proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
-    as = plot.as[]
+    sizes = plot.sizes[]
 
     if S <: Agents.ContinuousSpace
         cursor_pos = Tuple(plot[:pos][][idx])
@@ -80,7 +81,7 @@ function show_data_2D(inspector::DataInspector,
         cursor_pos = Tuple(Int.(plot[:pos][][idx]))
     end
     a._display_text[] = agent2string(plot.model[], cursor_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
     a._visible[] = true
@@ -97,7 +98,7 @@ function show_data_poly(inspector::DataInspector,
 
     proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
-    as = plot.as[]
+    sizes = plot.sizes[]
 
     if S <: Agents.ContinuousSpace
         cursor_pos = Tuple(plot[:pos][][idx])
@@ -105,7 +106,7 @@ function show_data_poly(inspector::DataInspector,
         cursor_pos = Tuple(Int.(plot[:pos][][idx]))
     end
     a._display_text[] = agent2string(plot.model[], cursor_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
     a._visible[] = true
@@ -127,7 +128,7 @@ function show_data_3D(inspector::DataInspector,
 
     proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
-    as = plot.as[]
+    sizes = plot.sizes[]
 
     if S <: Agents.ContinuousSpace
         cursor_pos = Tuple(plot[:pos][][idx])
@@ -135,7 +136,7 @@ function show_data_3D(inspector::DataInspector,
         cursor_pos = Tuple(Int.(plot[:pos][][idx]))
     end
     a._display_text[] = agent2string(plot.model[], cursor_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* as .- Vec2f0(5), Vec2f0(as) .+ Vec2f0(10))
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
     a._visible[] = true
