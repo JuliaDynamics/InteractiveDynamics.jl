@@ -34,10 +34,6 @@ end
 
 "Plot space and/or set axis limits."
 function plot_agents_space!(ax, model)
-    if model.space isa Agents.OpenStreetMapSpace
-        Main.OSMMakie.osmplot!(ax, model.space.map)
-        return
-    end
     if model.space isa Agents.ContinuousSpace
         e = model.space.extent
     elseif model.space isa Agents.DiscreteSpace
@@ -51,4 +47,10 @@ function plot_agents_space!(ax, model)
     return
 end
 
-default_static_preplot(ax, model) = nothing
+function default_static_preplot(ax, model)
+    if model.space isa Agents.OpenStreetMapSpace
+        return Main.OSMMakie.osmplot!(ax, model.space.map)
+    else
+        return nothing
+    end
+end
