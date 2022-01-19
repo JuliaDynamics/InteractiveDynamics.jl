@@ -1,5 +1,6 @@
 using Agents
 using GLMakie
+using InteractiveDynamics
 
 zombie_model, zombie_step!, zombie_model_step! = Models.zombies()
 
