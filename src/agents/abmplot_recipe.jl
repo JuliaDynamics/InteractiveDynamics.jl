@@ -51,6 +51,15 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}}
     return abmplot
 end
 
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:OpenStreetMapSpace}}})
+    scatter!(abmplot, abmplot[:pos];
+        color = abmplot[:colors], marker = abmplot[:markers], 
+        markersize = abmplot[:sizes], abmplot[:scatterkwargs]...
+    )
+
+    return abmplot
+end
+
 ##########################################################################################
 # Agent inspection on mouse hover
 ##########################################################################################
