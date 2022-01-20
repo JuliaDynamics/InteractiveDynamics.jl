@@ -24,7 +24,6 @@ function __init__()
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
         include("agents/abmplot_recipe.jl")
         include("agents/stepping.jl")
-        include("agents/plotting.jl")
         include("agents/plot_play_video.jl")
         include("agents/data_exploration.jl")
     end

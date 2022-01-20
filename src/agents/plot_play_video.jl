@@ -102,8 +102,10 @@ function abm_plot!(ax, model;
         kwargs...
     )
     abmstepper = abm_init_stepper(model; ac, as, am, scheduler, offset, heatarray)
-    abm_init_plot!(ax, model, abmstepper;
-        heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    abmplot!(ax, model;
+        pos = abmstepper.pos, colors = abmstepper.colors, markers = abmstepper.markers,
+        sizes = abmstepper.sizes, heatobs = abmstepper.heatobs, heatkwargs, add_colorbar,
+        static_preplot!, scatterkwargs...
     )
     # temporarily disable inspector for poly plots
     if user_used_polygons(am, abmstepper.markers[])
