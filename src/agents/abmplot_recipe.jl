@@ -1,9 +1,5 @@
 export agent2string
 
-##########################################################################################
-# ABMPlot recipe
-##########################################################################################
-
 "Define ABMPlot plotting function with some attribute defaults."
 @recipe(ABMPlot, model) do scene
     Theme(
@@ -18,10 +14,8 @@ export agent2string
     )
 end
 
-const GridOrContinuous = Union{Agents.GridSpace,Agents.ContinuousSpace}
-
 # ContinuousSpace and GridSpace
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:GridOrContinuous}}})
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_AGENTS_SPACES}}})
     T = typeof(abmplot[:pos][])
     if T<:Vector{Point2f0} # 2d space
         if typeof(abmplot[:markers][])<:Vector{<:Polygon{2}}
