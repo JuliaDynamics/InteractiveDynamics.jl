@@ -26,12 +26,12 @@ Order of plot layers:
         scatterkwargs = NamedTuple(),
         add_controls = false,
         add_data_plots = false,
+        used_poly = false,
         # Attribute _ax is currently necessary to have a reference to the parent Axis.
         # Makie's recipe system still works on the old system of `Scene`s which have no
         # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
         # we will have to work around it with this little hack.
-        _ax = nothing,
-        used_poly = false
+        _ax = nothing
     )
 end
 
