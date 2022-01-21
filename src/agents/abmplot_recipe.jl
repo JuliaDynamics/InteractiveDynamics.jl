@@ -7,7 +7,7 @@ Order of plot layers:
 1. OSMPlot, if `model.space isa OpenStreetMapSpace`
 2. static preplot, if `static_preplot! != nothing`
 3. heatmap, if `heatarray != nothing`
-4. agent positions, depending on type of `model.space`
+4. agent positions as `scatter`, `poly` or `meshscatter`, depending on type of `model.space`
 
 """
 @recipe(ABMPlot, model) do scene
