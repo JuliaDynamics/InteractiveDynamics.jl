@@ -90,30 +90,8 @@ function abm_plot(model;
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 
         Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
     ax isa Axis && (ax.aspect = aspect)
-    abmstepper = abm_plot!(ax, model; kwargs...)
-    return fig, abmstepper
-end
-
-function abm_plot!(ax, model;
-        ac = JULIADYNAMICS_COLORS[1], as = 10, am = :circle, offset = nothing,
-        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
-        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
-        scheduler = model.scheduler,
-        kwargs...
-    )
-    abmstepper = abm_init_stepper(model; ac, as, am, scheduler, offset, heatarray)
-    abmplot!(ax, model;
-        pos = abmstepper.pos, colors = abmstepper.colors, markers = abmstepper.markers,
-        sizes = abmstepper.sizes, heatobs = abmstepper.heatobs, heatkwargs, add_colorbar,
-        static_preplot!, scatterkwargs...
-    )
-    # temporarily disable inspector for poly plots
-    if user_used_polygons(am, abmstepper.markers[])
-        for p in ax.scene.plots
-            p isa ABMPlot && (p.plots[1].inspectable[] = false)
-        end
-    end
-    return abmstepper
+    abmplot!(ax, model; _ax = ax, kwargs...)
+    return fig
 end
 
 ##########################################################################################
