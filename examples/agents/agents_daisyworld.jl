@@ -156,13 +156,16 @@ plotkwargs = (
     heatarray = :temperature,
     heatkwargs = (colorrange = (-20, 60),),
 )
-fig, abmstepper = abm_plot(model; plotkwargs...)
-fig
+
+fig = Figure()
+ax = Axis(fig[1,1])
+p = abmplot!(model; ax, plotkwargs...)
 
 # And after a couple of steps
-Agents.step!(model, daisy_step!, daisyworld_step!, 5)
-fig, abmstepper = abm_plot(model; heatarray = model.temperature, plotkwargs...)
-fig
+Agents.step!(p.model[], daisy_step!, daisyworld_step!, 5)
+fig = Figure()
+ax = Axis(fig[1,1])
+p = abmplot!(model; ax, plotkwargs...)
 
 # %% Video
 model = daisyworld()
@@ -172,18 +175,16 @@ abm_video(
     daisy_step!,
     daisyworld_step!;
     title = "Daisy World",
-    plotkwargs...,
+    plotkwargs...
 )
 
 # %% Play
+
 model = daisyworld()
-abm_play(
-    model,
-    daisy_step!,
-    daisyworld_step!;
-    title = "Daisy World",
-    plotkwargs...,
-)
+fig = Figure(resolution = (600,700))
+ax = Axis(fig[1,1])
+p = abmplot!(model; 
+        ax, agent_step! = daisy_step!, model_step! = daisyworld_step!, plotkwargs...)
 
 # ## Interactive
 # %% #src
