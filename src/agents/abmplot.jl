@@ -207,7 +207,7 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
     end
 
     # Model controls, parameter sliders, data plots
-    add_interaction!(fig, ax, abmplot)
+    !isnothing(ax) && add_interaction!(fig, ax, abmplot)
 
     return abmplot
 end
