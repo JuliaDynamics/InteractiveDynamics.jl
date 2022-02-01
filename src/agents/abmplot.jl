@@ -167,14 +167,14 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
-        osm_plot = osmplot!(abmplot, model.space.map)
-        osm_plot.inspectable[] = false
+        osm_plot = Main.OSMMakie.osmplot!(abmplot, model.space.map)
+        osm_plot.plots[1].plots[1].plots[1].inspectable[] = false
+        osm_plot.plots[1].plots[3].inspectable[] = false
     end
 
     # Heatmap
     if !isnothing(heatobs[])
-        merged_heatkwargs = merge((; colormap = JULIADYNAMICS_CMAP), abmplot.heatkwargs)
-        hmap = heatmap!(abmplot, heatobs; merged_heatkwargs...)
+        hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         if abmplot.add_colorbar[]
             @assert !isnothing(ax) "Need `ax` to add a colorbar for the heatmap."
             Colorbar(fig[1,end+1], hmap, width = 20)
