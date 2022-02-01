@@ -3,7 +3,7 @@ In this file we define how agents are plotted and how the plots are updated whil
 =#
 
 function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
-    ids = @lift(Agents.schedule($model))
+    ids = @lift(Agents.allids($model))
     pos = @lift(abmplot_pos($model, $offset, $ids))
     color = @lift(abmplot_colors($model, $ac, $ids))
     marker = @lift(abmplot_markers($model, $used_poly, $am, $pos, $ids))
@@ -18,9 +18,9 @@ function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
     pos = begin
         if isnothing(offset)
-            [postype(model[i].pos) for i ∈ ids]
+            [postype(model[i].pos) for i in ids]
         else
-            [postype(model[i].pos .+ offset(model[i])) for i ∈ ids]
+            [postype(model[i].pos .+ offset(model[i])) for i in ids]
         end
     end
     return pos
@@ -31,7 +31,7 @@ function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids
         if isnothing(offset)
             [Point2f0(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
         else
-            [Point2f0(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i ∈ ids]
+            [Point2f0(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
         end
     end
     return pos
