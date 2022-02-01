@@ -8,7 +8,7 @@
 function Makie.show_data(inspector::DataInspector, 
             plot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}},
             idx, source::Scatter)
-    if plot.used_poly[]
+    if plot._used_poly[]
         return show_data_poly(inspector, plot, idx, source)
     else
         return show_data_2D(inspector, plot, idx, source)
@@ -26,12 +26,9 @@ function show_data_2D(inspector::DataInspector,
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     size = source.markersize[] isa Vector ? source.markersize[][idx] : source.markersize[]
 
-    if S <: Agents.ContinuousSpace
-        agent_pos = Tuple(pos)
-    elseif S <: Agents.GridSpace
-        agent_pos = Tuple(Int.(pos))
-    end
-    a._display_text[] = agent2string(plot.model[], agent_pos)
+    model = plot.model[]
+    id = collect(Agents.allids(model))[idx]
+    a._display_text[] = agent2string(model, model[id].pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* size .- Vec2f0(5), Vec2f0(size) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
@@ -52,11 +49,11 @@ function show_data_poly(inspector::DataInspector,
     sizes = plot.sizes[]
 
     if S <: Agents.ContinuousSpace
-        cursor_pos = Tuple(plot[:pos][][idx])
+        agent_pos = Tuple(plot[:pos][][idx])
     elseif S <: Agents.GridSpace
-        cursor_pos = Tuple(Int.(plot[:pos][][idx]))
+        agent_pos = Tuple(Int.(plot[:pos][][idx]))
     end
-    a._display_text[] = agent2string(plot.model[], cursor_pos)
+    a._display_text[] = agent2string(plot.model[], agent_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
@@ -83,11 +80,11 @@ function show_data_3D(inspector::DataInspector,
     sizes = plot.sizes[]
 
     if S <: Agents.ContinuousSpace
-        cursor_pos = Tuple(plot[:pos][][idx])
+        agent_pos = Tuple(plot[:pos][][idx])
     elseif S <: Agents.GridSpace
-        cursor_pos = Tuple(Int.(plot[:pos][][idx]))
+        agent_pos = Tuple(Int.(plot[:pos][][idx]))
     end
-    a._display_text[] = agent2string(plot.model[], cursor_pos)
+    a._display_text[] = agent2string(plot.model[], agent_pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
@@ -100,21 +97,16 @@ end
 # Agent to string conversion
 ##########################################################################################
 
-function agent2string(model::Agents.ABM, 
-            cursor_pos::Union{NTuple{2, Int}, NTuple{3, Int}})
-    ids = Agents.ids_in_position(cursor_pos, model)
-    s = ""
-    
-    for id in ids
-        s *= agent2string(model[id]) * "\n"
+function agent2string(model::Agents.ABM{<:S}, agent_pos) where {S<:SUPPORTED_SPACES}
+    if S<:Agents.GridSpace
+        ids = Agents.ids_in_position(agent_pos, model)
+    elseif S<:Agents.ContinuousSpace
+        ids = Agents.nearby_ids(agent_pos, model, 0.0)
+    elseif S<:Agents.OpenStreetMapSpace
+        ids = Agents.nearby_ids(agent_pos, model, 0.0)
+    else
+
     end
-
-    return s
-end
-
-function agent2string(model::Agents.ABM, 
-            cursor_pos::Union{NTuple{2, Float32}, NTuple{3, Float32}})
-    ids = Agents.nearby_ids(cursor_pos, model, 0.01)
     s = ""
     
     for id in ids
@@ -150,7 +142,7 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring *= "id: $(getproperty(agent, :id))\n"
     
     agent_pos = getproperty(agent, :pos)
-    if typeof(agent_pos) <: Union{NTuple{2, Float64}, NTuple{3, Float64}}
+    if typeof(agent_pos) <: Tuple{Float64}
         agent_pos = round.(agent_pos, digits=2)
     end
     agentstring *= "pos: $(agent_pos)\n"
