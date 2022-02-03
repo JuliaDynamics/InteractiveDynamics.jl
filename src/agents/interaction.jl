@@ -93,9 +93,8 @@ function add_controls!(fig, model, agent_step!, model_step!,
     end
 
     # Layout buttons
-    controllayout[3, :][:, 1] = MakieLayout.hbox!(clear; tellwidth = false)
-    controllayout[3, :][:, 2] = MakieLayout.hbox!(step, run; tellwidth = false)
-    controllayout[3, :][:, 3] = MakieLayout.hbox!(reset; tellwidth = false)
+    controllayout[3, :][:, 1] = MakieLayout.hbox!(step, run; tellwidth = false)
+    controllayout[3, :][:, 2] = MakieLayout.hbox!(reset, clear; tellwidth = false)
 
     return nothing
 end
