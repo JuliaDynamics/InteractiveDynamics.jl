@@ -132,8 +132,8 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         # Add controls if agent_step! and/or model_step! are provided
         agent_step! = Agents.dummystep,
         model_step! = Agents.dummystep,
-        adata = [],
-        mdata = [],
+        adata = nothing,
+        mdata = nothing,
         adf = nothing,
         mdf = nothing,
         spu = 1:50,

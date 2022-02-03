@@ -48,10 +48,10 @@ function add_controls!(fig, model, agent_step!, model_step!,
     on(step.clicks) do c
         n = speed[]
         if Agents.should_we_collect(s, model[], when[])
-            if adata[] != []
+            if !isnothing(adata[])
                 Agents.collect_agent_data!(adf[], model[], adata[], s)
             end
-            if mdata[] != []
+            if !isnothing(mdata[])
                 if mdata isa Function
                     Agents.collect_model_data!(mdf[], model[], mdata, s)
                 else
@@ -103,11 +103,11 @@ end
 function init_dataframes(model, adata, mdata)
     adf, mdf = nothing, nothing
 
-    if adata[] != []
+    if !isnothing(adata[])
         adf = Agents.init_agent_dataframe(model[], adata[])
     end
 
-    if mdata[] != []
+    if !isnothing(mdata[])
         if mdata isa Function
             mdf = Agents.init_model_dataframe(model[], mdata)
         else
