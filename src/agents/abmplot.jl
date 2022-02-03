@@ -122,23 +122,25 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         
         # Axis
         aspect = DataAspect,
-        # parent_axis is currently necessary to have a reference to the parent Axis.
+        # ax is currently necessary to have a reference to the parent Axis. This is needed
+        # for optional Colorbar of heatmap and optional buttons/sliders.
         # Makie's recipe system still works on the old system of Scenes which have no
         # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
         # we will have to work around it with this "little hack".
         ax = nothing,
         
         # Add controls if agent_step! and/or model_step! are provided
-        agent_step! = nothing,
-        model_step! = nothing,
-        spu = 1:50,
-        
-        # Add parameter sliders
-        params = Dict(),
-        
-        # Add data plots
+        agent_step! = Agents.dummystep,
+        model_step! = Agents.dummystep,
         adata = [],
         mdata = [],
+        adf = nothing,
+        mdf = nothing,
+        spu = 1:50,
+        when = true,
+        
+        # Add parameter sliders if params are provided
+        params = Dict(),
 
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,

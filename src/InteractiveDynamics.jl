@@ -26,7 +26,6 @@ function __init__()
         include("agents/lifting.jl")
         include("agents/interaction.jl")
         include("agents/abm_video.jl")
-        include("agents/data_exploration.jl")
         include("agents/inspection.jl")
     end
 end
