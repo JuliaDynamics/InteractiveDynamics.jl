@@ -18,7 +18,7 @@ export agent2string
 end
 
 # 2D space
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}})
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f}, <:Agents.ABM}})
     scatter!(abmplot, abmplot[:agent_pos];
         color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
         abmplot[:scatterkwargs]...
@@ -28,8 +28,8 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}})
 end
 
 # 3D space
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}})
-    abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f0(0), 1))
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{Vector{Point3f}, <:Agents.ABM}})
+    abmplot.am[] == :circle && (abmplot.am = Sphere(Point3f(0), 1))
     
     meshscatter!(abmplot, abmplot[:agent_pos];
         color=abmplot[:ac], marker=abmplot[:am], markersize=abmplot[:as],
@@ -55,12 +55,12 @@ end
 
 # 2D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{Vector{Point2f0}, <:Agents.ABM}},
+            plot::ABMPlot{<:Tuple{Vector{Point2f}, <:Agents.ABM}},
             idx, ::Scatter)
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[1][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
@@ -82,12 +82,12 @@ end
 
 # 3D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{Vector{Point3f0}, <:Agents.ABM}},
+            plot::ABMPlot{<:Tuple{Vector{Point3f}, <:Agents.ABM}},
             idx, ::MeshScatter)
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[1][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 
@@ -115,7 +115,7 @@ function Makie.show_data(inspector::DataInspector,
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[1][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[1][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     as = plot.as[]
 

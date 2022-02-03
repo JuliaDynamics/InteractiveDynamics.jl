@@ -9,14 +9,14 @@ mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     n::Int       # number of collisions done so far
     T::T         # total time
     # Fields used in plotting
-    tail::Observable{CircularBuffer{Point2f0}}
-    ξsin::Observable{Point2f0}
+    tail::Observable{CircularBuffer{Point2f}}
+    ξsin::Observable{Point2f}
 end
-function ParticleObservable(p::P, bd, n, ξsin = Point2f0(0, 0)) where {P<:AbstractParticle}
+function ParticleObservable(p::P, bd, n, ξsin = Point2f(0, 0)) where {P<:AbstractParticle}
     T = eltype(p.pos)
     i, tmin, cp = DynamicalBilliards.next_collision(p, bd)
-    cb = CircularBuffer{Point2f0}(n)
-    for i in 1:n; push!(cb, Point2f0(p.pos)); end
+    cb = CircularBuffer{Point2f}(n)
+    for i in 1:n; push!(cb, Point2f(p.pos)); end
     ParticleObservable{T,P}(p, i, tmin, 0, 0, 0, Observable(cb), Observable(ξsin))
 end
 const ParObs = ParticleObservable
@@ -29,7 +29,7 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin 
     DynamicalBilliards.ismagnetic(p.p) && (p.p.center = DynamicalBilliards.find_cyclotron(p.p))
     p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0, 0, 0
     L = length(p.tail[])
-    append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
+    append!(p.tail[], [Point2f(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
     if ξsin ≠ nothing
         p.ξsin[] = ξsin # This can only be updated from bmap, which gives selection directly

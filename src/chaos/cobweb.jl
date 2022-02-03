@@ -55,7 +55,7 @@ x0 = sln.slider.value
 # Timeseries plot
 function seriespoints(x)
     n = 0:length(x)+1
-    return [Point2f0(n[i], x[i]) for i in 1:length(x)]
+    return [Point2f(n[i], x[i]) for i in 1:length(x)]
 end
 
 x = Observable(DynamicalSystems.trajectory(ds, L[], x0[]))
@@ -135,12 +135,12 @@ end
 
 function cobweb(t) # transform timeseries x into cobweb (point2D)
     # TODO: can be optimized to become in-place instead of pushing
-    c = Point2f0[]
+    c = Point2f[]
     sizehint!(c, 2length(t))
-    push!(c, Point2f0(t[1], 0))
+    push!(c, Point2f(t[1], 0))
     for i ∈ 1:length(t)-1
-        push!(c, Point2f0(t[i], t[i]))
-        push!(c, Point2f0(t[i], t[i+1]))
+        push!(c, Point2f(t[i], t[i]))
+        push!(c, Point2f(t[i], t[i+1]))
     end
     return c
 end

@@ -1,6 +1,6 @@
 export subscript, superscript
 export record_interaction
-export rotate2D, scale, Polygon, Point2f0
+export rotate2D, scale, Polygon, Point2f
 
 ##########################################################################################
 # Check/get/set
@@ -141,13 +141,13 @@ function superscript(i::Int)
 end
 
 """
-    randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
+    randomcolor(args...) = RGBAf(0.9 .* (rand(), rand(), rand())..., 0.75)
 """
-randomcolor(args...) = RGBAf0(0.9 .* (rand(), rand(), rand())..., 0.75)
+randomcolor(args...) = RGBAf(0.9 .* (rand(), rand(), rand())..., 0.75)
 
 function colors_from_map(cmap, α, N)
     N == 1 && return [Makie.to_colormap(cmap, 2)[1]]
-    cs = [RGBAf0(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
+    cs = [RGBAf(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
 end
 
 function pushupdate!(o::Observable, v)
@@ -162,7 +162,7 @@ Create a color same as `c` but with given alpha channel.
 """
 function to_alpha(c, α = 1.2)
     c = to_color(c)
-    return RGBAf0(c.r, c.g, c.b, α)
+    return RGBAf(c.r, c.g, c.b, α)
 end
 
 struct CyclicContainer{C} <: AbstractVector{C}
@@ -186,7 +186,7 @@ CYCLIC_COLORS = CyclicContainer(JULIADYNAMICS_COLORS)
 ##########################################################################################
 using Makie.GeometryBasics # for using Polygons
 
-translate(p::Polygon, point) = Polygon(decompose(Point2f0, p.exterior) .+ point)
+translate(p::Polygon, point) = Polygon(decompose(Point2f, p.exterior) .+ point)
 
 """
     rotate2D(p::Polygon, θ)
@@ -195,8 +195,8 @@ Rotate given polygon counter-clockwise by `θ` (in radians).
 function rotate2D(p::Polygon, θ)
     sinφ, cosφ = sincos(θ)
     Polygon(map(
-        p -> Point2f0(cosφ*p[1] - sinφ*p[2], sinφ*p[1] + cosφ*p[2]),
-        decompose(Point2f0, p.exterior)
+        p -> Point2f(cosφ*p[1] - sinφ*p[2], sinφ*p[1] + cosφ*p[2]),
+        decompose(Point2f, p.exterior)
     ))
 end
 
@@ -204,4 +204,4 @@ end
     scale(p::Polygon, s)
 Scale given polygon by `s`, assuming polygon's "center" is the origin.
 """
-scale(p::Polygon, s) = Polygon(decompose(Point2f0, p.exterior) .* Float32(s))
+scale(p::Polygon, s) = Polygon(decompose(Point2f, p.exterior) .* Float32(s))

@@ -76,7 +76,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     history = [(i[], p₋, p₊, xmin, xmax, n[], Ttr[], d[])]
     update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
 
-    color = lift(a -> RGBAf0(0,0,0,a), α)
+    color = lift(a -> RGBAf(0,0,0,a), α)
     scatter!(odax, od_obs; marker = MARKER, markersize = 1px, color = color, strokewidth = 0.0)
 
     xlims!(odax, 0, 1)
@@ -178,7 +178,7 @@ end
 
 Compute and return a minimal and normalized orbit diagram (OD).
 
-All points are stored in a single vector of `Point2f0` to ensure fastest possible
+All points are stored in a single vector of `Point2f` to ensure fastest possible
 plotting. In addition all numbers are scaled to [0, 1]. This allows us to have
 64-bit precision while display is only 32-bit!
 
@@ -190,7 +190,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
 
     pvalues = range(p₋, stop = p₊, length = d)
     pdif = p₊ - p₋
-    od = Vector{Point2f0}() # make this pre-allocated
+    od = Vector{Point2f}() # make this pre-allocated
     xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
     @inbounds for (j, p) in enumerate(pvalues)
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
@@ -200,7 +200,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
         for z in 1:n
             DynamicalSystems.step!(integ)
             x = integ.u[i]
-            push!(od, Point2f0(pp, integ.u[i]))
+            push!(od, Point2f(pp, integ.u[i]))
             # update limits
             if x < xmin
                 xmin = x
@@ -213,7 +213,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     xdif = xmax - xmin
     @inbounds for j in eachindex(od)
         x = od[j][2]; p = od[j][1]
-        od[j] = Point2f0(p, (x - xmin)/xdif)
+        od[j] = Point2f(p, (x - xmin)/xdif)
     end
     return od, xmin, xmax
 end
@@ -223,7 +223,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
 
     pvalues = range(p₋, stop = p₊, length = d)
     pdif = p₊ - p₋; xdif = xmax - xmin
-    od = Vector{Point2f0}()
+    od = Vector{Point2f}()
     @inbounds for p in pvalues
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
         DynamicalSystems.reinit!(integ, u0)
@@ -233,7 +233,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
             DynamicalSystems.step!(integ)
             x = integ.u[i]
             if xmin ≤ x ≤ xmax
-                push!(od, Point2f0(pp, (integ.u[i] - xmin)/xdif))
+                push!(od, Point2f(pp, (integ.u[i] - xmin)/xdif))
             end
         end
     end

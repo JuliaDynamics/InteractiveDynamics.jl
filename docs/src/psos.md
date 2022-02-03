@@ -37,7 +37,7 @@ plane = (1, 0.0) # first variable crossing 0
 function λcolor(u)
     λ = lyapunovs(hh, 4000; u0 = u)[1]
     λmax = 0.1
-    return RGBf0(0, 0, clamp(λ/λmax, 0, 1))
+    return RGBf(0, 0, clamp(λ/λmax, 0, 1))
 end
 
 state, scene = interactive_poincaresos(hh, plane, (2, 4), complete;

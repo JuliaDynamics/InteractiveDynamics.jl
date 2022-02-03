@@ -62,14 +62,14 @@ end
 function agents_pos_for_plotting(model, offset, ids)
     if model.space isa Agents.OpenStreetMapSpace
         if isnothing(offset)
-            pos = [Point2f0(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
+            pos = [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
         else
-            pos = [Point2f0(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i ∈ ids]
+            pos = [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i ∈ ids]
         end
         return pos
     end
     # standard space case
-    postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
+    postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
     if isnothing(offset)
         pos = [postype(model[i].pos) for i ∈ ids]
     else
