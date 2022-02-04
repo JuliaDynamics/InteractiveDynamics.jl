@@ -234,7 +234,7 @@ end
 const AXIS_WARNING = """
 Please note that calling `abmplot` as a standalone function is currently unsupported.
 While it can be used to create relatively simple static plots, some of its built-in 
-functionality (e.g. heatmap colorbar, model controls, data plots) will not work.
+functionality (e.g. heatmap colorbar, model controls, parameter sliders) will not work.
 
 It is strongly advised to first explicitly construct a Figure and Axis to plot into, 
 then provide `ax::Axis` as a keyword argument to your in-place function call.
