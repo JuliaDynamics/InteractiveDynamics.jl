@@ -201,12 +201,30 @@ params = Dict(
     :surface_albedo => 0:0.01:1,
     :solar_change => -0.1:0.01:0.1,
 )
-alabels = ["black", "white"]
-mlabels = ["T", "L"]
 
-fig, adf, mdf = abm_data_exploration(
-    model, daisy_step!, daisyworld_step!, params;
-    mdata, adata, alabels, mlabels, plotkwargs...
-)
+fig = Figure(resolution = (800,700))
+ax = Axis(fig[1,1])
+p = abmplot!(model; 
+    ax, agent_step! = daisy_step!, model_step! = daisyworld_step!, params, 
+    mdata, adata, plotkwargs...)
+
+# data plots
+
+plot_layout = fig[:,end+1] = GridLayout()
+
+# xs = @lift($(p.mdf).step)
+
+b = @lift($(p.adf).count_black)
+w = @lift($(p.adf).count_white)
+count_layout = plot_layout[1,1] = GridLayout()
+scatterlines(count_layout[1,1], b; color = :red, label = "black")
+scatterlines!(w; color = :blue, label = "white")
+Legend(count_layout[1,2], current_axis())
+
+T = @lift($(p.mdf).temperature)
+scatterlines(plot_layout[2,1], T; label = "T")
+
+L = @lift($(p.mdf).solar_luminosity)
+scatterlines(plot_layout[3,1], L; label = "L")
 
 display(fig)
