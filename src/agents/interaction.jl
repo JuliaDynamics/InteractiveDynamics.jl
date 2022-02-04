@@ -1,14 +1,14 @@
 
 function add_interaction!(fig, ax, abmplot)
-    add_controls = (abmplot.agent_step! != Agents.dummystep) || 
-                    (abmplot.model_step! != Agents.dummystep)
+    add_controls = (abmplot.agent_step![] != Agents.dummystep) || 
+                    (abmplot.model_step![] != Agents.dummystep)
     add_param_sliders = !isempty(abmplot.params[])
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
         add_controls!(fig, abmplot.model, abmplot.agent_step!, abmplot.model_step!, 
             abmplot.adata, abmplot.mdata, abmplot.adf, abmplot.mdf, 
-            abmplot.spu, abmplot.when, add_param_sliders)
+            abmplot.spu, abmplot.when)
     end
 
     if add_controls && add_param_sliders
@@ -21,8 +21,9 @@ end
 
 "Initialize model control buttons."
 function add_controls!(fig, model, agent_step!, model_step!,
-            adata, mdata, adf, mdf, spu, when, add_param_sliders)
-    adf[], mdf[] = init_dataframes(model, adata, mdata)
+            adata, mdata, adf, mdf, spu, when)
+    init_dataframes!(model, adata, mdata, adf, mdf)
+    collect_data!(model, when, adata, mdata, adf, mdf, 0)
 
     # Create new layout for control buttons
     controllayout = fig[end+1,:][1,1] = GridLayout(tellheight = true)
@@ -47,23 +48,16 @@ function add_controls!(fig, model, agent_step!, model_step!,
     s = 0 # current step
     on(step.clicks) do c
         n = speed[]
-        if Agents.should_we_collect(s, model[], when[])
-            if !isnothing(adata[])
-                Agents.collect_agent_data!(adf[], model[], adata[], s)
-                adf[] = adf[] # trigger Observable
-            end
-            if !isnothing(mdata[])
-                if mdata isa Function
-                    Agents.collect_model_data!(mdf[], model[], mdata, s)
-                else
-                    Agents.collect_model_data!(mdf[], model[], mdata[], s)
-                end
-                mdf[] = mdf[] # trigger Observable
-            end
-        end
         Agents.step!(model[], agent_step![], model_step![], n)
         s += n # increment step counter
+        collect_data!(model, when, adata, mdata, adf, mdf, s)
         model[] = model[] # trigger Observable
+        for element in fig.content
+            # search for Axes but ignore those with ABMPlots in them
+            if element isa Axis && !any(p -> p isa ABMPlot, element.scene.plots)
+                autolimits!(element) # needed for custom plot limit updates
+            end
+        end
     end
 
     # Run button
@@ -79,7 +73,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
     end
 
     # Reset button
-    reset = Button(fig, label = "reset")
+    reset = Button(fig, label = "reset\nmodel")
     model0 = deepcopy(model[]) # backup initial model state
     on(reset.clicks) do c
         model[] = deepcopy(model0)
@@ -88,10 +82,11 @@ function add_controls!(fig, model, agent_step!, model_step!,
     end
 
     # Clear button
-    clear = Button(fig, label = "clear\nall")
+    clear = Button(fig, label = "clear\ndata")
     on(clear.clicks) do c
-        reset.clicks[] = reset.clicks[] + 1
-        adf[], mdf[] = init_dataframes(model, adata, mdata) # reset dataframes
+        adf.val, mdf.val = nothing, nothing # reset dataframes without triggering Observable
+        init_dataframes!(model, adata, mdata, adf, mdf)
+        collect_data!(model, when, adata, mdata, adf, mdf, 0)
     end
 
     # Layout buttons
@@ -102,22 +97,30 @@ function add_controls!(fig, model, agent_step!, model_step!,
 end
 
 "Initialize agent and model dataframes."
-function init_dataframes(model, adata, mdata)
-    adf, mdf = nothing, nothing
-
+function init_dataframes!(model, adata, mdata, adf, mdf)
     if !isnothing(adata[])
-        adf = Agents.init_agent_dataframe(model[], adata[])
+        adf[] = Agents.init_agent_dataframe(model[], adata[])
     end
 
     if !isnothing(mdata[])
-        if mdata isa Function
-            mdf = Agents.init_model_dataframe(model[], mdata)
-        else
-            mdf = Agents.init_model_dataframe(model[], mdata[])
-        end
+        mdf[] = Agents.init_model_dataframe(model[], mdata[])
     end
 
-    return adf, mdf
+    return nothing
+end
+
+function collect_data!(model, when, adata, mdata, adf, mdf, s)
+    if Agents.should_we_collect(s, model[], when[])
+        if !isnothing(adata[])
+            Agents.collect_agent_data!(adf[], model[], adata[], s)
+            adf[] = adf[] # trigger Observable
+        end
+        if !isnothing(mdata[])
+            Agents.collect_model_data!(mdf[], model[], mdata[], s)
+            mdf[] = mdf[] # trigger Observable
+        end
+    end
+    return nothing
 end
 
 "Initialize parameter control sliders."
