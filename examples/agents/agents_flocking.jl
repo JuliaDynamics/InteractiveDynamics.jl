@@ -14,7 +14,6 @@ end
 ## simple plot
 
 fig, ax, p = abmplot(model; am = bird_marker)
-ax.aspect = DataAspect()
 
 ## interactive app
 
