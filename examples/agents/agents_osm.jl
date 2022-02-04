@@ -28,7 +28,18 @@ fig = Figure()
 ax = Axis(fig[1,1]; title = "Zombie outbreak")
 count_infected(model) = count(model[id].infected for id in allids(model))
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
-    ac, as, params = Dict(:dt => 0.1:0.01:0.2),
-    # adata = [:infected]) # works
-    adata = [:infected], mdata = [:dt]) # works
-    # adata = [:infected], mdata = count_infected) # doesn't work
+    ac, as, params = Dict(:dt => 0.01:0.001:0.02),
+    adata = [:infected], mdata = [count_infected, :dt])
+
+fig
+
+## add custom plot
+
+plot_layout = fig[:,end+1] = GridLayout()
+
+xs = @lift($(p.mdf).step)
+dt = @lift($(p.mdf).dt)
+scatter(plot_layout[1,1], xs, dt)
+
+infected = @lift($(p.mdf).count_infected)
+lines(plot_layout[2,1], xs, infected)
