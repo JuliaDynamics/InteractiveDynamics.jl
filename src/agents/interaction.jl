@@ -50,6 +50,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
         if Agents.should_we_collect(s, model[], when[])
             if !isnothing(adata[])
                 Agents.collect_agent_data!(adf[], model[], adata[], s)
+                adf[] = adf[] # trigger Observable
             end
             if !isnothing(mdata[])
                 if mdata isa Function
@@ -57,6 +58,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
                 else
                     Agents.collect_model_data!(mdf[], model[], mdata[], s)
                 end
+                mdf[] = mdf[] # trigger Observable
             end
         end
         Agents.step!(model[], agent_step![], model_step![], n)
