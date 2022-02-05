@@ -121,7 +121,6 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         static_preplot! = nothing, 
         
         # Axis
-        aspect = DataAspect,
         # ax is currently necessary to have a reference to the parent Axis. This is needed
         # for optional Colorbar of heatmap and optional buttons/sliders.
         # Makie's recipe system still works on the old system of Scenes which have no
@@ -162,7 +161,7 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
     if isnothing(ax)
         @warn AXIS_WARNING
     else
-        ax.aspect = abmplot.aspect[]()
+        isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
         set_axis_limits!(ax, model)
         fig = ax.parent
     end
