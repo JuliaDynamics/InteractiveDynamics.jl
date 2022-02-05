@@ -13,16 +13,16 @@ mutable struct ParticleObservable{T<:Real, P<:AbstractParticle}
     n::Int       # number of collisions done so far
     T::T         # total time
     # Fields used in plotting
-    tail::Observable{CircularBuffer{Point2f0}}
-    ξsin::Observable{Point2f0}   # Only used when plotting in boundary map
+    tail::Observable{CircularBuffer{Point2f}}
+    ξsin::Observable{Point2f}   # Only used when plotting in boundary map
 end
 const ParObs = ParticleObservable
 
-function ParticleObservable(p::P, bd, n, ξsin = Point2f0(0, 0)) where {P<:AbstractParticle}
+function ParticleObservable(p::P, bd, n, ξsin = Point2f(0, 0)) where {P<:AbstractParticle}
     T = eltype(p.pos)
     i, tmin, cp = DynamicalBilliards.next_collision(p, bd)
-    cb = CircularBuffer{Point2f0}(n)
-    fill!(cb, Point2f0(p.pos))
+    cb = CircularBuffer{Point2f}(n)
+    fill!(cb, Point2f(p.pos))
     ParticleObservable{T,P}(p, i, tmin, 0, 0, 0, Observable(cb), Observable(ξsin))
 end
 
@@ -87,8 +87,8 @@ end
 
 mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
     allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
-    balls::Observable{Vector{Point2f0}}
-    vels::Observable{Vector{Point2f0}}
+    balls::Observable{Vector{Point2f}}
+    vels::Observable{Vector{Point2f}}
     update_balls::Bool # true if the particles were plotted
     N::Int
     vellength::Float32
@@ -123,8 +123,8 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
         lines!(ax, p.tail; color = x, linewidth = tailwidth)
     end
     
-    balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-    vels = Observable([vellength*Point2f0(p.p.vel) for p in allparobs])
+    balls = Observable([Point2f(p.p.pos) for p in allparobs])
+    vels = Observable([vellength*Point2f(p.p.vel) for p in allparobs])
     if plot_particles # plot ball and arrow as a particle
         scatter!(
             ax, balls; color = darken_color.(cs),
