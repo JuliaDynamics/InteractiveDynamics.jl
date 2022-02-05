@@ -1,4 +1,4 @@
-using DataStructures
+using DataStructures: CircularBuffer
 
 ######################################################################################
 # Observable for single particle, which auto-steps its plotted tail/boundary map
@@ -101,7 +101,7 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
         α = 1.0, colors = JULIADYNAMICS_CMAP, fade = true, tailwidth = 1,
         # Keywords for plotting the particles
         plot_particles = true, 
-        arrowsize = 1, particlewidth = 3tailwidth, particlesize = 1, vellength = 2.0
+        arrowsize = 1, particlewidth = 3tailwidth, particlesize = 1, vellength = 2.0,
         # boundary map arguments
         axbmap = nothing, 
     )

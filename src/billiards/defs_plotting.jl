@@ -1,6 +1,8 @@
 # DynamicalBilliards.jl constants
 SV = DynamicalBilliards.SV
-Obstacle, Billiard, AbstractParticle = DynamicalBilliards.Obstacle, DynamicalBilliards.Billiard, DynamicalBilliards.AbstractParticle
+Obstacle = DynamicalBilliards.Obstacle
+Billiard = DynamicalBilliards.Billiard
+AbstractParticle = DynamicalBilliards.AbstractParticle
 using Makie: RGBf, RGBAf
 
 obcolor(::Obstacle) = RGBf(0,0.6,0)
@@ -14,6 +16,13 @@ obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, Dynami
 obls(::DynamicalBilliards.PeriodicWall) = :dotted
 oblw(::Obstacle) = 2.0
 
+function bdplot(args...; kwargs...)
+    fig = Figure()
+    ax = Axis(fig[1,1]; aspect = DataAspect())
+    bdplot!(ax, args...; kwargs...)
+    return fig, ax
+end
+
 function bdplot!(ax, o::T; kwargs...) where {T}
     error("Element of type $T does not have a plotting definition yet.")
 end
@@ -24,26 +33,26 @@ function bdplot!(ax, o::DynamicalBilliards.Semicircle; kwargs...)
     θ = range(θ1, θ2; length = 200)
     p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
-    scale_plot=false, kwargs...)
+    kwargs...)
 end
 
 function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
     lines!(ax, Float32[w.sp[1],w.ep[1]], Float32[w.sp[2],w.ep[2]];
-    color = obcolor(w), linewidth = oblw(w), scale_plot=false, kwargs...)
+    color = obcolor(w), linewidth = oblw(w), kwargs...)
 end
 
 function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
     θ = range(0, 2π; length = 700)
     p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
-    poly!(ax, p; color = obfill(o), scale_plot=false, kwargs...)
+    poly!(ax, p; color = obfill(o), kwargs...)
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
-    scale_plot=false, kwargs...)
+    kwargs...)
 end
 
 function bdplot!(ax, bd::Billiard; kwargs...)
     xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
     dx = xmax - xmin; dy = ymax - ymin
-    for obst in bd; bdplot!(ax, obst; show_axis = false, kwargs...); end
+    for obst in bd; bdplot!(ax, obst; kwargs...); end
     if !isinf(xmin) && !isinf(xmax)
         Makie.xlims!(ax, xmin - 0.1dx, xmax + 0.1dx)
     end

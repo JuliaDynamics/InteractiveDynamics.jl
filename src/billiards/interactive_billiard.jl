@@ -1,6 +1,3 @@
-export interactive_billiard, interactive_billiard_bmap,
-       billiard_video, billiard_video_timeseries
-
 """
     interactive_billiard(bd::Billiard [, x, y, φ] [, ω=nothing]; kwargs...)
     interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)

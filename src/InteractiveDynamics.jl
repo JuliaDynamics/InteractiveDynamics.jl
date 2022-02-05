@@ -20,6 +20,7 @@ function __init__()
         include("billiards/defs_plotting.jl")
         include("billiards/defs_animating.jl")
         include("billiards/interactive_billiard.jl")
+        include("billiards/exports.jl")
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
         include("agents/abmplot.jl")
