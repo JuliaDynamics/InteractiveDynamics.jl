@@ -30,7 +30,7 @@ The function returns `fig, obs`. `fig` is the overarching fig
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
   gets different arguments.
 * `tail = 1000` : Length of plotted trajectory (in step units).
-* `diffeq = DynamicalSystems.CDS_KWARGS` : Named tuple of keyword arguments propagated to
+* `diffeq = NamedTuple()` : Named tuple of keyword arguments propagated to
   the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
   are not pre-computed and interpolated, it is recommended to use a combination of
   arguments that limit maximum stepsize, to ensure smooth curves. For example:
@@ -43,7 +43,7 @@ function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
-        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        tail = 1000, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
     ) where {IIP}
@@ -52,7 +52,7 @@ function interactive_evolution(
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     fig = Figure(resolution = (1000, 800), )
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
 
     # Initialize main plot with correct dimensionality
@@ -86,7 +86,7 @@ end
 
 function init_trajectory_observables(L, pinteg, tail, idxs, transform)
     obs = Observable[]
-    T = length(idxs) == 2 ? Point2f0 : Point3f0
+    T = length(idxs) == 2 ? Point2f : Point3f
     for i in 1:L
         cb = CircularBuffer{T}(tail)
         fill!(cb, T(transform(DynamicalSystems.get_state(pinteg, i))[idxs]))
@@ -144,12 +144,13 @@ end
 
 
 function traj_lim_estimator(ds, u0s, diffeq, idxs, transform)
-    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1, diffeq..., dtmax = Inf)
+    largedt_diffeq = merge(diffeq, (;dtmax = Inf))
+    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1, diffeq = largedt_diffeq)
     tr = DynamicalSystems.Dataset(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1, diffeq..., dtmax = Inf)
+        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1, diffeq = largedt_diffeq)
         tr = DynamicalSystems.Dataset(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
@@ -177,6 +178,10 @@ add some additional controls on the left side which allow one to interactively c
 system parameters and then click the "update" button to translate the new parameters to
 system evolution. This can be done without stopping the live system evolution.
 Notice that in this scenario it is recommended to provide the `lims` keyword manually.
+An extra argument is returned in this case: a dictionary mapping parameter keys 
+to _observables_ containing their current values. You can use this to generate additional
+plot elements that may depend on system parameters and thus need to be changed
+if the sliders are changed.
 
 The following additional keywords also apply:
 - `total_span` : How much the x-axis of the timeseries plots should span (in real time units)
@@ -188,7 +193,7 @@ function interactive_evolution_timeseries(
         ds::DynamicalSystems.DynamicalSystem{IIP}, u0s, ps = nothing;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
-        tail = 1000, diffeq = DynamicalSystems.CDS_KWARGS,
+        tail = 1000, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
         total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
@@ -204,7 +209,7 @@ function interactive_evolution_timeseries(
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
     idxs = DynamicalSystems.SVector(idxs...)
     fig = Figure(resolution = (1600, 800), )
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq...)
+    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
     obs, finalpoints = init_trajectory_observables(length(u0s), pinteg, tail, idxs, transform)
     tdt = total_span/50
 
@@ -218,8 +223,8 @@ function interactive_evolution_timeseries(
     for i in 1:length(idxs)
         individual_ts = Observable[]
         for j in 1:N
-            cb = CircularBuffer{Point2f0}(tail)
-            fill!(cb, Point2f0(
+            cb = CircularBuffer{Point2f}(tail)
+            fill!(cb, Point2f(
                 pinteg.t, transform(DynamicalSystems.get_state(pinteg, j))[idxs][i])
             )
             push!(individual_ts, Observable(cb))
@@ -264,7 +269,7 @@ function interactive_evolution_timeseries(
                 last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
                 pushupdate!(ob, last_state) # push and trigger update with `=`
                 for k in 1:length(idxs)
-                    pushupdate!(allts[k][i], Point2f0(pinteg.t, last_state[k]))
+                    pushupdate!(allts[k][i], Point2f(pinteg.t, last_state[k]))
                 end
             end
             finalpoints[] = [x[][end] for x in obs]
@@ -279,33 +284,38 @@ function interactive_evolution_timeseries(
     # Live parameter changing
     if !isnothing(ps)
         playout = fig[:, 3] = GridLayout(tellheight = false)
-        slidervals = add_param_controls!(fig, playout, ps, copy(ds.p), pnames)
+        slidervals, returnvals = add_param_controls!(fig, playout, ps, copy(ds.p), pnames)
         update = Button(fig, label = "update", tellwidth = false)
         playout[length(ps)+1, :] = update
         on(update.clicks) do clicks
-            update_ds_parameters!(ds, slidervals)
+            update_ds_parameters!(ds, slidervals, returnvals)
         end
+    else
+        returnvals = nothing
     end
 
     display(fig)
-    return fig, obs
+    return fig, obs, returnvals
 end
 
 function add_param_controls!(fig, playout, ps, p0, pnames)
     slidervals = Dict{keytype(ps), Observable}()
+    returnvals = Dict{keytype(ps), Observable}()
     for (i, (l, vals)) in enumerate(ps)
         startvalue = p0[l]
         label = string(pnames[l])
         sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
+        returnvals[l] = Observable(sll.slider.value[]) # will only get updated on button
         playout[i, :] = sll.layout
     end
-    return slidervals
+    return slidervals, returnvals
 end
 
-function update_ds_parameters!(ds, slidervals)
+function update_ds_parameters!(ds, slidervals, returnvals)
     for l in keys(slidervals)
         v = slidervals[l][]
+        returnvals[l][] = v
         DynamicalSystems.set_parameter!(ds, l, v)
     end
 end

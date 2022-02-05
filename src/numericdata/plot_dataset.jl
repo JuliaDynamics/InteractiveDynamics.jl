@@ -2,18 +2,18 @@ Dataset = DynamicalSystems.Dataset
 
 plot_dataset(args...; kwargs...) = plot_dataset!(Scene(), args...; kwargs...)
 function plot_dataset!(scene, data::Dataset{2}, color = :black; kwargs...)
-    makiedata = [Point2f0(d) for d in data]
+    makiedata = [Point2f(d) for d in data]
     scatter!(scene, makiedata; color = color, markersize = 0.01, kwargs...)
     return scene
 end
 function plot_dataset!(scene, data::Matrix, color = :black; kwargs...)
     size(data, 2) != 2 && error("Matrix dimension 2 must be 2")
-    makiedata = [Point2f0(data[i, 1], data[i, 2]) for i in 1:size(data, 1)]
+    makiedata = [Point2f(data[i, 1], data[i, 2]) for i in 1:size(data, 1)]
     scatter!(scene, makiedata; color = color, markersize = 0.01, kwargs...)
     return scene
 end
 function plot_dataset!(scene, data::Dataset{3}, color = :black; kwargs...)
-    makiedata = [Point3f0(d) for d in data]
+    makiedata = [Point3f(d) for d in data]
     lines!(scene, makiedata; color = color, transparency = true, linewidth = 2.0, kwargs...)
     return scene
 end

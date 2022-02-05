@@ -1,14 +1,14 @@
 # DynamicalBilliards.jl constants
 SV = DynamicalBilliards.SV
 Obstacle, Billiard, AbstractParticle = DynamicalBilliards.Obstacle, DynamicalBilliards.Billiard, DynamicalBilliards.AbstractParticle
-using Makie: RGBf0, RGBAf0
+using Makie: RGBf, RGBAf
 
-obcolor(::Obstacle) = RGBf0(0,0.6,0)
-obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = RGBf0(149/255, 88/255, 178/255)
-obcolor(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBf0(0.8,0.0,0)
-obcolor(::DynamicalBilliards.PeriodicWall) = RGBf0(0.8,0.8,0)
-obfill(o::DynamicalBilliards.Obstacle) = RGBAf0(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
-obfill(o::Union{DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBAf0(obcolor(o), 0.1)
+obcolor(::Obstacle) = RGBf(0,0.6,0)
+obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = RGBf(149/255, 88/255, 178/255)
+obcolor(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBf(0.8,0.0,0)
+obcolor(::DynamicalBilliards.PeriodicWall) = RGBf(0.8,0.8,0)
+obfill(o::DynamicalBilliards.Obstacle) = RGBAf(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
+obfill(o::Union{DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBAf(obcolor(o), 0.1)
 obls(::Obstacle) = nothing
 obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = :dash
 obls(::DynamicalBilliards.PeriodicWall) = :dotted
@@ -22,7 +22,7 @@ function bdplot!(ax, o::DynamicalBilliards.Semicircle; kwargs...)
     θ1 = atan(o.facedir[2], o.facedir[1]) + π/2 # start of semicircle
     θ2 = θ1 + π
     θ = range(θ1, θ2; length = 200)
-    p = [Point2f0(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
+    p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
     scale_plot=false, kwargs...)
 end
@@ -34,7 +34,7 @@ end
 
 function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
     θ = range(0, 2π; length = 700)
-    p = [Point2f0(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
+    p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
     poly!(ax, p; color = obfill(o), scale_plot=false, kwargs...)
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
     scale_plot=false, kwargs...)
@@ -78,7 +78,7 @@ end
 
 function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
     use_cell = true, kwargs...)
-    c = haskey(kwargs, :color) ? kwargs[:color] : Makie.RGBf0(0,0,0)
+    c = haskey(kwargs, :color) ? kwargs[:color] : Makie.RGBf(0,0,0)
     N = length(ps)
     xs, ys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
     vxs, vys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
@@ -97,7 +97,7 @@ function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
     end
     # important: marker hack for zoom-independent size. Will change in the future
     # to allow something like `markerspace = :display`
-    marker = Circle(Point2f0(xs[][1], ys[][1]), Float32(1))
+    marker = Circle(Point2f(xs[][1], ys[][1]), Float32(1))
 
     scatter!(ax, xs, ys; color = c, marker = marker, markersize = ms*px, strokewidth = 0.0)
     arrows!(ax, xs, ys, vxs, vys;

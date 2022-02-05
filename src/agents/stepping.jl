@@ -20,31 +20,8 @@ Base.show(io::IO, ::ABMStepper) =
 println(io, "Helper structure for stepping and updating the plot of an agent based model. ",
 "It is outputted by `abm_plot` and can be used in `Agents.step!`, see `abm_plot`.")
 
-"Initialize the abmstepper and the plotted observables. return the stepper"
-function abm_init_stepper_and_plot!(ax, fig, model;
-        ac = JULIADYNAMICS_COLORS[1],
-        as = 10,
-        am = :circle,
-        scheduler = model.scheduler,
-        offset = nothing,
-        aspect = DataAspect(),
-        scatterkwargs = NamedTuple(),
-        heatarray = nothing,
-        heatkwargs = NamedTuple(),
-        add_colorbar = true,
-        static_preplot! = default_static_preplot,
-    )
-
-    heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
-    o, e = modellims(model)
-    is3d = length(o) == 3
-    @assert length(o) == 2 || is3d "Only 2D and 3D spaces can be plotted."
-    # TODO: once graph plotting is possible, this will be adjusted
-    @assert typeof(model.space) <: Union{Agents.ContinuousSpace, Agents.DiscreteSpace}
-    xlims!(ax, o[1], e[1])
-    ylims!(ax, o[2], e[2])
-    is3d && zlims!(ax, o[3], e[3])
-    is3d || (ax.aspect = aspect)
+"Initialize the abmstepper and the plotted observables. Return the stepper."
+function abm_init_stepper(model; ac, am, as, scheduler, offset, heatarray)
 
     if !isnothing(heatarray)
         # TODO: This is also possible for continuous spaces, we have to
@@ -57,56 +34,24 @@ function abm_init_stepper_and_plot!(ax, fig, model;
             error("The heat array property must yield a matrix of same size as the grid!")
         end
         heatobs = Observable(matrix)
-        hmap = heatmap!(ax, heatobs; heatkwargs...)
     else
         heatobs = nothing
     end
-    if add_colorbar && !isnothing(heatobs)
-        Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
-    end
 
-    static_preplot!(ax, model)
-
-    if is3d && am == :circle
-        am = Sphere(Point3f0(0), 1)
-    end
     ids = scheduler(model)
-    colors  = ac isa Function ? Observable(to_color.([ac(model[i]) for i ∈ ids])) : to_color(ac)
-    sizes   = as isa Function ? Observable([as(model[i]) for i ∈ ids]) : as
-    markers = am isa Function ? Observable([am(model[i]) for i ∈ ids]) : am
-    postype = is3d ? Point3f0 : Point2f0
-    if isnothing(offset)
-        pos = Observable(postype[model[i].pos for i ∈ ids])
-    else
-        pos = Observable(postype[model[i].pos .+ offset(model[i]) for i ∈ ids])
+    colors = Observable(ac isa Function ? to_color.([ac(model[i]) for i ∈ ids]) : to_color(ac))
+    sizes = Observable(as isa Function ? [as(model[i]) for i ∈ ids] : as)
+    markers = Observable(am isa Function ? [am(model[i]) for i ∈ ids] : am)
+    pos = Observable(agents_pos_for_plotting(model, offset, ids))
+    if user_used_polygons(am, markers)
+        if am isa Function
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers[] = [translate(am, p) for p in pos[]]
+        end
+        # For polygons we always need vector, even if all agents are same polygon
     end
 
-    # Here we make the decision of whether the user has provided markers, and thus use
-    # `scatter`, or polygons, and thus use `poly`:
-    if is3d
-        meshscatter!(
-            ax, pos;
-            color = colors, marker = markers, markersize = sizes,
-            scatterkwargs...
-        )
-    else
-        if user_used_polygons(am, markers)
-            # For polygons we always need vector, even if all agents are same polygon
-            if markers isa Observable
-                markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
-            else
-                markers = Observable([translate(am, p) for p in pos])
-            end
-            poly!(ax, markers; color = colors, scatterkwargs...)
-        else
-            scatter!(
-                ax, pos;
-                color = colors, marker = markers, markersize = sizes,
-                scatterkwargs...
-            )
-        end
-    end
     return ABMStepper(
         ac, am, as, offset, scheduler,
         pos, colors, sizes, markers,
@@ -114,16 +59,94 @@ function abm_init_stepper_and_plot!(ax, fig, model;
     )
 end
 
-default_static_preplot(ax, model) = nothing
+function agents_pos_for_plotting(model, offset, ids)
+    if model.space isa Agents.OpenStreetMapSpace
+        if isnothing(offset)
+            pos = [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
+        else
+            pos = [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i ∈ ids]
+        end
+        return pos
+    end
+    # standard space case
+    postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
+    if isnothing(offset)
+        pos = [postype(model[i].pos) for i ∈ ids]
+    else
+        pos = [postype(model[i].pos .+ offset(model[i])) for i ∈ ids]
+    end
+    return pos
+end
 
-function modellims(model)
+agents_pos_for_plotting(abms::ABMStepper, model, ids = abms.scheduler(model)) = 
+agents_pos_for_plotting(model, abms.offset, ids)
+
+agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
+agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
+agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
+agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
+
+SUPPORTED_AGENTS_SPACES =  Union{
+    Agents.DiscreteSpace,
+    Agents.ContinuousSpace,
+    Agents.OpenStreetMapSpace,
+}
+
+"Initialize the ABM plot and return it."
+function abm_init_plot!(ax, model, abmstepper::ABMStepper;
+        heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    )
+
+    @assert typeof(model.space) <: SUPPORTED_AGENTS_SPACES
+    plot_agents_space!(ax, model)
+
+    if !isnothing(abmstepper.heatobs)
+        heatkwargs = merge((colormap=JULIADYNAMICS_CMAP,), heatkwargs)
+        hmap = heatmap!(ax, abmstepper.heatobs[]; heatkwargs...)
+        if add_colorbar 
+            fig = ax.parent
+            Colorbar(fig[1, 1][1, 2], hmap, width = 20)
+        end
+        # rowsize!(fig[1,1].fig.layout, 1, ax.scene.px_area[].widths[2]) # Colorbar height = axis height
+    end
+
+    static_plot = static_preplot!(ax, model)
+    !isnothing(static_plot) && (static_plot.inspectable[] = false)
+
+    # Here we make the decision of whether the user has provided markers, and thus use
+    # `scatter`, or polygons, and thus use `poly`:
+    if user_used_polygons(abmstepper.am, abmstepper.markers)
+        poly!(ax, abmstepper.markers; color = abmstepper.colors, scatterkwargs...)
+    else
+        scatter!(ax, abmstepper.pos; 
+            color = abmstepper.colors, marker = abmstepper.markers, 
+            markersize = abmstepper.sizes, scatterkwargs...
+        )
+    end
+    return
+end
+
+
+"Plot space and/or set axis limits."
+function plot_agents_space!(ax, model)
+    if model.space isa Agents.OpenStreetMapSpace
+        Main.OSMMakie.osmplot!(ax, model.space.map)
+        return
+    end
     if model.space isa Agents.ContinuousSpace
         e = model.space.extent
     elseif model.space isa Agents.DiscreteSpace
         e = size(model.space.s) .+ 1
     end
-    return zero.(e), e
+    o = zero.(e)
+    xlims!(ax, o[1], e[1])
+    ylims!(ax, o[2], e[2])
+    is3d = length(o) == 3
+    is3d && zlims!(ax, o[3], e[3])
+    return
 end
+
+default_static_preplot(ax, model) = nothing
 
 function user_used_polygons(am, markers)
     if (am isa Polygon)
@@ -146,7 +169,6 @@ without doing any stepping.
 function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n)
     @assert (n isa Int) "Only stepping with integer `n` is possible with `abmstepper`."
     ac, am, as = abmstepper.ac, abmstepper.am, abmstepper.as
-    offset = abmstepper.offset
     pos, colors = abmstepper.pos, abmstepper.colors
     sizes, markers =  abmstepper.sizes, abmstepper.markers
 
@@ -156,18 +178,17 @@ function Agents.step!(abmstepper::ABMStepper, model, agent_step!, model_step!, n
         @warn "The model has no agents"
     end
     ids = abmstepper.scheduler(model)
-    if isnothing(offset)
-        pos[] = [model[i].pos for i in ids]
-    else
-        pos[] = [model[i].pos .+ offset(model[i]) for i in ids]
-    end
+    pos[] = agents_pos_for_plotting(abmstepper, model, ids)
     if ac isa Function; colors[] = to_color.([ac(model[i]) for i in ids]); end
     if as isa Function; sizes[] = [as(model[i]) for i in ids]; end
     if am isa Function; markers[] = [am(model[i]) for i in ids]; end
     # If we use Polygons as markers, do a final update:
     if user_used_polygons(am, markers)
-        # translate all polygons according to pos
-        markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        if am isa Function
+            markers[] = [translate(m, p) for (m, p) in zip(markers[], pos[])]
+        else
+            markers[] = [translate(am, p) for p in pos[]]
+        end
     end
     # Finally update the heat array, if any
     if !isnothing(abmstepper.heatarray)

@@ -85,14 +85,14 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     for (i, p) in enumerate(allparobs)
         x = to_color(cs[i])
         if fade
-            x = [RGBAf0(x.r, x.g, x.b, i/tail) for i in 1:tail]
+            x = [RGBAf(x.r, x.g, x.b, i/tail) for i in 1:tail]
         end
         lines!(ax, p.tail; color = x, linewidth = tailwidth)
     end
 
     if plot_particles # plot ball and arrow as a particle
-        balls = Observable([Point2f0(p.p.pos) for p in allparobs])
-        vels = Observable([particle_size * vr * Point2f0(p.p.vel) for p in allparobs])
+        balls = Observable([Point2f(p.p.pos) for p in allparobs])
+        vels = Observable([particle_size * vr * Point2f(p.p.vel) for p in allparobs])
         particle_plots = (
             scatter!(
                 ax, balls; color = darken_color.(cs),
@@ -114,22 +114,22 @@ function interactive_billiard(bd::Billiard, ps::Vector{<:AbstractParticle};
     # Controls
     if add_controls
         resetbutton = Button(figure;
-            label = "reset", buttoncolor = RGBf0(0.8, 0.8, 0.8),
+            label = "reset", buttoncolor = RGBf(0.8, 0.8, 0.8),
             height = 40, width = 80
         )
         runbutton = Button(figure; label = Observable("run"),
-            buttoncolor = Observable(RGBf0(0.8, 0.8, 0.8)),
-            buttoncolor_hover = Observable(RGBf0(0.7, 0.7, 0.9)),
-            buttoncolor_active = Observable(RGBf0(0.6, 0.6, 1.0)),
-            labelcolor = Observable((RGBf0(0,0,0))),
-            labelcolor_active = Observable((RGBf0(1,1,1))),
+            buttoncolor = Observable(RGBf(0.8, 0.8, 0.8)),
+            buttoncolor_hover = Observable(RGBf(0.7, 0.7, 0.9)),
+            buttoncolor_active = Observable(RGBf(0.6, 0.6, 1.0)),
+            labelcolor = Observable((RGBf(0,0,0))),
+            labelcolor_active = Observable((RGBf(1,1,1))),
             height = 40, width = 70,
         )
         nslider = Slider(figure, range = 0:50, startvalue=0)
         controls = [resetbutton, runbutton, Label(figure, "speed:"), nslider]
         if plot_particles
             particlebutton = Button(figure, label = "particles",
-                buttoncolor = RGBf0(0.8, 0.8, 0.8),
+                buttoncolor = RGBf(0.8, 0.8, 0.8),
                 height = 40, width = 100
             )
             pushfirst!(controls, particlebutton)
@@ -362,8 +362,8 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
     tsax.xlabel = "time"
     tsax.ylabel = ylabel
 
-    all_ts = [Observable([Point2f0(0, f(p))]) for p in ps]
-    all_balls = [Observable(Point2f0(0, f(p))) for p in ps]
+    all_ts = [Observable([Point2f(0, f(p))]) for p in ps]
+    all_balls = [Observable(Point2f(0, f(p))) for p in ps]
 
     for i in 1:length(ps)
         lines!(tsax, all_ts[i];
@@ -400,7 +400,7 @@ function billiard_video_timeseries(file::AbstractString, bd::Billiard, ps::Vecto
             parobs = allparobs[i]
             InteractiveDynamics.animstep!(parobs, bd, dt, true)
             # Update timeseries
-            current_point = Point2f0(t_current, f(p))
+            current_point = Point2f(t_current, f(p))
             all_balls[i][] = current_point
             InteractiveDynamics.pushupdate!(all_ts[i], current_point)
             if plot_particles
@@ -463,8 +463,8 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
 
     current_color = Observable(newcolor(parobs.p.pos, parobs.p.vel, parobs.ξsin[]...))
-    scatter_points = Observable(Point2f0[])
-    scatter_colors = Observable(RGBAf0[])
+    scatter_points = Observable(Point2f[])
+    scatter_colors = Observable(RGBAf[])
 
     scatter!(bmapax.scene, scatter_points; color = scatter_colors,
         marker = MARKER, markersize = ms*Makie.px
@@ -493,7 +493,7 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
     on(spoint) do ξsin
         ξ, sφ = ξsin
         sφ = clamp(sφ, -1, 1)
-        ξsin = Point2f0(ξ, sφ)
+        ξsin = Point2f(ξ, sφ)
         if !(intervals[1] ≤ ξ ≤ intervals[end])
             error("selected point is outside the boundary map")
         end
@@ -507,8 +507,8 @@ function interactive_billiard_bmap(bd::Billiard, ω=nothing;
 
     # Clean button functionality
     on(cleanbutton.clicks) do nclicks
-        scatter_points[] = Point2f0[]
-        scatter_colors[] = RGBAf0[]
+        scatter_points[] = Point2f[]
+        scatter_colors[] = RGBAf[]
     end
 
     # Lock zooming
@@ -528,7 +528,7 @@ function add_obstacle_axis!(figure, sublayout, intervals, bmapax, lock)
     ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
     bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
     for (i, ξ) in enumerate(intervals[2:end-1])
-        lines!(bmapax.scene, [Point2f0(ξ, -1), Point2f0(ξ, 1)], linestyle = :dash, color = :black)
+        lines!(bmapax.scene, [Point2f(ξ, -1), Point2f(ξ, 1)], linestyle = :dash, color = :black)
     end
     obstacle_ticklabels = String[]
     obstacle_ticks = Float32[]
@@ -601,7 +601,7 @@ function billiard_bmap_plot(bd::Billiard, ps::Vector{<:AbstractParticle};
     end
 
     # create listeners that update boundary map points
-    all_bmap_scatters = [Point2f0[] for i in 1:N]
+    all_bmap_scatters = [Point2f[] for i in 1:N]
     for i in 1:N
         parobs = allparobs[i]
         vector = all_bmap_scatters[i]

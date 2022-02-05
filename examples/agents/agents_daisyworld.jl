@@ -10,7 +10,7 @@ mutable struct Daisy <: AbstractAgent
     albedo::Float64 # 0-1 fraction
 end
 
-const DaisyWorld = ABM{<:GridSpace, Daisy};
+DaisyWorld = ABM{<:GridSpace, Daisy};
 
 function update_surface_temperature!(pos, model::DaisyWorld)
     ids = ids_in_position(pos, model)
@@ -144,7 +144,6 @@ end
 
 # ## Visualizing & animating
 # %% #src
-
 using InteractiveDynamics
 using GLMakie
 
@@ -153,22 +152,32 @@ model = daisyworld()
 daisycolor(a::Daisy) = a.breed
 
 plotkwargs = (
-    ac=daisycolor, as = 12, am = '♠',
+    ac = daisycolor, as = 12, am = '♠',
     heatarray = :temperature,
     heatkwargs = (colorrange = (-20, 60),),
 )
-fig, _ = abm_plot(model; plotkwargs...)
+fig, abmstepper = abm_plot(model; plotkwargs...)
 fig
 
 # And after a couple of steps
 Agents.step!(model, daisy_step!, daisyworld_step!, 5)
-fig, _ = abm_plot(model; heatarray = model.temperature, plotkwargs...)
+fig, abmstepper = abm_plot(model; heatarray = model.temperature, plotkwargs...)
 fig
 
 # %% Video
 model = daisyworld()
 abm_video(
     "daisyworld.mp4",
+    model,
+    daisy_step!,
+    daisyworld_step!;
+    title = "Daisy World",
+    plotkwargs...,
+)
+
+# %% Play
+model = daisyworld()
+abm_play(
     model,
     daisy_step!,
     daisyworld_step!;

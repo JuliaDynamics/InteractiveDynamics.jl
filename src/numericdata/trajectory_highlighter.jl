@@ -53,7 +53,7 @@ function trajectory_highlighter(datasets, vals;
     ))
     # The colors are observables; the transparency can be changed
     data_αs = [Observable(1.0) for i in 1:N]
-    colors = [lift(α -> RGBAf0(get_color(i), α), data_αs[i]) for i ∈ 1:N]
+    colors = [lift(α -> RGBAf(get_color(i), α), data_αs[i]) for i ∈ 1:N]
     data_scene = plot_datasets(datasets, colors; kwargs...)
 
     # now time for the histogram:
@@ -83,7 +83,7 @@ according to a colormap.
 function plot_histogram(hist::StatsBase.Histogram, cmap)
     c = to_colormap(cmap, length(hist.weights))
     hist_αs = [Observable(1.) for i in c]
-    bincolor(αs...) = RGBAf0.(c, αs)
+    bincolor(αs...) = RGBAf.(c, αs)
     colors = lift(bincolor, hist_αs...)
     hist_scene = plot(hist, color=colors)
     return hist_scene, hist_αs

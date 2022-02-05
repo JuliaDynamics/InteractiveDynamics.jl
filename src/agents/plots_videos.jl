@@ -1,10 +1,8 @@
 export abm_plot, abm_play, abm_video
 
-dimensionality(::Agents.ABM{<:Agents.GridSpace{D}}) where {D} = D
-dimensionality(::Agents.ABM{<:Agents.ContinuousSpace{D}}) where {D} = D
-
 """
     abm_plot(model::ABM; kwargs...) → fig, abmstepper
+    abm_plot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmstepper
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
 
@@ -48,12 +46,11 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
 * `scheduler = model.scheduler`: decides the plotting order of agents
   (which matters only if there is overlap).
 * `offset = nothing`: If not `nothing`, it must be a function taking as an input an
-  agent and outputting an offset position vector to be added to the agent's position
+  agent and outputting an offset position tuple to be added to the agent's position
   (which matters only if there is overlap).
-* `scatterkwargs = ()`: Additional keyword arguments propagated to the scatter plot.
-  If `am` is/returns Polygons, then these arguments are propagated to a `poly` plot.
+* `scatterkwargs = ()`: Additional keyword arguments propagated to the `scatter!` call.
 
-## Model and figure related keywords
+## Preplot related keywords
 * `heatarray = nothing` : A keyword that plots a heatmap over the space.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
@@ -62,32 +59,65 @@ evolving the ABM and a heatmap in parallel with only a few lines of code.
   But you could also define `f(model) = create_some_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
-* `heatkwargs = (colormap=:tokyo,)` : Keyowrds given to `Makie.heatmap` function
+* `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
-* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
-* `resolution = (600, 600)`: Resolution of the figugre.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents. Notice that you can still make objects of this plot be visible
   above the agents using a translation in the third dimension like below:
   ```julia
   function static_preplot!(ax, model)
-      obj = CairoMakie.scatter!([50 50]; color = :red) # Show position of teacher
-      CairoMakie.hidedecorations!(ax) # hide tick labels etc.
-      CairoMakie.translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
+      obj = scatter!(ax, [50 50]; color = :red) # Show position of teacher
+      hidedecorations!(ax) # hide tick labels etc.
+      translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
+
+## Figure related keywords
+These only matter for `abm_plot` and not for `abm_plot!`.
+* `resolution = (600, 600)`: Resolution of the figure.
+* `backgroundcolor = DEFAULT_BG`: Background color of the figure.
+* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
+  setting `xticksvisible = false`.
+* `aspect = DataAspect()`: The aspect ratio behavior of the axis.
 """
-function abm_plot(model; resolution = (600, 600), kwargs...)
-    fig = Figure(; resolution)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+function abm_plot(model; 
+        resolution = (600,600),
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), 
+        aspect = model.space isa Agents.OpenStreetMapSpace ? AxisAspect(1) : DataAspect(), 
+        kwargs...
+    )
+    fig = Figure(; resolution, backgroundcolor)
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 
+        Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
+    ax isa Axis && (ax.aspect = aspect)
+    abmstepper = abm_plot!(ax, model; kwargs...)
     return fig, abmstepper
+end
+
+function abm_plot!(ax, model;
+        ac = JULIADYNAMICS_COLORS[1], as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true, 
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        scheduler = model.scheduler,
+        kwargs...
+    )
+    abmstepper = abm_init_stepper(model;
+    ac, as, am, scheduler, offset, heatarray)
+    abm_init_plot!(ax, model, abmstepper;
+        heatkwargs, add_colorbar, static_preplot!, scatterkwargs
+    )
+    # temporarily disable inspector for poly plots
+    if user_used_polygons(am, abmstepper.markers)
+        inspector = DataInspector(ax.parent.scene)
+        inspector.plot.enabled = false
+    end
+    return abmstepper
 end
 
 ##########################################################################################
 
 """
-    abm_play(model, agent_step!, model_step!; kwargs...) → fig, abmstepper
+    abm_play(model, agent_step! [, model_step!]; kwargs...) → fig, abmstepper
 Launch an interactive application that plots an agent based model and can animate
 its evolution in real time. Requires `Agents`.
 
@@ -108,10 +138,9 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `ac, am, as, scheduler, offset, aspect, scatterkwargs`: propagated to [`abm_plot`](@ref).
 * `spu = 1:100`: The values of the "spu" slider.
 """
-function abm_play(model, agent_step!, model_step!; spu = 1:100, kwargs...)
-    fig = Figure(; resolution = (600, 700), backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = dimensionality(model) == 3 ? Axis3(fig) : Axis(fig)
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+function abm_play(model, agent_step!, model_step! = Agents.dummystep;
+        spu = 1:100, kwargs...)
+    fig, abmstepper = abm_plot(model; resolution = (600, 700), kwargs...)
     abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     display(fig)
     return fig, abmstepper
@@ -122,11 +151,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
     model0 = deepcopy(model)
     modelobs = Observable(model) # only useful for resetting
     speed, slep, step, run, reset, = abm_controls_play!(fig, model, spu, false)
+    
     # Clicking the step button
     on(step) do clicks
         n = speed[]
         Agents.step!(abmstepper, model, agent_step!, model_step!, n)
     end
+    
     # Clicking the run button
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
@@ -139,11 +170,13 @@ function abm_play!(fig, abmstepper, model, agent_step!, model_step!; spu)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
+    
     # Clicking the reset button
     on(reset) do clicks
         modelobs[] = deepcopy(model0)
         Agents.step!(abmstepper, modelobs[], agent_step!, model_step!, 0)
     end
+    
     return nothing
 end
 
@@ -153,7 +186,7 @@ function abm_controls_play!(fig, model, spu, add_update = false)
     if model.space isa Agents.ContinuousSpace
         _s, _v = 0:0.01:1, 0
     else
-        _s, _v = 0:0.1:10, 1
+        _s, _v = 0:0.01:2, 1
     end
     slesl = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[1, :] = spusl.layout
@@ -178,22 +211,28 @@ end
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
 saved at given path `file`, by recording the behavior of [`abm_play`](@ref) (without sliders).
-The plotting is identical as in [`abm_plot`](@ref).
+The plotting is identical as in [`abm_plot`](@ref) and applicable keywords are propagated.
 
 ## Keywords
 * `spf = 1`: Steps-per-frame, i.e. how many times to step the model before recording a new
   frame.
 * `framerate = 30`: The frame rate of the exported video.
 * `frames = 300`: How many frames to record in total, including the starting frame.
-* `resolution = (600, 600)`: Resolution of the fig.
-* `axiskwargs = NamedTuple()`: Keyword arguments given to the main axis creation for e.g.
-  setting `xticksvisible = false`.
+* `title = ""`: The title of the figure.
+* `showstep = true`: If current step should be shown in title.
 * `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
-        spf = 1, framerate = 30, frames = 300, resolution = (600, 600),
-        title = "", showstep = true, axiskwargs = NamedTuple(), kwargs...
+        spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
+        resolution = (600,600), colorscheme = JULIADYNAMICS_COLORS, 
+        backgroundcolor = DEFAULT_BG, axiskwargs = NamedTuple(), aspect = DataAspect(),
+        as = 10, am = :circle, offset = nothing,
+        heatarray = nothing, heatkwargs = NamedTuple(), add_colorbar = true,
+        static_preplot! = default_static_preplot, scatterkwargs = NamedTuple(),
+        kwargs...
     )
+    ac = get(kwargs, :ac, colorscheme[1])
+    scheduler = get(kwargs, :scheduler, model.scheduler)
 
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -204,14 +243,14 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     else
         t = title
     end
+    axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
-    fig = Figure(; resolution, backgroundcolor = DEFAULT_BG)
-    ax = fig[1,1][1,1] = if dimensionality(model) == 3
-        Axis3(fig; title = t, titlealign = :left, axiskwargs...)
-    else
-        Axis(fig; title = t, titlealign = :left, axiskwargs...)
-    end
-    abmstepper = abm_init_stepper_and_plot!(ax, fig, model; kwargs...)
+    fig, abmstepper = abm_plot(model; 
+        resolution, colorscheme, backgroundcolor, axiskwargs, aspect,
+        ac, as, am, scheduler, offset,
+        heatarray, heatkwargs, add_colorbar, 
+        static_preplot!, scatterkwargs
+    )
 
     record(fig, file; framerate) do io
         for j in 1:frames-1

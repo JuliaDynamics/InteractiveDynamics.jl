@@ -34,7 +34,7 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin 
     DynamicalBilliards.ismagnetic(p.p) && (p.p.center = DynamicalBilliards.find_cyclotron(p.p))
     p.i, p.tmin, p.t, p.n, p.T = i, tmin, 0, 0, 0
     L = length(p.tail[])
-    append!(p.tail[], [Point2f0(p0.pos) for i in 1:L])
+    append!(p.tail[], [Point2f(p0.pos) for i in 1:L])
     p.tail[] = p.tail[]
     if ξsin !== nothing
         p.ξsin[] = ξsin # This can only be updated from bmap, which gives selection directly

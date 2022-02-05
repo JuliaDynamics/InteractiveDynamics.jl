@@ -73,13 +73,13 @@ ws[j] = 0
 
 p = lift(y) do y
     ss[j] = y
-    o = Makie.Point3f0(ss...)
-    w = Makie.Point3f0(ws...)
+    o = Makie.Point3f(ss...)
+    w = Makie.Point3f(ws...)
     Makie.FRect3D(o, w)
 end
 
-a = Makie.RGBAf0(0,0,0,0)
-c = Makie.RGBAf0(0.2, 0.2, 0.25, 1.0)
+a = RGBAf(0,0,0,0)
+c = RGBAf(0.2, 0.2, 0.25, 1.0)
 img = Makie.ImagePattern([c a; a c]);
 Makie.mesh!(ax, p; color = img);
 
