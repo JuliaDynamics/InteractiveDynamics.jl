@@ -11,10 +11,10 @@ The animation at the start of this page was done by running the `examples/agents
 Another example application can be found in the [Agents.jl docs](https://juliadynamics.github.io/Agents.jl/dev/examples/schelling/).
 
 ```@docs
-abmplot!
+abmplot
 ```
 
-Please note that calling `abmplot` as a standalone function is currently not fully supported. 
+Please note that calling [`abmplot`](@ref) as a standalone function is currently not fully supported. 
 While it can be used to create relatively simple static plots, some of its built-in functionality (e.g. heatmap colorbar, model controls, parameter sliders) will not work out of the box.
 
 It is strongly advised to first explicitly construct a Figure and Axis to plot into, then provide `ax::Axis` as a keyword argument to your in-place function call.
@@ -28,8 +28,8 @@ p = abmplot!(model; ax)
 
 ## Convenience functions
 
-There are currently two extra convenience functions that execute the `abmplot` recipe under specific conditions.
-These can be helpful for having a quick look at time series of collected data (`abm_data_exploration`) or for recording the evolution of a model and saving it in a video file (`abm_video`).
+There are currently two extra convenience functions that execute the [`abmplot`](@ref) recipe under specific conditions.
+These can be helpful for having a quick look at time series of collected data ([`abm_data_exploration`](@ref)) or for recording the evolution of a model and saving it in a video file ([`abm_video`](@ref)).
 
 ```@docs
 abm_data_exploration
