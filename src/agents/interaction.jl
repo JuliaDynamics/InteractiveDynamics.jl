@@ -77,8 +77,8 @@ function add_controls!(fig, model, agent_step!, model_step!,
     model0 = deepcopy(model[]) # backup initial model state
     on(reset.clicks) do c
         model[] = deepcopy(model0)
-        Agents.step!(model[], agent_step![], model_step![], 0)
         s = 0 # reset step counter
+        Agents.step!(model[], agent_step![], model_step![], s)
     end
 
     # Clear button
