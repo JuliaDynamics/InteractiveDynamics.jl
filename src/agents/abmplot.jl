@@ -17,7 +17,7 @@ the agent's position field as its location on the plot. Requires `Agents`.
 ### Agent related
 * `ac, as, am` : These three keywords decided the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single argument and ouputs the corresponding value.
+  which takes as an input a single argument and outputs the corresponding value.
   
   Using constants: `ac = "#338c54", as = 10, am = :diamond`
 
