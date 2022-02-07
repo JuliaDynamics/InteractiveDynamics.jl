@@ -47,7 +47,7 @@ For this functionality, we draw on the powerful features of Makie's [`DataInspec
 The tooltip can be customized both with regards to its content and its style by extending a single function and creating a specialized method for a given `A<:AbstractAgent`.
 
 ```@docs
-agent2string
+InteractiveDynamics.agent2string
 ```
 
 ## Adding custom plots
