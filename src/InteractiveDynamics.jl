@@ -25,8 +25,8 @@ function __init__()
         include("agents/abmplot.jl")
         include("agents/lifting.jl")
         include("agents/interaction.jl")
-        include("agents/abm_video.jl")
         include("agents/inspection.jl")
+        include("agents/convenience.jl")
     end
 end
 
