@@ -10,10 +10,34 @@ This page describes functions that can be used in conjunction with [Agents.jl](h
 The animation at the start of this page was done by running the `examples/daisyworld.jl` file, and see also an example application in [Agents.jl docs](https://juliadynamics.github.io/Agents.jl/dev/examples/schelling/).
 
 ```@docs
-abm_plot
-abm_play
-abm_video
+abmplot
+abmplot!
+```
+
+```
+!!! note
+    Please note that calling `abmplot` as a standalone function is currently not fully 
+    supported. While it can be used to create relatively simple static plots, some of its 
+    built-in functionality (e.g. heatmap colorbar, model controls, parameter sliders) will 
+    not work out of the box.
+
+    It is strongly advised to first explicitly construct a Figure and Axis to plot into, 
+    then provide `ax::Axis` as a keyword argument to your in-place function call.
+
+    Example:
+        fig = Figure()
+        ax = Axis(fig[1,1])
+        p = abmplot!(model; ax)
+```
+
+## Convenience functions
+
+There are currently two extra convenience functions that execute the `abmplot` recipe under specific conditions.
+These can be helpful for having a quick look at time series of collected data (`abm_data_exploration`) or for recording the evolution of a model and saving it in a video file (`abm_video`).
+
+```@docs
 abm_data_exploration
+abm_video
 ```
 
 ## Agent inspection
