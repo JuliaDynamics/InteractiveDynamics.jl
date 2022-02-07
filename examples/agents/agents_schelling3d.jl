@@ -43,4 +43,6 @@ using InteractiveDynamics, GLMakie
 
 model = initialize()
 ac(agent) = (:red, :blue)[agent.group]
-fig, abmstepper = abm_play(model, agent_step!, dummystep; ac, as = 0.5)
+fig = Figure(resolution = (800,600))
+ax = Axis3(fig[1,1])
+p = abmplot!(model; ax, ac, as = 0.5, agent_step!)
