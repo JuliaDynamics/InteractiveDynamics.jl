@@ -1,5 +1,4 @@
 using Agents
-using OSMMakie
 using GLMakie
 using InteractiveDynamics
 
@@ -43,3 +42,13 @@ scatter(plot_layout[1,1], xs, dt)
 
 infected = @lift($(p.mdf).count_infected)
 lines(plot_layout[2,1], xs, infected)
+
+## abm_data_exploration convenience function
+
+fig, p = abm_data_exploration(zombie_model;
+    agent_step! = zombie_step!, model_step! = zombie_model_step!,
+    ac, as, params = Dict(:dt => 0.01:0.001:0.02),
+    adata = [(:infected, count)], mdata = [count_infected, :dt]
+)
+
+fig
