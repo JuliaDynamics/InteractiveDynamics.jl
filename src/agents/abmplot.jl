@@ -5,17 +5,6 @@
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
 
-## Basic usage
-
-Please note that calling `abmplot` as a standalone function is currently unsupported.
-While it can be used to create relatively simple plots, some of its built-in functionality 
-(e.g. heatmap colorbar, model controls, data plots) will not work.
-
-It is strongly advised to first explicitly construct a Figure and Axis to plot into, 
-then provide `ax::Axis` as a keyword argument to your in-place function call.
-
-*Example:* `fig = Figure(); ax = Axis(fig[1,1]); p = abmplot!(model; ax)`
-
 ### Order of plot layers inside `ABMPlot`
 
 1. OSMPlot, if `model.space isa OpenStreetMapSpace`
