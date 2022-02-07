@@ -22,8 +22,9 @@ end
 "Initialize model control buttons."
 function add_controls!(fig, model, agent_step!, model_step!,
             adata, mdata, adf, mdf, spu, when)
+    s = 0 # current step
     init_dataframes!(model, adata, mdata, adf, mdf)
-    collect_data!(model, when, adata, mdata, adf, mdf, 0)
+    collect_data!(model, when, adata, mdata, adf, mdf, s)
 
     # Create new layout for control buttons
     controllayout = fig[end+1,:][1,1] = GridLayout(tellheight = true)
@@ -45,7 +46,6 @@ function add_controls!(fig, model, agent_step!, model_step!,
     
     # Step button
     step = Button(fig, label = "step")
-    s = 0 # current step
     on(step.clicks) do c
         n = speed[]
         Agents.step!(model[], agent_step![], model_step![], n)
@@ -86,7 +86,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
     on(clear.clicks) do c
         adf.val, mdf.val = nothing, nothing # reset dataframes without triggering Observable
         init_dataframes!(model, adata, mdata, adf, mdf)
-        collect_data!(model, when, adata, mdata, adf, mdf, 0)
+        collect_data!(model, when, adata, mdata, adf, mdf, s)
     end
 
     # Layout buttons
