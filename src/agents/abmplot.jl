@@ -96,11 +96,18 @@ Two sliders control the animation speed: "spu" decides how many model steps shou
 before the plot is updated, and "sleep" the `sleep()` time between updates.
 
 ## Keywords arguments (in addition to those mentioned above)
-* `agent_step!, model_step! = nothing` : If one or both aren't nothing, interactive buttons for 
-  model control will be added to the resulting figure.
+* `params = Dict()` : This is a dictionary which decides which parameters of the model will 
+  be configurable from the interactive application. Each entry of `params` is a pair of 
+  `Symbol` to an `AbstractVector`, and provides a range of possible values for the parameter 
+  named after the given symbol (see example online). Changing a value in the parameter 
+  slides is only propagated to the actual model after a press of the "update" button.
+* `agent_step!, model_step! = nothing` : If one or both aren't nothing, interactive buttons
+  for model control will be added to the resulting figure.
+* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If one or both 
+  aren't empty, plots for data exploration and sliders for altering the model parameters 
+  will be added to the resulting figure.
 * `spu = 1:50`: The values of the "spu" slider.
-* `adata, mdata = []` : If one or both aren't empty, plots for data exploration and 
-  sliders for altering the model parameters will be added to the resulting figure.
+* `when = true` : When to perform data collection, as in `Agents.run!`.
 """
 @recipe(ABMPlot, model) do scene
     Theme(
