@@ -44,7 +44,7 @@ the agent's position field as its location on the plot. Requires `Agents`.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
   The returned data must be a matrix of the same size as the underlying space.
-  For example `heatarray = :temperature` is used in the [Daisyworld](@ref) example.
+  For example `heatarray = :temperature` is used in the Daisyworld example.
   But you could also define `f(model) = create_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
