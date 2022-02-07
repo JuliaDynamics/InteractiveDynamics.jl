@@ -25,10 +25,10 @@ p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_
 
 fig = Figure()
 ax = Axis(fig[1,1]; title = "Zombie outbreak")
-count_infected(model) = count(model[id].infected for id in allids(model))
+zombie_share(model) = count(model[id].infected for id in allids(model)) / nagents(model)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.01:0.001:0.02),
-    adata = [:infected], mdata = [count_infected, :dt])
+    adata = [:infected], mdata = [zombie_share, :dt])
 
 fig
 
@@ -40,7 +40,7 @@ xs = @lift($(p.mdf).step)
 dt = @lift($(p.mdf).dt)
 scatter(plot_layout[1,1], xs, dt)
 
-infected = @lift($(p.mdf).count_infected)
+infected = @lift($(p.mdf).zombie_share)
 lines(plot_layout[2,1], xs, infected)
 
 ## abm_data_exploration convenience function
@@ -48,7 +48,8 @@ lines(plot_layout[2,1], xs, infected)
 fig, p = abm_data_exploration(zombie_model;
     agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.01:0.001:0.02),
-    adata = [(:infected, count)], mdata = [count_infected, :dt]
+    adata = [(:infected, count)], mdata = [zombie_share, :dt],
+    alabels = ["Number of\nZombies"], mlabels = ["Zombie share", "travel distance"]
 )
 
 fig
