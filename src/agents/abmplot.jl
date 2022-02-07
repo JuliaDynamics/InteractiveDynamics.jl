@@ -158,9 +158,7 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
 
     model = abmplot.model[]
     ax = abmplot.ax[]
-    if isnothing(ax)
-        @warn AXIS_WARNING
-    else
+    if !isnothing(ax)
         isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
         set_axis_limits!(ax, model)
         fig = ax.parent
@@ -229,17 +227,3 @@ function set_axis_limits!(ax, model)
     is3d && zlims!(ax, o[3], e[3])
     return
 end
-
-const AXIS_WARNING = """
-Please note that calling `abmplot` as a standalone function is currently unsupported.
-While it can be used to create relatively simple static plots, some of its built-in 
-functionality (e.g. heatmap colorbar, model controls, parameter sliders) will not work.
-
-It is strongly advised to first explicitly construct a Figure and Axis to plot into, 
-then provide `ax::Axis` as a keyword argument to your in-place function call.
-
-Example:
-    fig = Figure()
-    ax = Axis(fig[1,1])
-    p = abmplot!(model; ax)
-"""
