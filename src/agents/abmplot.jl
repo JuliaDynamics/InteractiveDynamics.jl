@@ -162,7 +162,7 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
-        osm_plot = Main.OSMMakie.osmplot!(abmplot, model.space.map)
+        osm_plot = osmplot!(abmplot, model.space.map)
         osm_plot.plots[1].plots[1].plots[1].inspectable[] = false
         osm_plot.plots[1].plots[3].inspectable[] = false
     end
