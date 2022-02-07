@@ -1,4 +1,37 @@
-export abm_video
+export abm_data_exploration, abm_video
+
+"""
+    abm_data_exploration(model::ABM; alabels, mlabels, kwargs...)
+
+Open an interactive application for exploring an agent based model and
+the impact of changing parameters on the time evolution. Requires `Agents`.
+The application evolves an ABM interactively and plots its evolution, while allowing
+changing any of the model parameters interactively and also
+showing the evolution of collected data over time (if any are asked for, see below).
+The agent based model is plotted and animated exactly as in [`abm_play`](@ref),
+and the arguments `model, agent_step!, model_step!` are propagated there as-is.
+Calling `abm_data_exploration` returns: `fig, agent_df, model_df`. So you can save the
+figure, but you can also access the collected data (if any).
+
+## Interaction
+The "reset" button resets the model to its original agent and space state but it updates
+it to the currently selected parameter values. A red vertical line is displayed in the
+data plots when resetting, for visual guidance.
+
+## Keywords arguments (in addition to those in `abmplot`)
+* `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
+  the corresponding plots' y-labels are automatically named after the collected data.
+  It is also possible to provide `alabels, mlabels` (vectors of strings with exactly same 
+  length as `adata, mdata`), and these labels will be used instead.
+"""
+function abm_data_exploration(model; alabels = nothing, mlabels = nothing, kwargs...)
+    fig = Figure(1600, 800)
+    ax = Axis(fig[1,1])
+    p = abmplot!(model; ax, kwargs...)
+
+    return fig, p
+end
+
 
 ##########################################################################################
 """
