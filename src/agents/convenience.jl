@@ -8,7 +8,7 @@ the impact of changing parameters on the time evolution. Requires `Agents`.
 The application evolves an ABM interactively and plots its evolution, while allowing
 changing any of the model parameters interactively and also
 showing the evolution of collected data over time (if any are asked for, see below).
-The agent based model is plotted and animated exactly as in [`abm_play`](@ref),
+The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the arguments `model, agent_step!, model_step!` are propagated there as-is.
 Calling `abm_data_exploration` returns: `fig, agent_df, model_df`. So you can save the
 figure, but you can also access the collected data (if any).
@@ -48,7 +48,7 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
 * `frames = 300`: How many frames to record in total, including the starting frame.
 * `title = ""`: The title of the figure.
 * `showstep = true`: If current step should be shown in title.
-* `kwargs...`: All other keywords are propagated to [`abm_plot`](@ref).
+* `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
 function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
             spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
