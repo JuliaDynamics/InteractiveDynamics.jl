@@ -49,43 +49,43 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
     La = isnothing(adata) ? 0 : size(p.adf[])[2]-1
     Lm = isnothing(mdata) ? 0 : size(p.mdf[])[2]-1
     La + Lm == 0 && return nothing # failsafe; don't add plots if dataframes are empty
-    
+
     plotlayout = fig[:, end+1] = GridLayout(tellheight = false)
     axs = []
-    xs = isnothing(adata) ? @lift($(p.mdf).step) : @lift($(p.adf).step)
 
-    # Plot all quantities
-    # TODO: make scatter+line plot 1.
-    for i in 1:La
+    for i in 1:La # add adata plots
         y_label = string(adata[i][2]) * "_" * string(adata[i][1])
-        ys = @lift($(p.adf)[:,y_label])
+        points = @lift(Point2f.($(p.adf).step, $(p.adf)[:,y_label]))
         ax = plotlayout[i, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? y_label : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
-        scatterlines!(ax, xs, ys;
+        scatterlines!(ax, points;
             marker = MARKER, markersize = 5Makie.px, color = c,
             strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
-    for i in 1:Lm
+
+    for i in 1:Lm # add mdata plots
         y_label = string(mdata[i])
-        ys = @lift($(p.mdf)[:,y_label])
+        points = @lift(Point2f.($(p.mdf).step, $(p.mdf)[:,y_label]))
         ax = plotlayout[i+La, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? y_label : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
-        scatterlines!(ax, xs, ys;
+        scatterlines!(ax, points;
             marker = MARKER, markersize = 5Makie.px, color = c,
             strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
+
     if La+Lm > 1
         for ax in @view(axs[1:end-1]); hidexdecorations!(ax, grid = false); end
     end
     axs[end].xlabel = "step"
+    
     return nothing
 end
 
