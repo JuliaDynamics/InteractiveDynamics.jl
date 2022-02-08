@@ -25,13 +25,17 @@ guidance.
   the corresponding plots' y-labels are automatically named after the collected data.
   It is also possible to provide `alabels, mlabels` (vectors of strings with exactly same 
   length as `adata, mdata`), and these labels will be used instead.
+* `figurekwargs = NamedTuple()`: Keywords to customize the created Figure.
+* `axiskwargs = NamedTuple()`: Keywords to customize the created Axis.
 * `plotkwargs = NamedTuple()`: Keywords to customize the styling of the resulting 
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
 function abm_data_exploration(model; 
-        alabels = nothing, mlabels = nothing, plotkwargs = NamedTuple(), kwargs...)
-    fig = Figure(resolution = (1600, 800))
-    ax = Axis(fig[1,1])
+        alabels = nothing, mlabels = nothing, 
+        figurekwargs = NamedTuple(), axiskwargs = NamedTuple(), plotkwargs = NamedTuple(),
+        kwargs...)
+    fig = Figure(; resolution = (1600, 800), figurekwargs...)
+    ax = Axis(fig[1,1]; axiskwargs...)
     p = abmplot!(model; ax, kwargs...)
 
     adata, mdata, adf, mdf = p.adata[], p.mdata[], p.adf[], p.mdf[] # alias Observables
