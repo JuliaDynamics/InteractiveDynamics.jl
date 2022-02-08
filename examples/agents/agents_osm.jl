@@ -9,22 +9,24 @@ as(agent) = agent.infected ? 10 : 8
 
 ## interactive app
 
+axiskwargs = (; title = "Zombie outbreak", backgroundcolor = "#f3f3f3")
+
 fig = Figure()
-ax = Axis(fig[1,1]; title = "Zombie outbreak")
+ax = Axis(fig[1,1]; axiskwargs...)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as)
 
 ## with parameter sliders
 
 fig = Figure()
-ax = Axis(fig[1,1]; title = "Zombie outbreak")
+ax = Axis(fig[1,1]; axiskwargs...)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.1:0.01:0.2))
 
 ## with data collection
 
 fig = Figure()
-ax = Axis(fig[1,1]; title = "Zombie outbreak")
+ax = Axis(fig[1,1]; axiskwargs...)
 zombie_share(model) = count(model[id].infected for id in allids(model)) / nagents(model)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.01:0.001:0.02),
@@ -53,7 +55,8 @@ fig, p = abm_data_exploration(zombie_model;
     agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.01:0.001:0.02),
     adata = [(:infected, count)], mdata = [zombie_share, :dt],
-    alabels = ["Number of\nZombies"], mlabels = ["Zombie share", "travel distance"]
+    alabels = ["Number of\nZombies"], mlabels = ["Zombie share", "travel distance"],
+    axiskwargs
 )
 
 fig
