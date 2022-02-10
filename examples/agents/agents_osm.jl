@@ -46,8 +46,8 @@ xs = @lift($(p.mdf).step)
 dt = @lift($(p.mdf).dt)
 scatter(plot_layout[end+1,:], xs, dt)
 
-zombie_share = @lift($(p.mdf).zombie_share)
-scatterlines(plot_layout[end+1,:], xs, zombie_share)
+share_zombies = @lift($(p.mdf).zombie_share)
+scatterlines(plot_layout[end+1,:], xs, share_zombies)
 
 ## abm_data_exploration convenience function
 
