@@ -14,7 +14,7 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     else
         bmax = nothing
     end
-    phs, chs = billiard_plotting_init!(ax, bd, ps; bmax, kwargs...)
+    phs, chs = bdplot_plotting_init!(ax, bd, ps; bmax, kwargs...)
     ######################################################################################
     # Controls and stepping
     # Controls and stuff are here so that a video function can be made easily;
@@ -54,6 +54,9 @@ function bdplot_control_actions!(control_observables, phs, chs, bd, dt)
         @async while isrunning[]
             n = stepslider[]
             for _ in 1:n-1
+                # TODO: Tail length is affected by dt with current design...
+                # TODO: I think the solution is to put the tail back
+                # into the ParticleHelper
                 billiard_animstep!(phs, chs, bd, dt; update = false)
             end
             billiard_animstep!(phs, chs, bd, dt; update = true)
