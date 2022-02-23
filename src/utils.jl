@@ -58,7 +58,7 @@ output in `file` (recommended to end in `".mp4"`).
 * `total_time = 10`: Time to record for, in seconds
 * `sleep_time = 1`: Time to call `sleep()` before starting to save.
 """
-function record_interaction(file, figure; 
+function record_interaction(file, figure;
         framerate = 30, total_time = 10, sleep_time = 1,
     )
     ispath(dirname(file)) || mkpath(dirname(file))
@@ -72,7 +72,7 @@ function record_interaction(file, figure;
     end
     return
 end
-record_interaction(figure::Figure, file; kwargs...) = 
+record_interaction(figure::Figure, file; kwargs...) =
 record_interaction(file, figure; kwargs...)
 
 
@@ -145,9 +145,9 @@ end
 """
 randomcolor(args...) = RGBAf(0.9 .* (rand(), rand(), rand())..., 0.75)
 
-function colors_from_map(cmap, α, N)
+function colors_from_map(cmap, N, α = 1)
     N == 1 && return [Makie.to_colormap(cmap, 2)[1]]
-    cs = [RGBAf(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
+    return [RGBAf(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
 end
 
 function pushupdate!(o::Observable, v)

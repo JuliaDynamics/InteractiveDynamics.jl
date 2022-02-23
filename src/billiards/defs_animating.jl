@@ -1,5 +1,11 @@
 using DataStructures: CircularBuffer
 
+# TODO: I Think I need to scrap this entire design,
+# and make a new design based on a Observable{Vector{Particles}}...
+# then, everything can be lift/on of this observable. The stepping function
+# would bounce particles and then just call `notify`. All else gets updated
+# for free. Also, all stuff should be vectors of values, each for each particle.
+
 ######################################################################################
 # Observable for single particle, which auto-steps its plotted tail/boundary map
 ######################################################################################
@@ -41,8 +47,10 @@ function rebind_partobs!(p::ParticleObservable, p0::AbstractParticle, bd, ξsin 
     end
 end
 
-function animstep!(parobs, bd, dt, updateplot = true, intervals = nothing)
+function billiard_animstep!(parobs::ParticleObservable, bd, dt, updateplot = true, intervals = nothing)
     if parobs.t + dt - parobs.tmin > 0
+        # There is a collision happening within this window,
+        # and hence we need to update the stuff
         rt = parobs.tmin - parobs.t # remaining time
         animbounce!(parobs, bd, rt, updateplot, intervals)
     else
@@ -85,25 +93,24 @@ end
 # Animation stepper for a group of particles. Includes plotted quiver field
 ######################################################################################
 
-mutable struct ParticleStepper{T<:Real, P<:AbstractParticle}
-    allparobs::Vector{ParticleObservable{T, P}} # contains tail plot
-    balls::Observable{Vector{Point2f}}
-    vels::Observable{Vector{Point2f}}
-    update_balls::Bool # true if the particles were plotted
-    N::Int
-    vellength::Float32
+mutable struct ParticleStepper{T<:Real, P<:AbstractParticle, X}
+    allparobs::Vector{ParticleObservable{T, P}} # individual particles
+    balls::Observable{Vector{Point2f}}          # data for plotting all particles
+    vels::Observable{Vector{Point2f}}           # data for plotting all particles
+    update_balls::Bool                          # whether to update balls
+    vellength::Float32                          # scaling of velocity vector
+    bmap_points::X # scatter points for boundary map, vector{observable{vector{point}}}
+    N::Int                                      # convenience, = length(allparobs)
 end
 
 function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
-        # Internal keyword arguments (e.g. a second axis for boundary map plot)
-    
         # Remaining arguments for tuning plotting, e.g. color, linewidths, etc.
         α = 1.0, colors = JULIADYNAMICS_CMAP, fade = true, tailwidth = 1,
         # Keywords for plotting the particles
-        plot_particles = true, 
+        plot_particles = true,
         arrowsize = 1, particlewidth = 3tailwidth, particlesize = 1, vellength = 2.0,
         # boundary map arguments
-        axbmap = nothing, 
+        axbmap = nothing,
     )
 
     N = length(ps)
@@ -122,7 +129,7 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
         end
         lines!(ax, p.tail; color = x, linewidth = tailwidth)
     end
-    
+
     balls = Observable([Point2f(p.p.pos) for p in allparobs])
     vels = Observable([vellength*Point2f(p.p.vel) for p in allparobs])
     if plot_particles # plot ball and arrow as a particle
@@ -140,23 +147,34 @@ function bdplot_initialize_stepper!(ax, ps::Vector{<:AbstractParticle}, bd;
     end
 
     # TODO: Boundary map
-    # probably `lift` the `balls`
+    # probably `lift` the `balls`...?
+    if !isnothing(axbmap)
+        bmap_points = [Observable([Point2f(p[].ξsin)]) for p in allparobs]
+        for i in 1:length(ps)
+            parobs = allparobs[i]
+            on(parobs.ξsin) do val
+                push!(bmap_points[i], val)
+            end
+        end
+    end
 
-    update_balls = plot_particles || plot_boundarymap
-    return ParticleStepper(allparobs, balls, vels, update_balls, length(ps), vellength)
+
+
+
+    return ParticleStepper(allparobs, balls, vels, plot_particles, vellength, length(ps))
 end
 
-function animstep!(stepper::ParticleStepper, bd, dt, n, intervals = nothing)
+function billiard_animstep!(stepper::ParticleStepper, bd, dt, n, intervals = nothing)
     for _ in 1:n
         for i in 1:stepper.N
             parobs = stepper.allparobs[i]
-            animstep!(parobs, bd, dt, false, intervals)
+            billiard_animstep!(parobs, bd, dt, false, intervals)
         end
     end
 
     for i in 1:stepper.N
         parobs = stepper.allparobs[i]
-        animstep!(parobs, bd, dt, false, intervals)
+        billiard_animstep!(parobs, bd, dt, false, intervals)
         if stepper.update_balls
             balls[][i] = parobs.p.pos
             vels[][i] = stepper.vellength * parobs.p.vel
@@ -167,6 +185,10 @@ function animstep!(stepper::ParticleStepper, bd, dt, n, intervals = nothing)
         vels[] = vels[]
     end
     # TODO: Boundary map here.
+
+    if !isnothing(intervals)
+        fafa
+    end
 end
 
 

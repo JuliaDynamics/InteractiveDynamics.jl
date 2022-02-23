@@ -60,6 +60,7 @@ function bdplot!(ax, bd::Billiard; kwargs...)
         Makie.ylims!(ax, ymin - 0.1dy, ymax + 0.1dy)
     end
     remove_axis!(ax)
+    ax.aspect = DataAspect()
     return ax
 end
 
