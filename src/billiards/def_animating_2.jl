@@ -8,7 +8,7 @@ Expected inputs: vector of particles, a billiard, and optionally the output of
 
 Two helper structures for each particle:
 1. `ParticleHelper`: Contains quantities that are updated each `dt` step,
-   including particle itself
+   including particle itself.
 2. `CollisionHelper`: Contains quantities that are only updated each collision.
 
 These two helpers are necessary to
@@ -88,7 +88,7 @@ end
 function billiard_animstep!(ph::ParticleHelper, ch::CollisionHelper, bd, dt, intervals)
     collided = false
     if ph.t + dt - ch.tmin > 0
-        # We reach the collision poin within the `dt` window, so we need to
+        # We reach the collision point within the `dt` window, so we need to
         # call the "bounce" logic
         rt = ch.tmin - ph.t # remaining time to collision
         billiards_animbounce!(ph, ch, bd, rt, intervals)
@@ -187,8 +187,10 @@ function billiard_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPa
         )
     end
 
-    # TODO: boundary map observable lifint and plotting
+    # TODO: boundary map observable lifting and plotting
     # TODO: must return tails for resetting them.
+
+    # TODO: Tail length is affected by dt with current design...
     return phs, chs
 end
 
