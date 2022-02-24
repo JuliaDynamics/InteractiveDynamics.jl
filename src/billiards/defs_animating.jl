@@ -45,26 +45,24 @@ mutable struct CollisionHelper{T<:Real}
     i::Int         # index of obstacle to be collided with
     tmin::T        # time to next collision
     n::Int         # total collisions so far
-    ξsinφ::SVector{2, T}  # boundary map point
+    ξsinθ::SVector{2, T}  # boundary map point
 end
 
-function helpers_from_particle(p::AbstractParticle, bd::Billiard, L, intervals = nothing)
+function helpers_from_particle(p::AbstractParticle, bd::Billiard, L, intervals)
     T = eltype(p.pos)
     i, tmin, _ = DynamicalBilliards.next_collision(p, bd)
-    if !isnothing(intervals)
-        p2 = propagate!(copy(p), tmin)
-        ξ, sinφ = to_bcoords(p2.pos, p2.vel, bd[i])
-        ξsin = SVector(ξ, sinφ)
-    else
-        ξsin = SVector{2, T}(0, 0)
-    end
+    # Do intervals always on first step, doesn't cost much...
+    p2 = copy(p)
+    DynamicalBilliards.propagate!(p2, tmin)
+    ξ, sinφ = DynamicalBilliards.to_bcoords(p2.pos, p2.vel, bd[i])
+    ξsin = SVector(ξ, sinφ)
     tail = CircularBuffer{Point2f}(L)
     fill!(tail, Point2f(p.pos))
     return ParticleHelper{typeof(p), T}(p, 0, 0, tail), CollisionHelper{T}(i, tmin, 0, ξsin)
 end
 
-function helpers_from_particles(
-    ps::Vector{P}, bd::Billiard, L, intervals = nothing) where {P<:AbstractParticle}
+function helpers_from_particles(ps::Vector{P}, bd::Billiard, L) where {P<:AbstractParticle}
+    intervals = DynamicalBilliards.arcintervals(bd)
     T = eltype(ps[1])
     phs = ParticleHelper{P, T}[]
     chs = CollisionHelper{T}[]
@@ -115,6 +113,12 @@ function billiards_animbounce!(ph::ParticleHelper, ch::CollisionHelper, bd, rt, 
     DynamicalBilliards._correct_pos!(ph.p, bd[ch.i])
     DynamicalBilliards.resolvecollision!(ph.p, bd[ch.i])
     DynamicalBilliards.ismagnetic(ph.p) && (ph.p.center = DynamicalBilliards.find_cyclotron(ph.p))
+    # Update boundary map point if necessary
+    if !isnothing(intervals)
+        ξ, sθ = DynamicalBilliards.to_bcoords(ph.p.pos, ph.p.vel, bd[ch.i])
+        ξ += intervals[ch.i]
+        ch.ξsinθ = SVector(ξ, sθ)
+    end
     # Update all remaining counters
     i, tmin, = DynamicalBilliards.next_collision(ph.p, bd)
     ch.i = i
@@ -122,12 +126,6 @@ function billiards_animbounce!(ph::ParticleHelper, ch::CollisionHelper, bd, rt, 
     ch.n += 1
     ph.t = 0
     ph.T += rt
-    # Compute new boundary map point if necessary
-    if !isnothing(intervals)
-        ξ, sφ = DynamicalBilliards.to_bcoords(ph.p.pos, ph.p.vel, bd[parobs.i])
-        ξ += intervals[ph.i]
-        ch.ξsin = SVector(ξ, sφ)
-    end
     # Also add the collision point to the tail for continuity
     push!(ph.tail, ph.p.pos)
     return
@@ -144,7 +142,7 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         plot_particles = true,
         particle_size = 5.0, # size of marker for scatter plot of particle balls
         velocity_size = 0.05, # size of multiplying the quiver
-        bmax = nothing, intervals = nothing,
+        bmax = nothing,
     )
 
     bdplot!(ax, bd)
@@ -195,7 +193,18 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         )
     end
 
-    # TODO: boundary map observable lifting and plotting
+    if !isnothing(bmax)
+        bmap_points = [Observable([Point2f(c.ξsinθ)]) for c in chs[]]
+        for i in 1:N
+            scatter!(bmax, bmap_points[i]; color = cs[i])
+        end
+        on(chs) do chs
+            for i in 1:N
+                push!(bmap_points[i][], Point2f(chs[i].ξsinθ))
+                notify(bmap_points[i])
+            end
+        end
+    end
 
     return phs, chs
 end
