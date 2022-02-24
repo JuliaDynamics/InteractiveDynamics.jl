@@ -1,4 +1,4 @@
-# Billiards
+# Visualizations and Animations for Billiards
 
 ## Interactive billiard
 ```@raw html

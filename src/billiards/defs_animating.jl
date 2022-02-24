@@ -8,9 +8,12 @@ Expected inputs: vector of particles, a billiard, and optionally the output of
 `arcintervals`, which initializes plotted elements related with the boundary map
 
 Two helper structures for each particle:
-1. `ParticleHelper`: Contains quantities that are updated each `dt` step,
-   including the particle and its tail.
-2. `CollisionHelper`: Contains quantities that are only updated each collision.
+1. `ParticleHelper`: Contains quantities that are updated each `dt` step:
+   the particle, time elapsed since last collision, total time ellapsed, tail
+   (positions in the last `N` `dt`-sized steps).
+2. `CollisionHelper`: Contains quantities that are only updated at collisions:
+   index of obstacle to be collided with, time to next collision, total collisions so far,
+   boundary map point at upcoming collision.
 
 These two helpers are necessary to
 split the simulation into real-time stepping, instead of the traditional
@@ -22,8 +25,10 @@ Every plotted element is lifted from these observables.
 
 An exported high-level function `bdplot_animstep!(phs, chs, bd, dt; update, intervals)`
 progresses the simulation for one `dt` step. The user should be using this function for
-custom-made animations. The only thing the `update` keyword does is:
-`notify!(phs)`. The collision helper is always notified at collisions.
+custom-made animations. The only thing the `update` keyword does is `notify!(phs)`.
+The collision helper is always notified at collisions.
+They keyword `intervals` is `nothing` by default, but if it is `arcintervals(bd)` instead,
+computations that map to boundary map are also done at collisions.
 """
 
 ######################################################################################
