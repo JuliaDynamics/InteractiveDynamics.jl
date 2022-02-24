@@ -80,6 +80,19 @@ function bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0
         notify(ps0) # simply trigger initial particles change
     end
 
-    # TODO: Selecting a line
+    # Selecting a line and making new particles
+    ax = content(fig[1,1][1,1])
+    MakieLayout.deactivate_interaction!(ax, :rectanglezoom)
+    sline = select_line(ax.scene)
+    dx = 0.001 # TODO: keyword
+    ω0 = DynamicalBilliards.ismagnetic(ps0[][1]) ? ps0[][1].ω : nothing
+    N = length(ps0[])
+    on(sline) do val
+        pos = val[1]
+        dir = val[2] - val[1]
+        φ = atan(dir[2], dir[1])
+        ps0[] = DynamicalBilliards.particlebeam(pos..., φ, N, dx, ω0, eltype(bd))
+    end
+
 end
 
