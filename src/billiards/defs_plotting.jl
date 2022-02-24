@@ -119,7 +119,7 @@ end
 
 
 function obstacle_axis!(figlocation, intervals)
-    bmapax = Axis(figlocation)
+    bmapax = Axis(figlocation; alignmode = Inside())
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
@@ -138,7 +138,7 @@ function obstacle_axis!(figlocation, intervals)
     ylims!(bmapax, -1, 1)
     xlims!(bmapax, 0, intervals[end])
 
-    obax = Axis(figlocation)
+    obax = Axis(figlocation; alignmode = Inside())
     MakieLayout.deactivate_interaction!(obax, :rectanglezoom)
     obax.xticks = (obstacle_ticks, obstacle_ticklabels)
     obax.xaxisposition = :top

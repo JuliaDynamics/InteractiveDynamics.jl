@@ -5,16 +5,16 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
         playback_controls = true,
         dt = 0.001,
         plot_bmap = false,
-        # backgroundcolor = DEFAULT_BG,
+        backgroundcolor = DEFAULT_BG,
         kwargs...
     )
-    fig = Figure()
-    primary_layout = fig[1,1] = GridLayout()
-    ax = Axis(primary_layout[1,1])
+    fig = Figure(;backgroundcolor)
+    primary_layout = fig[:,1] = GridLayout()
+    ax = Axis(primary_layout[1,1]; backgroundcolor = RGBAf(1,1,1,0))
     if plot_bmap
         resize!(fig.scene, (2fig.scene.px_area[].widths[1], fig.scene.px_area[].widths[2]))
         intervals = DynamicalBilliards.arcintervals(bd)
-        bmax = obstacle_axis!(fig[1,2], intervals)
+        bmax = obstacle_axis!(fig[:,2], intervals)
     else
         bmax = nothing
         intervals = nothing
@@ -50,21 +50,23 @@ end
 # Internal interaction code
 ######################################################################################
 function bdplot_animation_controls(fig, primary_layout)
-    control_layout = primary_layout[2,1] = GridLayout(tellheight = true, tellwidth = false)
+    control_layout = primary_layout[2,:] = GridLayout(tellheight = true, tellwidth = false)
 
+    height = 30
     resetbutton = Button(fig;
         label = "reset", buttoncolor = RGBf(0.8, 0.8, 0.8),
-        height = 40, width = 80
+        height, width = 70
     )
     runbutton = Button(fig; label = "run",
-        buttoncolor = RGBf(0.8, 0.8, 0.8), height = 40, width = 80
+        buttoncolor = RGBf(0.8, 0.8, 0.8), height, width = 70
     )
-    stepslider = labelslider!(fig, "steps", 1:100, startvalue=1)
+    stepslider = labelslider!(fig, "steps", 1:100; startvalue=1, height)
     # put them in the layout
-    control_layout[1,1] = resetbutton
-    control_layout[1,2] = runbutton
-    control_layout[1,3] = stepslider.layout
+    control_layout[:,1] = resetbutton
+    control_layout[:,2] = runbutton
+    control_layout[:,3] = stepslider.layout
     isrunning = Observable(false)
+    rowsize!(primary_layout, 2, height)
     return isrunning, resetbutton.clicks, runbutton.clicks, stepslider.slider.value
 end
 

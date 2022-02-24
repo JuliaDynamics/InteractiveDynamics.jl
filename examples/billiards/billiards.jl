@@ -1,7 +1,6 @@
 using DynamicalBilliards, InteractiveDynamics, GLMakie
 
 N = 100
-colors = :dense
 colors = [GLMakie.RGBAf(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 
 # Uncomment any of the following to get the billiard you want:
@@ -17,16 +16,14 @@ bd = billiard_mushroom()
 ps = particlebeam(randominside_xyφ(bd)..., N, 0.01, nothing)
 
 # Interact a bit
-fig, phs, chs = bdplot_interactive(bd, ps; tail_length = 1000);
+fig, phs, chs = bdplot_interactive(bd, ps; tail_length = 1000, colors);
 display(fig)
 
 # %% Boundary map
 N = 10
 ps =  [randominside(bd, 1.0) for i in 1:10]
 fig, phs, chs = bdplot_interactive(bd, ps; plot_bmap = true);
-display(fig)
-
-
+fig
 
 
 # %% Add another plot: timeseries of distance of first two particles:
