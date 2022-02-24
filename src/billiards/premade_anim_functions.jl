@@ -1,7 +1,8 @@
-using DynamicalBilliards, InteractiveDynamics, GLMakie
+######################################################################################
+# Exported functions
+######################################################################################
 function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
-        add_controls = true,
-        sleept = nothing,
+        playback_controls = true,
         dt = 0.001,
         plot_bmap = false,
         # backgroundcolor = DEFAULT_BG,
@@ -15,21 +16,25 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     else
         bmax = nothing
     end
+
     phs, chs = bdplot_plotting_init!(ax, bd, ps; bmax, kwargs...)
-    ######################################################################################
-    # Controls and stepping
-    # Controls and stuff are here so that a video function can be made easily;
-    # the axis only initializes and binds the observables
-    # TODO: Controls
-    if add_controls
+    ps0 = Observable(deepcopy(ps))
+
+    if playback_controls
         control_observables = bdplot_animation_controls(fig, primary_layout)
-        bdplot_control_actions!(control_observables, phs, chs, bd, dt)
+        bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0)
     end
-    # billiard_animstep!(phs, chs, bd, dt; update = true)
 
     return fig, phs, chs
 end
 
+function bdplot_video(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
+    # TODO:
+end
+
+######################################################################################
+# Internal interaction code
+######################################################################################
 function bdplot_animation_controls(fig, primary_layout)
     control_layout = primary_layout[2,1] = GridLayout(tellheight = true, tellwidth = false)
 
@@ -49,17 +54,14 @@ function bdplot_animation_controls(fig, primary_layout)
     return isrunning, resetbutton.clicks, runbutton.clicks, stepslider.slider.value
 end
 
-function bdplot_control_actions!(control_observables, phs, chs, bd, dt)
+function bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0)
     isrunning, resetbutton, runbutton, stepslider = control_observables
 
     on(runbutton) do clicks; isrunning[] = !isrunning[]; end
     on(runbutton) do clicks
-        @async while isrunning[]
+    @async while isrunning[] # without `@async`, Julia "freezes" in this loop
             n = stepslider[]
             for _ in 1:n-1
-                # TODO: Tail length is affected by dt with current design...
-                # TODO: I think the solution is to put the tail back
-                # into the ParticleHelper
                 bdplot_animstep!(phs, chs, bd, dt; update = false)
             end
             bdplot_animstep!(phs, chs, bd, dt; update = true)
@@ -68,34 +70,16 @@ function bdplot_control_actions!(control_observables, phs, chs, bd, dt)
         end
     end
 
+    # Whenever initial particles are changed, trigger reset update
+    on(ps0) do ps
+        phs_vals, chs_vals = helpers_from_particles(deepcopy(ps), bd, length(phs[][1].tail))
+        phs[] = phs_vals
+        chs[] = chs_vals
+    end
+    on(resetbutton) do clicks
+        notify(ps0) # simply trigger initial particles change
+    end
 
-    # TODO:
+    # TODO: Selecting a line
 end
 
-
-function bdplot_video(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
-    # TODO:
-end
-
-
-# New example code:
-using DynamicalBilliards, InteractiveDynamics, GLMakie
-
-N = 100
-colors = :dense
-colors = [GLMakie.RGBAf(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
-
-# Uncomment any of the following to get the billiard you want:
-bd = billiard_stadium()
-# bd = billiard_mushroom()
-# bd = billiard_hexagonal_sinai(0.5, 1.0)
-# bd = billiard_sinai(0.25f0, 1f0, 1f0)
-# bd = Billiard(Antidot(Float32[0, 0], 0.5f0, false))
-# bd, = billiard_logo(T = Float32)
-
-# ps = [MagneticParticle(1, 0.6 + 0.0005*i, 0, 1) for i in 1:N]
-# ps = [Particle(1, 0.6 + 0.00005*i, 0) for i in 1:N]
-ps = particlebeam(0.8, 0.6, π/4, N, 0.01, nothing)
-
-fig, phs, chs = bdplot_interactive(bd, ps; tail_length = 1000);
-display(fig)

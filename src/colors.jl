@@ -6,11 +6,12 @@ const DEFAULT_BG = RGBf(1.0, 1.0, 1.0)
 using Makie: px
 
 COLORSCHEME = [
-    "#6F4AC7",
-    "#2DB9C5",
+    "#6D44D0",
+    "#2CB3BF",
     "#1B1B1B",
-    "#E82727",
-    "#004E41",
+    "#DA5210",
+    "#866373",
+    "#03502A",
 ]
 JULIADYNAMICS_COLORS = to_color.(COLORSCHEME)
 

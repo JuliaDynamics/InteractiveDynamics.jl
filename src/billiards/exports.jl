@@ -1,6 +1,3 @@
 export bdplot, bdplot!
 export bdplot_animstep!
-export interactive_billiard
-export interactive_billiard_bmap
-export billiard_video
-export billiard_video_timeseries
+export bdplot_interactive

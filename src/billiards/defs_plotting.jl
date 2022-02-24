@@ -1,5 +1,5 @@
 # DynamicalBilliards.jl constants
-SV = DynamicalBilliards.SV
+SVector = DynamicalBilliards.SVector
 Obstacle = DynamicalBilliards.Obstacle
 Billiard = DynamicalBilliards.Billiard
 AbstractParticle = DynamicalBilliards.AbstractParticle

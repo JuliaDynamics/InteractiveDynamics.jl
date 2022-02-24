@@ -67,9 +67,8 @@ function helpers_from_particles(
         ph, ch = helpers_from_particle(ps[i], bd, L, intervals)
         push!(phs, ph); push!(chs, ch)
     end
-    return Observable(phs), Observable(chs)
+    return phs, chs
 end
-
 
 
 ######################################################################################
@@ -151,7 +150,8 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         to_color.(colors)
     end
     # Instantiate the helper observables
-    phs, chs = helpers_from_particles(ps, bd, tail_length)
+    phs_vals, chs_vals = helpers_from_particles(ps, bd, tail_length)
+    phs = Observable(phs_vals); chs = Observable(chs_vals)
 
     ######################################################################################
     # Initialize plot elements and link them via Observable pipeline
