@@ -37,19 +37,25 @@ function lighten_color(c, f = 1.2)
 end
 
 # JULIADYNAMICS_CMAP = [
-#     lighten_color(JULIADYNAMICS_COLORS[3], 1.1),
-#     darken_color(JULIADYNAMICS_COLORS[1], 1.2),
-#     lighten_color(JULIADYNAMICS_COLORS[1], 1.2),
-#     lighten_color(JULIADYNAMICS_COLORS[2], 1.0),
-#     lighten_color(JULIADYNAMICS_COLORS[6], 3.5),
+    # darken_color(JULIADYNAMICS_COLORS[1], x)
+    # for x in range(3.0; step = -0.2, length = 15)
+
+
+    # darken_color(JULIADYNAMICS_COLORS[1], 2.0),
+    # JULIADYNAMICS_COLORS[1],
+    # lighten_color(JULIADYNAMICS_COLORS[1], 1.5),
+
+    # (lighten_color(JULIADYNAMICS_COLORS[1], 2.5) +
+    #  lighten_color(JULIADYNAMICS_COLORS[2], 3)
+    # )/2,
 # ]
-JULIADYNAMICS_CMAP = Reverse(:dense)
+JULIADYNAMICS_CMAP = reverse(cgrad(:dense)[20:end])
 
 # JULIADYNAMICS_CMAP_DIVERGING = [
 #     lighten_color(JULIADYNAMICS_COLORS[1], 2.2),
 #     lighten_color(JULIADYNAMICS_COLORS[1], 1.0),
 #     darken_color(JULIADYNAMICS_COLORS[3], 2.0),
-#     lighten_color(JULIADYNAMICS_COLORS[2], 1.0),
+#     lighten_color(JULIADYNAMICS_COLORS[2] , 1.0),
 #     lighten_color(JULIADYNAMICS_COLORS[2], 2.0),
 # ]
 JULIADYNAMICS_CMAP_DIVERGING = :curl

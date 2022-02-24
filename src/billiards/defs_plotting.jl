@@ -54,10 +54,10 @@ function bdplot!(ax, bd::Billiard; kwargs...)
     dx = xmax - xmin; dy = ymax - ymin
     for obst in bd; bdplot!(ax, obst; kwargs...); end
     if !isinf(xmin) && !isinf(xmax)
-        Makie.xlims!(ax, xmin - 0.1dx, xmax + 0.1dx)
+        Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
     end
     if !isinf(ymin) && !isinf(ymax)
-        Makie.ylims!(ax, ymin - 0.1dy, ymax + 0.1dy)
+        Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
     end
     remove_axis!(ax)
     ax.aspect = DataAspect()
@@ -115,4 +115,38 @@ function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
         linewidth  = 2,
     )
     return xs, ys
+end
+
+
+function obstacle_axis!(figlocation, intervals)
+    bmapax = Axis(figlocation)
+    bmapax.xlabel = "arclength, ξ"
+    bmapax.ylabel = "sine of normal angle, sin(θ)"
+    bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
+
+    ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
+    bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
+    for (i, ξ) in enumerate(intervals[2:end-1])
+        lines!(bmapax, [Point2f(ξ, -1), Point2f(ξ, 1)]; linestyle = :dash, color = :black)
+    end
+    obstacle_ticklabels = String[]
+    obstacle_ticks = Float32[]
+    for (i, ξ) in enumerate(intervals[1:end-1])
+        push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
+        push!(obstacle_ticklabels, string(i))
+    end
+    ylims!(bmapax, -1, 1)
+    xlims!(bmapax, 0, intervals[end])
+
+    obax = Axis(figlocation)
+    MakieLayout.deactivate_interaction!(obax, :rectanglezoom)
+    obax.xticks = (obstacle_ticks, obstacle_ticklabels)
+    obax.xaxisposition = :top
+    obax.xticklabelalign = (:center, :bottom)
+    obax.xlabel = "obstacle index"
+    obax.xgridvisible = false
+    hideydecorations!(obax)
+    hidespines!(obax)
+    xlims!(obax, 0, intervals[end])
+    return bmapax
 end

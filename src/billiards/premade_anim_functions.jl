@@ -13,13 +13,8 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     ax = Axis(primary_layout[1,1])
     if plot_bmap
         resize!(fig.scene, (2fig.scene.px_area[].widths[1], fig.scene.px_area[].widths[2]))
-        bmax = Axis(fig[1,2])
         intervals = DynamicalBilliards.arcintervals(bd)
-        # Make axis pretty
-        bmax.xlabel = "arclength, ξ"
-        bmax.ylabel = "sine of normal angle, sin(θ)"
-        bmax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)
-        add_obstacle_axis!(fig, intervals, bmax)
+        bmax = obstacle_axis!(fig[1,2], intervals)
     else
         bmax = nothing
         intervals = nothing
@@ -28,7 +23,7 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     phs, chs = bdplot_plotting_init!(ax, bd, ps; bmax, kwargs...)
     ps0 = Observable(deepcopy(ps))
 
-    if playback_controls # TODO: Move playback controls to function for show/hide
+    if playback_controls
         control_observables = bdplot_animation_controls(fig, primary_layout)
         bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0, intervals)
     end
@@ -36,37 +31,19 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     return fig, phs, chs
 end
 
-function bdplot_video(bd::Billiard, ps::Vector{<:AbstractParticle}; kwargs...)
-    # TODO:
-end
-
-
-function add_obstacle_axis!(fig, intervals, bmapax)
-    ticklabels = ["$(round(ξ, sigdigits=4))" for ξ in intervals[2:end-1]]
-    bmapax.xticks = (Float32[intervals[2:end-1]...], ticklabels)
-    for (i, ξ) in enumerate(intervals[2:end-1])
-        lines!(bmapax, [Point2f(ξ, -1), Point2f(ξ, 1)]; linestyle = :dash, color = :black)
+function bdplot_video(file, bd::Billiard, ps::Vector{<:AbstractParticle};
+        dt = 0.001, frames = 1000, steps = 10, plot_bmap = false,
+        framerate = 60, kwargs...
+    )
+    fig, phs, chs = bdplot_interactive(bd, ps; playback_controls = false, plot_bmap, kwargs...)
+    intervals = !plot_bmap ? nothing : DynamicalBilliards.arcintervals(bd)
+    record(fig, file, 1:frames; framerate) do j
+        for _ in 1:steps-1
+            bdplot_animstep!(phs, chs, bd, dt; update = false, intervals)
+        end
+        bdplot_animstep!(phs, chs, bd, dt; update = true, intervals)
     end
-    obstacle_ticklabels = String[]
-    obstacle_ticks = Float32[]
-    for (i, ξ) in enumerate(intervals[1:end-1])
-        push!(obstacle_ticks, ξ + (intervals[i+1] - ξ)/2)
-        push!(obstacle_ticklabels, string(i))
-    end
-    ylims!(bmapax, -1, 1)
-    xlims!(bmapax, 0, intervals[end])
-
-    obax = Axis(fig[1,2])
-    MakieLayout.deactivate_interaction!(obax, :rectanglezoom)
-    obax.xticks = (obstacle_ticks, obstacle_ticklabels)
-    obax.xaxisposition = :top
-    obax.xticklabelalign = (:center, :bottom)
-    obax.xlabel = "obstacle index"
-    obax.xgridvisible = false
-    hideydecorations!(obax)
-    hidespines!(obax)
-    xlims!(obax, 0, intervals[end])
-    return obax
+    return
 end
 
 ######################################################################################

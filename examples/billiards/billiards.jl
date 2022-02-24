@@ -52,5 +52,8 @@ for i in 1:10
 end
 bdplot_animstep!(phs, chs, bd, 0.001; update = true)
 
-
-# %%
+# %% Make a video with the premade function
+N = 10
+ps =  [randominside(bd, 1.0) for i in 1:10]
+bdplot_video("billiard.mp4", bd, ps; plot_bmap = false);
+bdplot_video("billiard_bmap.mp4", bd, ps; plot_bmap = true);

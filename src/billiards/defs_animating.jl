@@ -142,6 +142,7 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         plot_particles = true,
         particle_size = 5.0, # size of marker for scatter plot of particle balls
         velocity_size = 0.05, # size of multiplying the quiver
+        bmap_size = 4,
         bmax = nothing,
     )
 
@@ -196,7 +197,7 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
     if !isnothing(bmax)
         bmap_points = [Observable([Point2f(c.ξsinθ)]) for c in chs[]]
         for i in 1:N
-            scatter!(bmax, bmap_points[i]; color = cs[i])
+            scatter!(bmax, bmap_points[i]; color = cs[i], markersize = bmap_size)
         end
         on(chs) do chs
             for i in 1:N
