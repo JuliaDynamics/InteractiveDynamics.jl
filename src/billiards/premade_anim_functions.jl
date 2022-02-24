@@ -1,3 +1,4 @@
+using DynamicalBilliards, InteractiveDynamics, GLMakie
 function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
         add_controls = true,
         sleept = nothing,
@@ -20,8 +21,10 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
     # Controls and stuff are here so that a video function can be made easily;
     # the axis only initializes and binds the observables
     # TODO: Controls
-    control_observables = bdplot_animation_controls(fig, primary_layout)
-    bdplot_control_actions!(control_observables, phs, chs, bd, dt)
+    if add_controls
+        control_observables = bdplot_animation_controls(fig, primary_layout)
+        bdplot_control_actions!(control_observables, phs, chs, bd, dt)
+    end
     # billiard_animstep!(phs, chs, bd, dt; update = true)
 
     return fig, phs, chs
@@ -57,9 +60,9 @@ function bdplot_control_actions!(control_observables, phs, chs, bd, dt)
                 # TODO: Tail length is affected by dt with current design...
                 # TODO: I think the solution is to put the tail back
                 # into the ParticleHelper
-                billiard_animstep!(phs, chs, bd, dt; update = false)
+                bdplot_animstep!(phs, chs, bd, dt; update = false)
             end
-            billiard_animstep!(phs, chs, bd, dt; update = true)
+            bdplot_animstep!(phs, chs, bd, dt; update = true)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
             yield()
         end
@@ -94,5 +97,5 @@ bd = billiard_stadium()
 # ps = [Particle(1, 0.6 + 0.00005*i, 0) for i in 1:N]
 ps = particlebeam(0.8, 0.6, π/4, N, 0.01, nothing)
 
-fig, phs, chs = bdplot_interactive(bd, ps; tail_length = 100);
+fig, phs, chs = bdplot_interactive(bd, ps; tail_length = 1000);
 display(fig)

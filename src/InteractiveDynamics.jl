@@ -19,7 +19,7 @@ function __init__()
     @require DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5" begin
         include("billiards/defs_plotting.jl")
         include("billiards/defs_animating.jl")
-        include("billiards/interactive_billiard.jl")
+        # include("billiards/interactive_billiard.jl")
         include("billiards/exports.jl")
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
