@@ -83,7 +83,7 @@ function bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0
     # Selecting a line and making new particles
     ax = content(fig[1,1][1,1])
     MakieLayout.deactivate_interaction!(ax, :rectanglezoom)
-    sline = select_line(ax.scene)
+    sline = select_line(ax.scene; color = JULIADYNAMICS_COLORS[1])
     dx = 0.001 # TODO: keyword
     ω0 = DynamicalBilliards.ismagnetic(ps0[][1]) ? ps0[][1].ω : nothing
     N = length(ps0[])
