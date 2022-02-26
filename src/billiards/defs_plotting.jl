@@ -16,6 +16,27 @@ obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, Dynami
 obls(::DynamicalBilliards.PeriodicWall) = :dotted
 oblw(::Obstacle) = 2.0
 
+"""
+    bdplot(x; kwargs...) → fig, ax
+    bdplot!(ax::Axis, x; kwargs...)
+Plot an object `x` from `DynamicalBilliards` into an axis (or a new figure).
+`x` can be an obstacle, a particle, a vector of particles, or a billiard.
+
+    bdplot!(ax,::Axis, o::Obstacle; kwargs...)
+Keywords are propagated to `lines!`. Functions `obfill, obcolor, obls, oblw` (not exported)
+decide global defaults for linecolor, fillcolor, linestyle, linewidth, when plotting obstacles.
+
+    bdplot!(ax,::Axis, bd::Billiard; clean = true, kwargs...)
+If `clean = true`, all axis elements are removed and an equal aspect ratio is establised.
+Other keywords are propagated to `lines!`.
+
+    bdplot!(ax,::Axis, ps::Vector{<:AbstractParticle}; kwargs...)
+Plot particles as a scatter plot (positions) and a quiver plot (velocities).
+Keywords `particle_size = 5, velocity_size = 0.05` set the size of plotted particles.
+Keyword `colors = JULIADYNAMICS_CMAP` decides the color of the particles, and can be
+either a colormap or a vector of colors with equal length to `ps`.
+The rest of the keywords are propagated to the scatter plot of the particles.
+"""
 function bdplot(args...; kwargs...)
     fig = Figure()
     ax = Axis(fig[1,1]; aspect = DataAspect())
@@ -24,7 +45,7 @@ function bdplot(args...; kwargs...)
 end
 
 function bdplot!(ax, o::T; kwargs...) where {T}
-    error("Element of type $T does not have a plotting definition yet.")
+    error("Object of type $T does not have a plotting definition yet.")
 end
 
 function bdplot!(ax, o::DynamicalBilliards.Semicircle; kwargs...)
@@ -34,34 +55,38 @@ function bdplot!(ax, o::DynamicalBilliards.Semicircle; kwargs...)
     p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
     lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
     kwargs...)
+    return
 end
 
 function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
     lines!(ax, Float32[w.sp[1],w.ep[1]], Float32[w.sp[2],w.ep[2]];
     color = obcolor(w), linewidth = oblw(w), kwargs...)
+    return
 end
 
 function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
-    θ = range(0, 2π; length = 700)
+    θ = range(0, 2π; length = 1000)
     p = [Point2f(cos(t)*o.r + o.c[1], sin(t)*o.r + o.c[2]) for t in θ]
-    poly!(ax, p; color = obfill(o), kwargs...)
-    lines!(ax, p; color = obcolor(o), linewidth = oblw(o), linestyle = obls(o),
-    kwargs...)
+    poly!(ax, p; color = obfill(o), strokecolor = obcolor(o), strokewidth = oblw(o),
+    linestyle = obls(o), kwargs...)
+    return
 end
 
-function bdplot!(ax, bd::Billiard; kwargs...)
-    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
-    dx = xmax - xmin; dy = ymax - ymin
+function bdplot!(ax, bd::Billiard; clean = true, kwargs...)
     for obst in bd; bdplot!(ax, obst; kwargs...); end
-    if !isinf(xmin) && !isinf(xmax)
-        Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
+    if clean
+        xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+        dx = xmax - xmin; dy = ymax - ymin
+        if !isinf(xmin) && !isinf(xmax)
+            Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
+        end
+        if !isinf(ymin) && !isinf(ymax)
+            Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
+        end
+        remove_axis!(ax)
+        ax.aspect = DataAspect()
     end
-    if !isinf(ymin) && !isinf(ymax)
-        Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
-    end
-    remove_axis!(ax)
-    ax.aspect = DataAspect()
-    return ax
+    return
 end
 
 function remove_axis!(ax)
@@ -86,35 +111,30 @@ function _estimate_vr(bd)
     vr = Float32(f/25)
 end
 
-function bdplot!(ax, bd, ps::Vector{<:AbstractParticle};
-    use_cell = true, kwargs...)
-    c = haskey(kwargs, :color) ? kwargs[:color] : Makie.RGBf(0,0,0)
+function bdplot!(ax, ps::Vector{<:AbstractParticle};
+        use_cell = true, velocity_size = 0.05, particle_size = 5, α = 0.9,
+        colors = JULIADYNAMICS_CMAP, kwargs...
+    )
     N = length(ps)
-    xs, ys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
-    vxs, vys = Observable(zeros(Float32, N)), Observable(zeros(Float32, N))
-
-    # need heuristic for ms and vr
-    ms = 6
-    vr = _estimate_vr(bd)
-    for i in 1:N
-        p = ps[i]
-        pos = use_cell ? p.pos + p.current_cell : p.pos
-        xs[][i] = pos[1]
-        ys[][i] = pos[2]
-        θ = atan(p.vel[2], p.vel[1])
-        vxs[][i] = vr*cos(θ)
-        vys[][i] = vr*sin(θ)
+    cs = if !(colors isa Vector) || length(colors) ≠ N
+        InteractiveDynamics.colors_from_map(colors, N, α)
+    else
+        to_color.(colors)
     end
-    # important: marker hack for zoom-independent size. Will change in the future
-    # to allow something like `markerspace = :display`
-    marker = Circle(Point2f(xs[][1], ys[][1]), Float32(1))
-
-    scatter!(ax, xs, ys; color = c, marker = marker, markersize = ms*px, strokewidth = 0.0)
-    arrows!(ax, xs, ys, vxs, vys;
-        normalize = false, arrowsize = 0.01px,
+    balls = [Point2f(use_cell ? p.pos + p.current_cell : p.pos) for p in ps]
+    vels = [Point2f(velocity_size*p.vel) for p in ps]
+    scatter!(
+        ax, balls; color = cs,
+        markersize = particle_size, strokewidth = 0.0, kwargs...
+    )
+    arrows!(
+        ax, balls, vels; arrowcolor = darken_color.(cs),
+        linecolor = darken_color.(cs),
+        normalize = false,
+        # arrowsize = particle_size*vr/3,
         linewidth  = 2,
     )
-    return xs, ys
+    return
 end
 
 

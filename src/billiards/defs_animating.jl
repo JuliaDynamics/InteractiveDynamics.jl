@@ -1,37 +1,5 @@
 using DataStructures: CircularBuffer
 ######################################################################################
-# Code outline
-######################################################################################
-BILLIARDS_ANIMATIONS_API = """
-## Description
-Expected inputs: vector of particles, a billiard, and optionally the output of
-`arcintervals`, which initializes plotted elements related with the boundary map
-
-Two helper structures for each particle:
-1. `ParticleHelper`: Contains quantities that are updated each `dt` step:
-   the particle, time elapsed since last collision, total time ellapsed, tail
-   (positions in the last `N` `dt`-sized steps).
-2. `CollisionHelper`: Contains quantities that are only updated at collisions:
-   index of obstacle to be collided with, time to next collision, total collisions so far,
-   boundary map point at upcoming collision.
-
-These two helpers are necessary to
-split the simulation into real-time stepping, instead of the traditional
-DynamicalBilliards.jl setup of discrete time stepping (1 step = 1 collision).
-
-The main thing returned to the user are two observables, one having vector
-of helpers (1) and the other having vector of helpers (2).
-Every plotted element is lifted from these observables.
-
-An exported high-level function `bdplot_animstep!(phs, chs, bd, dt; update, intervals)`
-progresses the simulation for one `dt` step. The user should be using this function for
-custom-made animations. The only thing the `update` keyword does is `notify!(phs)`.
-The collision helper is always notified at collisions.
-They keyword `intervals` is `nothing` by default, but if it is `arcintervals(bd)` instead,
-computations that map to boundary map are also done at collisions.
-"""
-
-######################################################################################
 # Struct definitions
 ######################################################################################
 mutable struct ParticleHelper{P, T<:Real}
@@ -40,6 +8,14 @@ mutable struct ParticleHelper{P, T<:Real}
     T::T           # total time ellapsed (only resets when resetting particles)
     tail::CircularBuffer{Point2f} # particle positions in last recorded steps
 end
+Base.show(io::IO, ::Type{ParticleHelper}) = print(io,
+"""
+Particle helper struct. Fields:
+    p::P           # particle
+    t::T           # time ellapsed (resets at each collision)
+    T::T           # total time ellapsed (only resets when resetting particles)
+    tail::CircularBuffer{Point2f} # particle positions in last recorded steps
+""")
 
 mutable struct CollisionHelper{T<:Real}
     i::Int         # index of obstacle to be collided with
@@ -47,6 +23,14 @@ mutable struct CollisionHelper{T<:Real}
     n::Int         # total collisions so far
     ξsinθ::SVector{2, T}  # boundary map point
 end
+Base.show(io::IO, ::Type{CollisionHelper}) = print(io,
+"""
+Collision helper struct. Fields:
+    i::Int         # index of obstacle to be collided with
+    tmin::T        # time to next collision
+    n::Int         # total collisions so far
+    ξsinθ::SVector{2, T}  # boundary map point
+""")
 
 function helpers_from_particle(p::AbstractParticle, bd::Billiard, L, intervals)
     T = eltype(p.pos)
@@ -140,16 +124,17 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         fade = true,
         tailwidth = 1,
         plot_particles = true,
-        particle_size = 5.0, # size of marker for scatter plot of particle balls
+        particle_size = 5, # size of marker for scatter plot of particle balls
         velocity_size = 0.05, # size of multiplying the quiver
         bmap_size = 4,
+        α = 0.9,
         bmax = nothing,
     )
 
     bdplot!(ax, bd)
     N = length(ps)
     cs = if !(colors isa Vector) || length(colors) ≠ N
-        InteractiveDynamics.colors_from_map(colors, N, 0.8)
+        InteractiveDynamics.colors_from_map(colors, N, α)
     else
         to_color.(colors)
     end
