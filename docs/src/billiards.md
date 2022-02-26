@@ -47,8 +47,42 @@ bdplot!(ax, [p1, p2]; colors, particle_size = 10, marker = markers)
 fig
 ```
 
-### Periodic billiard plots
-#TODO:!!!!
+### Periodic billiard plot
+Rectangle periodicity:
+```@example BILLIARDS
+using DynamicalBilliards, InteractiveDynamics, CairoMakie
+
+r = 0.25
+bd = billiard_rectangle(2, 1; setting = "periodic")
+d = Disk([0.5, 0.5], r)
+d2 = Ellipse([1.5, 0.5], 1.5r, 2r/3)
+bd = Billiard(bd.obstacles..., d, d2)
+p = Particle(1.0, 0.5, 0.1)
+xt, yt, vxt, vyt, t = DynamicalBilliards.timeseries!(p, bd, 10)
+fig, ax = bdplot(bd, extrema(xt)..., extrema(yt)...)
+lines!(ax, xt, yt)
+bdplot!(ax, p; velocity_size = 0.1)
+fig
+```
+
+Hexagonal periodicity:
+```@example BILLIARDS
+using DynamicalBilliards, InteractiveDynamics, CairoMakie
+
+bd = billiard_hexagonal_sinai(0.3, 1.50; setting = "periodic")
+d = Disk([0.7, 0], 0.2)
+d2 = Antidot([0.7/2, 0.65], 0.35)
+bd = Billiard(bd..., d, d2)
+
+p = MagneticParticle(-0.5, 0.5, π/5, 1.0)
+
+xt, yt = DynamicalBilliards.timeseries(p, bd, 10)
+fig, ax = bdplot(bd, extrema(xt)..., extrema(yt)...)
+lines!(ax, xt, yt)
+bdplot!(ax, p; velocity_size = 0.1)
+fig
+```
+
 
 ## Interactive GUI
 ```@dos
@@ -99,8 +133,8 @@ fig, phs, chs = bdplot_interactive(bd, ps; playback_controls=false, resolution =
 Then, we add some axis
 ```@example BILLIARDS
 layout = fig[2,1] = GridLayout()
-axd = Axis(layout[1,1]; ylabel = "log(⟨d⟩)")
-axs = Axis(layout[2,1]; ylabel = "std", xlabel = "time")
+axd = Axis(layout[1,1]; ylabel = "log(⟨d⟩)", align = Outside())
+axs = Axis(layout[2,1]; ylabel = "std", xlabel = "time", align = Outside())
 hidexdecorations!(axd; grid = false)
 rowsize!(fig.layout, 1, Auto(2))
 fig

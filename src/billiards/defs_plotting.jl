@@ -1,4 +1,6 @@
-# DynamicalBilliards.jl constants
+######################################################################################
+# Constants and API
+######################################################################################
 SVector = DynamicalBilliards.SVector
 Obstacle = DynamicalBilliards.Obstacle
 Billiard = DynamicalBilliards.Billiard
@@ -19,16 +21,22 @@ oblw(::Obstacle) = 2.0
 """
     bdplot(x; kwargs...) → fig, ax
     bdplot!(ax::Axis, x; kwargs...)
-Plot an object `x` from `DynamicalBilliards` into an axis (or a new figure).
+Plot an object `x` from `DynamicalBilliards` into a given axis (or a new figure).
 `x` can be an obstacle, a particle, a vector of particles, or a billiard.
 
     bdplot!(ax,::Axis, o::Obstacle; kwargs...)
-Keywords are propagated to `lines!`. Functions `obfill, obcolor, obls, oblw` (not exported)
+Keywords are propagated to `lines!` or `poly!`.
+Functions `obfill, obcolor, obls, oblw` (not exported)
 decide global defaults for linecolor, fillcolor, linestyle, linewidth, when plotting obstacles.
 
     bdplot!(ax,::Axis, bd::Billiard; clean = true, kwargs...)
 If `clean = true`, all axis elements are removed and an equal aspect ratio is establised.
-Other keywords are propagated to `lines!`.
+Other keywords are propagated to the obstacle plots.
+
+    bdplot!(ax,::Axis, bd::Billiard, xmin, xmax, ymin, ymax; kwargs...)
+This call signature plots periodic billiards: it plots `bd` along its periodic vectors
+so that it fills the total amount of space specified by `xmin, xmax, ymin, ymax`.
+
 
     bdplot!(ax,::Axis, ps::Vector{<:AbstractParticle}; kwargs...)
 Plot particles as a scatter plot (positions) and a quiver plot (velocities).
@@ -44,6 +52,9 @@ function bdplot(args...; kwargs...)
     return fig, ax
 end
 
+######################################################################################
+# Obstacles, particles
+######################################################################################
 function bdplot!(ax, o::T; kwargs...) where {T}
     error("Object of type $T does not have a plotting definition yet.")
 end
@@ -72,45 +83,15 @@ function bdplot!(ax, o::DynamicalBilliards.Circular; kwargs...)
     return
 end
 
-function bdplot!(ax, bd::Billiard; clean = true, kwargs...)
-    for obst in bd; bdplot!(ax, obst; kwargs...); end
-    if clean
-        xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
-        dx = xmax - xmin; dy = ymax - ymin
-        if !isinf(xmin) && !isinf(xmax)
-            Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
-        end
-        if !isinf(ymin) && !isinf(ymax)
-            Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
-        end
-        remove_axis!(ax)
-        ax.aspect = DataAspect()
-    end
+function bdplot!(ax, o::DynamicalBilliards.Ellipse; kwargs...)
+    θ = range(0, 2π; length = 1000)
+    p = [Point2f(cos(t)*o.a + o.c[1], sin(t)*o.b + o.c[2]) for t in θ]
+    poly!(ax, p; color = obfill(o), strokecolor = obcolor(o), strokewidth = oblw(o),
+    linestyle = obls(o), kwargs...)
     return
 end
 
-function remove_axis!(ax)
-    ax.bottomspinevisible = false
-    ax.leftspinevisible = false
-    ax.topspinevisible = false
-    ax.rightspinevisible = false
-    ax.xgridvisible = false
-    ax.ygridvisible = false
-    ax.xticksvisible = false
-    ax.yticksvisible = false
-    ax.xticklabelsvisible = false
-    ax.yticklabelsvisible = false
-end
-
 bdplot!(ax, p::AbstractParticle; kwargs...) = bdplot!(ax, [p]; kwargs...)
-
-function _estimate_vr(bd)
-    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
-    f = max((xmax-xmin), (ymax-ymin))
-    isinf(f) && error("cellsize of billiard is infinite")
-    vr = Float32(f/25)
-end
-
 function bdplot!(ax, ps::Vector{<:AbstractParticle};
         use_cell = true, velocity_size = 0.05, particle_size = 5, α = 0.9,
         colors = JULIADYNAMICS_CMAP, kwargs...
@@ -137,6 +118,128 @@ function bdplot!(ax, ps::Vector{<:AbstractParticle};
     return
 end
 
+######################################################################################
+# Billiard
+######################################################################################
+function bdplot!(ax, bd::Billiard; clean = true, kwargs...)
+    for obst in bd; bdplot!(ax, obst; kwargs...); end
+    if clean
+        xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+        dx = xmax - xmin; dy = ymax - ymin
+        if !isinf(xmin) && !isinf(xmax)
+            Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
+        end
+        if !isinf(ymin) && !isinf(ymax)
+            Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
+        end
+        remove_axis!(ax)
+        ax.aspect = DataAspect()
+    end
+    return
+end
+
+function bdplot!(ax, bd::Billiard, xmin::Real, xmax, ymin, ymax; clean=false, kwargs...)
+    n = count(x -> typeof(x) <: DynamicalBilliards.PeriodicWall, bd)
+    if n == 6
+        plot_periodic_hexagon!(ax, bd, xmin, xmax, ymin, ymax; kwargs...)
+    elseif n ∈ (2, 4)
+        plot_periodic_rectangle!(ax, bd, xmin, xmax, ymin, ymax; kwargs...)
+    else
+        error("Periodic billiards can only have 2, 4 or 6 periodic walls.")
+    end
+    dx = xmax - xmin; dy = ymax - ymin
+    Makie.xlims!(ax, xmin - 0.01dx, xmax + 0.01dx)
+    Makie.ylims!(ax, ymin - 0.01dy, ymax + 0.01dy)
+    if clean
+        remove_axis!(ax)
+        ax.aspect = DataAspect()
+    end
+    return ax
+end
+
+
+function plot_periodic_rectangle!(ax, bd, xmin, xmax, ymin, ymax; kwargs...)
+    # Cell limits:
+    cellxmin, cellymin, cellxmax, cellymax = DynamicalBilliards.cellsize(bd)
+    dcx = cellxmax - cellxmin
+    dcy = cellymax - cellymin
+    # Find displacement vectors
+    dx = (floor((xmin - cellxmin)/dcx):1:ceil((xmax - cellxmax)/dcx)) * dcx
+    dy = (floor((ymin - cellymin)/dcy):1:ceil((ymax - cellymax)/dcy)) * dcy
+    # Plot displaced Obstacles
+    toplot = nonperiodic(bd)
+    for x in dx
+        for y in dy
+            disp = SVector(x,y)
+            for obst in toplot
+                bdplot!(ax, DynamicalBilliards.translate(obst, disp); kwargs...)
+            end
+        end
+    end
+end
+
+
+function plot_periodic_hexagon!(ax, bd, xmin, xmax, ymin, ymax; kwargs...)
+    # find first periodic wall to establish scale
+    v = 1
+    while !(typeof(bd[v]) <: DynamicalBilliards.PeriodicWall); v += 1; end
+    space = sqrt(sum(bd[v].sp - bd[v].ep).^2)*√3
+    # norm(bd[v].sp - bd[v].ep)
+    basis_a = space*SVector(0.0, 1.0)
+    basis_b = space*SVector(√3/2, 1/2)
+    basis_c = space*SVector(√3, 0.0)
+
+    # Cell limits:
+    cellxmin, cellymin, cellxmax, cellymax = DynamicalBilliards.cellsize(bd)
+    dcx = cellxmax - cellxmin
+    dcy = cellymax - cellymin
+    jmin = Int((ymin - cellymin - dcy/2)÷space) - 1
+    jmax = Int((ymax - cellymax + dcy/2)÷space) + 1
+    imin = Int((xmin - cellxmin - dcx/2)÷(√3*space)) - 1
+    imax = Int((xmax - cellxmax + dcx/2)÷(√3*space)) + 1
+
+    obstacles = nonperiodic(bd)
+    for d in obstacles
+        for j ∈ jmin:jmax
+            for i ∈ imin:imax
+                bdplot!(ax, DynamicalBilliards.translate(d, j*basis_a + i*basis_c); kwargs...)
+                bdplot!(ax, DynamicalBilliards.translate(d, j*basis_a + i*basis_c + basis_b); kwargs...)
+            end
+        end
+    end
+end
+
+function nonperiodic(bd::Billiard)
+    toplot = Obstacle{eltype(bd)}[]
+    for obst in bd
+        typeof(obst) <: DynamicalBilliards.PeriodicWall && continue
+        push!(toplot, obst)
+    end
+    return toplot
+end
+
+function remove_axis!(ax)
+    ax.bottomspinevisible = false
+    ax.leftspinevisible = false
+    ax.topspinevisible = false
+    ax.rightspinevisible = false
+    ax.xgridvisible = false
+    ax.ygridvisible = false
+    ax.xticksvisible = false
+    ax.yticksvisible = false
+    ax.xticklabelsvisible = false
+    ax.yticklabelsvisible = false
+end
+
+######################################################################################
+# Misc.
+######################################################################################
+function _estimate_vr(bd)
+    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
+    f = max((xmax-xmin), (ymax-ymin))
+    isinf(f) && error("cellsize of billiard is infinite")
+    vr = Float32(f/25)
+end
 
 function obstacle_axis!(figlocation, intervals)
     bmapax = Axis(figlocation; alignmode = Inside())

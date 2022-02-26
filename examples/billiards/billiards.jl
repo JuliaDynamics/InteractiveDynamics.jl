@@ -54,3 +54,16 @@ N = 10
 ps =  [randominside(bd, 1.0) for i in 1:10]
 bdplot_video("billiard.mp4", bd, ps; plot_bmap = false);
 bdplot_video("billiard_bmap.mp4", bd, ps; plot_bmap = true);
+
+# %% Periodic billiards example
+r = 0.25
+bd = billiard_rectangle(2, 1; setting = "periodic")
+d = Disk([0.5, 0.5], r)
+d2 = Ellipse([1.5, 0.5], 1.5r, 2r/3)
+bd = Billiard(bd.obstacles..., d, d2)
+p = Particle(1.0, 0.5, 0.1)
+xt, yt, vxt, vyt, t = DynamicalBilliards.timeseries!(p, bd, 10)
+fig, ax = bdplot(bd, extrema(xt)..., extrema(yt)...)
+lines!(ax, xt, yt)
+bdplot!(ax, p; velocity_size = 0.1)
+fig
