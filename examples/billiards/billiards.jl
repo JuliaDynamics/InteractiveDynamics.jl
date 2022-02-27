@@ -28,9 +28,9 @@ ps = vcat(
     [MushroomTools.randomchaotic(l, w, r) for i in 1:N],
     [MushroomTools.randomregular(l, w, r) for i in 1:N],
 )
-colors = [i ≤ N ? RGBf(0.1, 0.6 + 0.3rand(), 0) : RGBf(0.5, 0, 0.6 + 0.4rand()) for i in 1:2N]
+colors = [i ≤ N ? RGBf(0.1, 0.4 + 0.3rand(), 0) : RGBf(0.4, 0, 0.6 + 0.4rand()) for i in 1:2N]
 fig, phs, chs = bdplot_interactive(bd, ps;
-    colors, plot_bmap = true, bmap_size = 8
+    colors, plot_bmap = true, bmap_size = 8, tail_length = 2000,
 );
 fig
 
