@@ -1,8 +1,12 @@
 # # Visualizations and Animations for Billiards
 
-# All plotting and animating for [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/) lies within a few well-defined functions from [InteractiveDynamics.jl](https://juliadynamics.github.io/InteractiveDynamics.jl/dev/) that use the [Makie](https://makie.juliaplots.org/stable/) ecosystem.
+# All plotting and animating for
+# [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/)
+# lies within a few well-defined functions from
+# [InteractiveDynamics.jl](https://juliadynamics.github.io/InteractiveDynamics.jl/dev/)
+# that use the [Makie](https://makie.juliaplots.org/stable/) ecosystem.
 
-# - For static plotting, you can use the function [`bdplot`](@ref).
+# - For static plotting, you can use the function [`bdplot`](@ref) and [`bdplot_boundarymap`](@ref).
 # - For interacting/animating, you can use the function [`bdplot_interactive`](@ref).
 #   This function also allows you to create custom animations, see [Custom Billiards Animations](@ref).
 # - For producing videos of time evolution of particles in a billiard, use [`bdplot_video`](@ref).
@@ -10,6 +14,7 @@
 # ## Plotting
 # ```@docs
 # bdplot
+# bdplot_boundarymap
 # ```
 # ### Plotting an obstacle with keywords
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
@@ -77,6 +82,21 @@ xt, yt = DynamicalBilliards.timeseries(p, bd, 10)
 fig, ax = bdplot(bd, extrema(xt)..., extrema(yt)...)
 lines!(ax, xt, yt)
 bdplot!(ax, p; velocity_size = 0.1)
+fig
+
+### Boundary map plot
+using DynamicalBilliards, InteractiveDynamics, CairoMakie
+
+bd = billiard_mushroom()
+
+n = 100 # how many particles to create
+t = 200 # how long to evolve each one
+
+bmap, arcs = parallelize(boundarymap, bd, t, n)
+
+colors = [randomcolor() for i in 1:n] # random colors
+
+fig, ax = bdplot_boundarymap(bmap, arcs, color = colors)
 fig
 
 # ## Interactive GUI

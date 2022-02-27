@@ -179,6 +179,7 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         )
     end
 
+    # Boundary map
     if !isnothing(bmax)
         bmap_points = [Observable([Point2f(c.ξsinθ)]) for c in chs[]]
         for i in 1:N
