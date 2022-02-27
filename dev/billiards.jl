@@ -200,21 +200,18 @@ fig
 # the style of [3Blue1Brown](https://www.3blue1brown.com/).
 # %% #src
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
-
 BLUE = "#7BC3DC"
 BROWN = "#8D6238"
 colors = [BLUE, BROWN]
 ## Overwrite default color of obstacles to white (to fit with black background)
-InteractiveDynamics.obcolor(::Obstacle) = RGBf(1,1,1)
 bd = billiard_stadium(1, 1)
 ps = particlebeam(1.0, 0.6, 0, 200, 0.01)
-
+## Notice that keyword `color = :white` is propagated to billiard plot
 bdplot_video(
     "3b1billiard.mp4", bd, ps;
     frames = 120, colors, dt = 0.01, tail_length = 100,
-    backgroundcolor = :black, framerate = 10,
+    backgroundcolor = :black, framerate = 10, color = :white,
 )
-nothing
 
 # ```@raw html
 # <video width="auto" controls autoplay loop>
