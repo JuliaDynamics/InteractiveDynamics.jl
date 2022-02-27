@@ -8,6 +8,9 @@
 # - For producing videos of time evolution of particles in a billiard, use [`bdplot_video`](@ref).
 
 # ## Plotting
+# ```@docs
+# bdplot
+# ```
 # ### Plotting an obstacle with keywords
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
 
@@ -21,9 +24,7 @@ fig
 # ### Plotting a billiard
 # %% #src
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
-b = billiard_polygon(6, 1)
-a = Antidot([0.0,0.0], 0.5)
-bd = Billiard(b.obstacles..., a)
+bd = billiard_logo()[1]
 fig, ax = bdplot(bd)
 fig
 
@@ -79,7 +80,7 @@ bdplot!(ax, p; velocity_size = 0.1)
 fig
 
 # ## Interactive GUI
-# ```@dos
+# ```@docs
 # bdplot_interactive
 # ```
 

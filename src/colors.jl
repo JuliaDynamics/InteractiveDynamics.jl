@@ -5,10 +5,11 @@ const MARKER = Circle(Point2f(0, 0), Float32(1)) # allows pixel size (zoom indep
 const DEFAULT_BG = RGBf(0.99, 0.99, 0.99)
 using Makie: px
 
+JULIADYNAMICS_BLACK = "#1B1B1B"
 COLORSCHEME = [
     "#6D44D0",
     "#2CB3BF",
-    "#1B1B1B",
+    JULIADYNAMICS_BLACK,
     "#DA5210",
     "#866373",
     "#03502A",

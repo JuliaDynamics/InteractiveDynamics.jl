@@ -24,7 +24,6 @@ end
 Themes.compile(joinpath(@__DIR__, "juliadynamics-light.scss"), joinpath(@__DIR__, "src/assets/themes/documenter-light.css"))
 Themes.compile(joinpath(@__DIR__, "juliadynamics-dark.scss"), joinpath(@__DIR__, "src/assets/themes/documenter-dark.css"))
 
-
 # Use literate to transform files
 using Literate
 indir = joinpath(@__DIR__, "src")

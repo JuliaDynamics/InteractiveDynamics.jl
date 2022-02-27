@@ -7,14 +7,16 @@ Billiard = DynamicalBilliards.Billiard
 AbstractParticle = DynamicalBilliards.AbstractParticle
 using Makie: RGBf, RGBAf
 
-obcolor(::Obstacle) = RGBf(0,0.6,0)
-obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = RGBf(149/255, 88/255, 178/255)
-obcolor(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBf(0.8,0.0,0)
-obcolor(::DynamicalBilliards.PeriodicWall) = RGBf(0.8,0.8,0)
-obfill(o::DynamicalBilliards.Obstacle) = RGBAf(obcolor(o).r, obcolor(o).g, obcolor(o).b, 0.5)
-obfill(o::Union{DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = RGBAf(obcolor(o), 0.1)
+obcolor(::Obstacle) = JULIADYNAMICS_COLORS[3]
+obcolor(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) =
+    JULIADYNAMICS_COLORS[2]
+obcolor(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot,
+    DynamicalBilliards.Ellipse}) = JULIADYNAMICS_COLORS[1]
+obcolor(::DynamicalBilliards.PeriodicWall) = JULIADYNAMICS_COLORS[4]
+obfill(o::DynamicalBilliards.Obstacle) = RGBAf(obcolor(o).r,obcolor(o).g,obcolor(o).b,0.2)
 obls(::Obstacle) = nothing
-obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot, DynamicalBilliards.Ellipse}) = :dash
+obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot,
+    DynamicalBilliards.Ellipse}) = :dash
 obls(::DynamicalBilliards.PeriodicWall) = :dotted
 oblw(::Obstacle) = 2.0
 
