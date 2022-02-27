@@ -23,11 +23,11 @@ an observable containing the latest initial `state`.
 * `tfinal = (1000.0, 10.0^4)` : A 2-element tuple for the range of values
   for the total integration time (chosen interactively).
 * `color` : A **function** of the system's initial condition, that returns a color to
-  plot the new points with. The color must be `RGBf0/RGBAf0`.
+  plot the new points with. The color must be `RGBf/RGBAf`.
    A random color is chosen by default.
 * `labels = ("u₁" , "u₂")` : Scatter plot labels.
 * `scatterkwargs = ()`: Named tuple of keywords passed to `scatter`.
-* `diffeq...` : Any extra keyword arguments are passed into `init` of DiffEq.
+* `diffeq = NamedTuple()` : Any extra keyword arguments are passed into `init` of DiffEq.
 
 ## Interaction
 The application is a standard scatterplot, which shows the PSOS of the system,
@@ -61,7 +61,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
          scatterkwargs = (),
          labels = ("u₁" , "u₂"),
          # DiffEq kwargs:
-         diffeq...)
+         diffeq = NamedTuple())
 
     @assert typeof(plane) <: Tuple
     @assert length(idxs) == 2
@@ -71,7 +71,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
 
     # This is the low-level call of poincaresos:
     ChaosTools._check_plane(plane, DynamicalSystems.dimension(ds))
-    integ = DynamicalSystems.integrator(ds, u0; diffeq...)
+    integ = DynamicalSystems.integrator(ds, u0; diffeq)
     planecrossing = ChaosTools.PlaneCrossing(plane, direction > 0)
     i = DynamicalSystems.SVector{2, Int}(idxs)
 
@@ -82,7 +82,6 @@ function interactive_poincaresos(ds, plane, idxs, complete;
 
     # Initial Section
     f = (t) -> planecrossing(integ(t))
-    @show T_slider[]
     data = ChaosTools._poincaresos(integ, f, planecrossing, T_slider[], i, rootkw)
     length(data) == 0 && error(ChaosTools.PSOS_ERROR)
 

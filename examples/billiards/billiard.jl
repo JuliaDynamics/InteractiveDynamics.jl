@@ -2,11 +2,11 @@ using DynamicalBilliards, InteractiveDynamics, GLMakie
 
 N = 100
 colors = :dense
-colors = [GLMakie.RGBAf0(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
+colors = [GLMakie.RGBAf(i/N, 0, 1 - i/N, 0.25) for i in 1:N]
 
 # Uncomment any of the following to get the billiard you want:
 bd = billiard_stadium()
-bd = billiard_mushroom()
+# bd = billiard_mushroom()
 # bd = billiard_hexagonal_sinai(0.5, 1.0)
 # bd = billiard_sinai(0.25f0, 1f0, 1f0)
 # bd = Billiard(Antidot(Float32[0, 0], 0.5f0, false))
@@ -27,7 +27,7 @@ interactive_billiard_bmap(bd);
 
 # %% static plot of boundary map and billiard (several particles, same color)
 ps = [randominside(bd) for i in 1:N]
-scene, bmapax = billiard_bmap_plot(bd, ps; colors = colors, backgroundcolor = RGBf0(1,1,1))
+scene, bmapax = billiard_bmap_plot(bd, ps; colors = colors, backgroundcolor = RGBf(1,1,1))
 save("static_billiard_plot.png", scene)
 
 # %% 3b1b style video:
@@ -36,7 +36,7 @@ BLUE = "#7BC3DC"
 BROWN = "#8D6238"
 colors = [BLUE, BROWN]
 # Overwrite default color of obstacles to white (to fit with black)
-InteractiveDynamics.obcolor(::Obstacle) = RGBf0(1,1,1)
+InteractiveDynamics.obcolor(::Obstacle) = RGBf(1,1,1)
 bd = billiard_stadium(1.0f0, 1.0f0)
 billiard_video(
     "3b1billiard.mp4", bd, 1.0, 0.6, 0;

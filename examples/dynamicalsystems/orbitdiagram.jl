@@ -11,7 +11,7 @@ systems = [(Systems.logistic(), 2.5, 4.0, "r", "logistic map"),
 ds, p_min, p_max, parname, t = systems[2]
 t = "orbit diagram for the "*t
 
-oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
+fig, oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
                                   parname = parname, title = t)
 
 ps, us = scaleod(oddata)

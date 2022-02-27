@@ -86,7 +86,7 @@ end
 
 function init_trajectory_observables(L, pinteg, tail, idxs, transform)
     obs = Observable[]
-    T = length(idxs) == 2 ? Point2f0 : Point3f0
+    T = length(idxs) == 2 ? Point2f : Point3f
     for i in 1:L
         cb = CircularBuffer{T}(tail)
         fill!(cb, T(transform(DynamicalSystems.get_state(pinteg, i))[idxs]))
@@ -223,8 +223,8 @@ function interactive_evolution_timeseries(
     for i in 1:length(idxs)
         individual_ts = Observable[]
         for j in 1:N
-            cb = CircularBuffer{Point2f0}(tail)
-            fill!(cb, Point2f0(
+            cb = CircularBuffer{Point2f}(tail)
+            fill!(cb, Point2f(
                 pinteg.t, transform(DynamicalSystems.get_state(pinteg, j))[idxs][i])
             )
             push!(individual_ts, Observable(cb))
@@ -269,7 +269,7 @@ function interactive_evolution_timeseries(
                 last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
                 pushupdate!(ob, last_state) # push and trigger update with `=`
                 for k in 1:length(idxs)
-                    pushupdate!(allts[k][i], Point2f0(pinteg.t, last_state[k]))
+                    pushupdate!(allts[k][i], Point2f(pinteg.t, last_state[k]))
                 end
             end
             finalpoints[] = [x[][end] for x in obs]
