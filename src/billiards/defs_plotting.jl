@@ -73,7 +73,7 @@ end
 
 function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
     lines!(ax, Float32[w.sp[1],w.ep[1]], Float32[w.sp[2],w.ep[2]];
-    color = obcolor(w), linewidth = oblw(w), kwargs...)
+    color = obcolor(w), linewidth = oblw(w), linestyle = obls(w), kwargs...)
     return
 end
 
