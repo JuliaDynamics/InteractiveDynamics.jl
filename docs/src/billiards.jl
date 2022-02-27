@@ -161,7 +161,7 @@ ps = particlebeam(1.0, 0.6, 0, 200, 0.01)
 bdplot_video(
     "3b1billiard.mp4", bd, ps;
     frames = 120, colors, dt = 0.01, tail_length = 100,
-    backgroundcolor = :black, framerate = 20,
+    backgroundcolor = :black, framerate = 10,
 )
 nothing
 
