@@ -11,6 +11,14 @@
 #   This function also allows you to create custom animations, see [Custom Billiards Animations](@ref).
 # - For producing videos of time evolution of particles in a billiard, use [`bdplot_video`](@ref).
 
+
+# ```@raw html
+# <video width="auto" controls autoplay loop>
+# <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/billiards/billiards_app.mp4?raw=true" type="video/mp4">
+# </video>
+# ```
+
+
 # ## Plotting
 # ```@docs
 # bdplot
@@ -102,6 +110,29 @@ fig
 # ## Interactive GUI
 # ```@docs
 # bdplot_interactive
+# ```
+
+# ```@raw html
+# <video width="auto" controls autoplay loop>
+# <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/billiards/billiards_app.mp4?raw=true" type="video/mp4">
+# </video>
+# ```
+
+# For example, the animation above was done with:
+
+# ```julia
+# using DynamicalBilliards, InteractiveDynamics, GLMakie
+# l, w, r = 0.5, 0.75, 1.0
+# bd = billiard_mushroom(l, w, r)
+# N = 20
+# ps = vcat(
+#     [MushroomTools.randomchaotic(l, w, r) for i in 1:N],
+#     [MushroomTools.randomregular(l, w, r) for i in 1:N],
+# )
+# colors = [i ≤ N ? RGBf(0.1, 0.4 + 0.3rand(), 0) : RGBf(0.4, 0, 0.6 + 0.4rand()) for i in 1:2N]
+# fig, phs, chs = bdplot_interactive(bd, ps;
+#     colors, plot_bmap = true, bmap_size = 8, tail_length = 2000,
+# );
 # ```
 
 # ## Custom Billiards Animations
