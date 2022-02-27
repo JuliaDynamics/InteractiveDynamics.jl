@@ -28,6 +28,7 @@ and `phs, chs` can be used for making custom animations, see below.
 * `velocity_size = 0.05`: Multiplication of particle velocity before plotted as quiver.
 * `bmap_size = 4`: Marker size of boundary map scatter plot.
 * `backgroundcolor, resolution`: Background color and resolution of the created figure.
+* `kwargs...`: Remaining keywords are propagated to the billiard plotting.
 
 ## Custom Animations
 Two helper structures are defined for each particle:

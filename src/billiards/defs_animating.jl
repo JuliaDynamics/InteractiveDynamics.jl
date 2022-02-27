@@ -129,9 +129,10 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         bmap_size = 4,
         α = 0.9,
         bmax = nothing,
+        kwargs...,
     )
 
-    bdplot!(ax, bd)
+    bdplot!(ax, bd; kwargs...)
     N = length(ps)
     cs = if !(colors isa Vector) || length(colors) ≠ N
         InteractiveDynamics.colors_from_map(colors, N, α)
