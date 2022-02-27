@@ -191,8 +191,10 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
                 notify(bmap_points[i])
             end
         end
+    else
+        bmap_points = nothing
     end
 
-    return phs, chs
+    return phs, chs, bmap_points
 end
 
