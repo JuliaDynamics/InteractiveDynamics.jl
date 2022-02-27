@@ -16,8 +16,8 @@ obcolor(::DynamicalBilliards.PeriodicWall) = JULIADYNAMICS_COLORS[4]
 obfill(o::DynamicalBilliards.Obstacle) = RGBAf(obcolor(o).r,obcolor(o).g,obcolor(o).b,0.2)
 obls(::Obstacle) = nothing
 obls(::Union{DynamicalBilliards.SplitterWall, DynamicalBilliards.Antidot,
-    DynamicalBilliards.Ellipse}) = :dash
-obls(::DynamicalBilliards.PeriodicWall) = :dotted
+    DynamicalBilliards.Ellipse}) = :dot
+obls(::Union{DynamicalBilliards.RandomWall, DynamicalBilliards.RandomDisk}) = [0.5, 1.0, 1.5, 2.5]
 oblw(::Obstacle) = 2.0
 
 """

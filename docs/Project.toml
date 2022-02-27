@@ -7,6 +7,8 @@ DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5"
 DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634"
 InteractiveDynamics = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+libsass_jll = "47bcb7c8-5119-555a-9eeb-0afcc36cd728"
 
 [compat]
 Documenter = "0.24.6"
+libsass_jll = "~3.5"
