@@ -15,7 +15,7 @@ end
 
 # Do we have to exclude OpenStreetMapSpace here for this dispatch to work?
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
-    postype = agents_space_dimensionality(model.space) == 3 ? Point3f0 : Point2f0
+    postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
     pos = begin
         if isnothing(offset)
             [postype(model[i].pos) for i in ids]
@@ -29,9 +29,9 @@ end
 function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids)
     pos = begin
         if isnothing(offset)
-            [Point2f0(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
+            [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
         else
-            [Point2f0(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
+            [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
         end
     end
     return pos

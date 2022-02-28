@@ -22,7 +22,7 @@ function show_data_2D(inspector::DataInspector,
     scene = Makie.parent_scene(plot)
 
     pos = source.converted[1][][idx]
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, pos, 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, pos, 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     size = source.markersize[] isa Vector ? source.markersize[][idx] : source.markersize[]
 
@@ -44,7 +44,7 @@ function show_data_poly(inspector::DataInspector,
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     sizes = plot.sizes[]
 
@@ -75,7 +75,7 @@ function show_data_3D(inspector::DataInspector,
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f0, plot[:pos][][idx], 0))
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[:pos][][idx], 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     sizes = plot.sizes[]
 

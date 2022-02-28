@@ -184,15 +184,15 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
 
     # Dispatch on type of agent positions
     T = typeof(pos[])
-    if T<:Vector{Point2f0} # 2d space
+    if T<:Vector{Point2f} # 2d space
         if typeof(marker[])<:Vector{<:Polygon{2}}
             poly_plot = poly!(abmplot, marker; color, abmplot.scatterkwargs...)
             poly_plot.inspectable[] = false # disable inspection for poly until fixed
         else
             scatter!(abmplot, pos; color, marker, markersize, abmplot.scatterkwargs...)
         end
-    elseif T<:Vector{Point3f0} # 3d space
-        marker[] == :circle && (marker = Sphere(Point3f0(0), 1))
+    elseif T<:Vector{Point3f} # 3d space
+        marker[] == :circle && (marker = Sphere(Point3f(0), 1))
         meshscatter!(abmplot, pos; color, marker, markersize, abmplot.scatterkwargs...)
     else
         error("""
