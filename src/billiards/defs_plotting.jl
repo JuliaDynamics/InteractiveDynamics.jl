@@ -73,7 +73,7 @@ end
 
 function bdplot!(ax, w::DynamicalBilliards.Wall; kwargs...)
     lines!(ax, Float32[w.sp[1],w.ep[1]], Float32[w.sp[2],w.ep[2]];
-    color = obcolor(w), linewidth = oblw(w), kwargs...)
+    color = obcolor(w), linewidth = oblw(w), linestyle = obls(w), kwargs...)
     return
 end
 
@@ -234,13 +234,36 @@ function remove_axis!(ax)
 end
 
 ######################################################################################
-# Misc.
+# Boundary map
 ######################################################################################
-function _estimate_vr(bd)
-    xmin, ymin, xmax, ymax = DynamicalBilliards.cellsize(bd)
-    f = max((xmax-xmin), (ymax-ymin))
-    isinf(f) && error("cellsize of billiard is infinite")
-    vr = Float32(f/25)
+"""
+    bdplot_boundarymap(bmap, intervals; figkwargs = NamedTuple(), kwargs...)
+Plot the output of [`DynamicalBilliards.boundarymap`](@ref) into an axis that
+correctly displays information about obstacle arclengths.
+
+Also works for the parallelized version of boundary map.
+
+## Keyword Arguments
+* `figkwargs = NamedTuple()` keywords propagated to `Figure`.
+* `color` : The color to use for the plotted points. Can be either a
+  single color or a vector of colors of length `length(bmap)`, in
+  order to give each initial condition a different color (for parallelized version).
+* All other keywords propagated to `scatter!`.
+"""
+function bdplot_boundarymap(bmap, intervals;
+    color = JULIADYNAMICS_COLORS[1], figkwargs = NamedTuple(), kwargs...)
+    fig = Figure(;figkwargs...)
+    bmapax = obstacle_axis!(fig[1,1], intervals)
+    if typeof(bmap) <: Vector{<:SVector}
+        c = typeof(color) <: AbstractVector ? color[1] : color
+        scatter!(bmapax, bmap; color = c, markersize = 4, kwargs...)
+    else
+        for (i, bmapp) in enumerate(bmap)
+            c = typeof(color) <: AbstractVector ? color[i] : color
+            scatter!(bmapax, bmapp; color = c, markersize = 3, kwargs...)
+        end
+    end
+    return fig, bmapax
 end
 
 function obstacle_axis!(figlocation, intervals)

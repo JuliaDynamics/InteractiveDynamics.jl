@@ -129,9 +129,10 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         bmap_size = 4,
         α = 0.9,
         bmax = nothing,
+        kwargs...,
     )
 
-    bdplot!(ax, bd)
+    bdplot!(ax, bd; kwargs...)
     N = length(ps)
     cs = if !(colors isa Vector) || length(colors) ≠ N
         InteractiveDynamics.colors_from_map(colors, N, α)
@@ -179,6 +180,7 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
         )
     end
 
+    # Boundary map
     if !isnothing(bmax)
         bmap_points = [Observable([Point2f(c.ξsinθ)]) for c in chs[]]
         for i in 1:N
@@ -190,8 +192,10 @@ function bdplot_plotting_init!(ax::Axis, bd::Billiard, ps::Vector{<:AbstractPart
                 notify(bmap_points[i])
             end
         end
+    else
+        bmap_points = nothing
     end
 
-    return phs, chs
+    return phs, chs, bmap_points
 end
 

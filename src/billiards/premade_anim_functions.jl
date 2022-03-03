@@ -28,6 +28,7 @@ and `phs, chs` can be used for making custom animations, see below.
 * `velocity_size = 0.05`: Multiplication of particle velocity before plotted as quiver.
 * `bmap_size = 4`: Marker size of boundary map scatter plot.
 * `backgroundcolor, resolution`: Background color and resolution of the created figure.
+* `kwargs...`: Remaining keywords are propagated to the billiard plotting.
 
 ## Custom Animations
 Two helper structures are defined for each particle:
@@ -61,14 +62,13 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
         dt = 0.001,
         plot_bmap = false,
         backgroundcolor = DEFAULT_BG,
-        resolution = (800, 600),
+        resolution = plot_bmap ? (1200, 600) : (800, 600),
         kwargs...
     )
     fig = Figure(;backgroundcolor, resolution)
     primary_layout = fig[:,1] = GridLayout()
     ax = Axis(primary_layout[1,1]; backgroundcolor = RGBAf(1,1,1,0))
     if plot_bmap
-        resize!(fig.scene, (2fig.scene.px_area[].widths[1], fig.scene.px_area[].widths[2]))
         intervals = DynamicalBilliards.arcintervals(bd)
         bmax = obstacle_axis!(fig[:,2], intervals)
     else
@@ -76,12 +76,14 @@ function bdplot_interactive(bd::Billiard, ps::Vector{<:AbstractParticle};
         intervals = nothing
     end
 
-    phs, chs = bdplot_plotting_init!(ax, bd, ps; bmax, kwargs...)
+    phs, chs, bmap_points = bdplot_plotting_init!(ax, bd, ps; bmax, kwargs...)
     ps0 = Observable(deepcopy(ps))
 
     if playback_controls
         control_observables = bdplot_animation_controls(fig, primary_layout)
-        bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0, intervals)
+        bdplot_control_actions!(
+            fig, control_observables, phs, chs, bd, dt, ps0, intervals, bmap_points
+        )
     end
 
     return fig, phs, chs
@@ -135,7 +137,9 @@ function bdplot_animation_controls(fig, primary_layout)
     return isrunning, resetbutton.clicks, runbutton.clicks, stepslider.slider.value
 end
 
-function bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0, intervals)
+function bdplot_control_actions!(
+        fig, control_observables, phs, chs, bd, dt, ps0, intervals, bmap_points
+    )
     isrunning, resetbutton, runbutton, stepslider = control_observables
 
     on(runbutton) do clicks; isrunning[] = !isrunning[]; end
@@ -157,6 +161,11 @@ function bdplot_control_actions!(fig, control_observables, phs, chs, bd, dt, ps0
         phs_vals, chs_vals = helpers_from_particles(deepcopy(ps), bd, length(phs[][1].tail))
         phs[] = phs_vals
         chs[] = chs_vals
+        if !isnothing(bmap_points)
+            for (bmp, c) in zip(bmap_points, chs[])
+                bmp[] = [Point2f(c.ξsinθ)]
+            end
+        end
     end
     on(resetbutton) do clicks
         notify(ps0) # simply trigger initial particles change

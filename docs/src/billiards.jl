@@ -1,15 +1,28 @@
 # # Visualizations and Animations for Billiards
 
-# All plotting and animating for [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/) lies within a few well-defined functions from [InteractiveDynamics.jl](https://juliadynamics.github.io/InteractiveDynamics.jl/dev/) that use the [Makie](https://makie.juliaplots.org/stable/) ecosystem.
+# All plotting and animating for
+# [DynamicalBilliards.jl](https://juliadynamics.github.io/DynamicalBilliards.jl/dev/)
+# lies within a few well-defined functions from
+# [InteractiveDynamics.jl](https://juliadynamics.github.io/InteractiveDynamics.jl/dev/)
+# that use the [Makie](https://makie.juliaplots.org/stable/) ecosystem.
 
-# - For static plotting, you can use the function [`bdplot`](@ref).
+# - For static plotting, you can use the function [`bdplot`](@ref) and [`bdplot_boundarymap`](@ref).
 # - For interacting/animating, you can use the function [`bdplot_interactive`](@ref).
 #   This function also allows you to create custom animations, see [Custom Billiards Animations](@ref).
 # - For producing videos of time evolution of particles in a billiard, use [`bdplot_video`](@ref).
 
+
+# ```@raw html
+# <video width="auto" controls autoplay loop>
+# <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/billiards/billiards_app.mp4?raw=true" type="video/mp4">
+# </video>
+# ```
+
+
 # ## Plotting
 # ```@docs
 # bdplot
+# bdplot_boundarymap
 # ```
 # ### Plotting an obstacle with keywords
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
@@ -79,9 +92,47 @@ lines!(ax, xt, yt)
 bdplot!(ax, p; velocity_size = 0.1)
 fig
 
+### Boundary map plot
+using DynamicalBilliards, InteractiveDynamics, CairoMakie
+
+bd = billiard_mushroom()
+
+n = 100 # how many particles to create
+t = 200 # how long to evolve each one
+
+bmap, arcs = parallelize(boundarymap, bd, t, n)
+
+colors = [randomcolor() for i in 1:n] # random colors
+
+fig, ax = bdplot_boundarymap(bmap, arcs, color = colors)
+fig
+
 # ## Interactive GUI
 # ```@docs
 # bdplot_interactive
+# ```
+
+# ```@raw html
+# <video width="auto" controls autoplay loop>
+# <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/billiards/billiards_app.mp4?raw=true" type="video/mp4">
+# </video>
+# ```
+
+# For example, the animation above was done with:
+
+# ```julia
+# using DynamicalBilliards, InteractiveDynamics, GLMakie
+# l, w, r = 0.5, 0.75, 1.0
+# bd = billiard_mushroom(l, w, r)
+# N = 20
+# ps = vcat(
+#     [MushroomTools.randomchaotic(l, w, r) for i in 1:N],
+#     [MushroomTools.randomregular(l, w, r) for i in 1:N],
+# )
+# colors = [i ≤ N ? RGBf(0.1, 0.4 + 0.3rand(), 0) : RGBf(0.4, 0, 0.6 + 0.4rand()) for i in 1:2N]
+# fig, phs, chs = bdplot_interactive(bd, ps;
+#     colors, plot_bmap = true, bmap_size = 8, tail_length = 2000,
+# );
 # ```
 
 # ## Custom Billiards Animations
@@ -149,21 +200,18 @@ fig
 # the style of [3Blue1Brown](https://www.3blue1brown.com/).
 # %% #src
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
-
 BLUE = "#7BC3DC"
 BROWN = "#8D6238"
 colors = [BLUE, BROWN]
 ## Overwrite default color of obstacles to white (to fit with black background)
-InteractiveDynamics.obcolor(::Obstacle) = RGBf(1,1,1)
 bd = billiard_stadium(1, 1)
 ps = particlebeam(1.0, 0.6, 0, 200, 0.01)
-
+## Notice that keyword `color = :white` is propagated to billiard plot
 bdplot_video(
     "3b1billiard.mp4", bd, ps;
     frames = 120, colors, dt = 0.01, tail_length = 100,
-    backgroundcolor = :black, framerate = 10,
+    backgroundcolor = :black, framerate = 10, color = :white,
 )
-nothing
 
 # ```@raw html
 # <video width="auto" controls autoplay loop>
