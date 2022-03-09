@@ -115,6 +115,14 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         # insert InteractiveDynamics theme here?   
     )
     Attributes(
+        # Axis
+            # ax is currently necessary to have a reference to the parent Axis. This is needed
+            # for optional Colorbar of heatmap and optional buttons/sliders.
+            # Makie's recipe system still works on the old system of Scenes which have no
+            # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
+            # we will have to work around it with this "little hack".
+            ax = nothing,
+        
         # Agent
         ac = JULIADYNAMICS_COLORS[1],
         as = 10,
@@ -128,14 +136,9 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         add_colorbar = true,
         static_preplot! = nothing, 
         
-        # Axis
-        # ax is currently necessary to have a reference to the parent Axis. This is needed
-        # for optional Colorbar of heatmap and optional buttons/sliders.
-        # Makie's recipe system still works on the old system of Scenes which have no
-        # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
-        # we will have to work around it with this "little hack".
-        ax = nothing,
-        
+        # Interactive application
+        # Add parameter sliders if params are provided
+        params = Dict(),
         # Add controls if agent_step! and/or model_step! are provided
         agent_step! = Agents.dummystep,
         model_step! = Agents.dummystep,
@@ -146,9 +149,6 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         spu = 1:50,
         when = true,
         
-        # Add parameter sliders if params are provided
-        params = Dict(),
-
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
     )
