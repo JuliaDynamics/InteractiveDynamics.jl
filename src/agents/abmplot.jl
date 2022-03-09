@@ -148,7 +148,7 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
         mdf = nothing,
         spu = 1:50,
         when = true,
-        
+
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
     )
@@ -190,7 +190,7 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
 
     # Static preplot
     if !isnothing(abmplot.static_preplot![])
-        static_plot = abmplot.static_preplot!(abmplot, model)
+        static_plot = abmplot.static_preplot![](abmplot, model)
         static_plot.inspectable[] = false
     end
 
