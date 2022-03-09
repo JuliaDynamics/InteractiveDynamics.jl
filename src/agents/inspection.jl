@@ -140,7 +140,7 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring *= "id: $(getproperty(agent, :id))\n"
     
     agent_pos = getproperty(agent, :pos)
-    if typeof(agent_pos) <: Tuple{Float64}
+    if agent_pos isa Tuple && agent_pos isa NTuple{length(agent_pos), AbstractFloat}
         agent_pos = round.(agent_pos, digits=2)
     end
     agentstring *= "pos: $(agent_pos)\n"
@@ -152,7 +152,7 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
             val = round(val, digits=2)
         elseif V <: AbstractArray{<:AbstractFloat}
             val = round.(val, digits=2)
-        elseif V <: Tuple && V <: NTuple{length(val), <:AbstractFloat}
+        elseif V <: Tuple && V <: NTuple{length(val), AbstractFloat}
             val = round.(val, digits=2)
         end
         agentstring *= "$(field): $val\n"
