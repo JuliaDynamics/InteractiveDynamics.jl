@@ -10,10 +10,11 @@ This page describes functions that can be used in conjunction with [Agents.jl](h
 The animation at the start of this page was done by running the `examples/agents/agents_daisyworld.jl` file.
 Another example application can be found in the [Agents.jl docs](https://juliadynamics.github.io/Agents.jl/dev/examples/schelling/).
 
-Please note that calling [`abmplot`](@ref) as a standalone function is currently not fully supported. 
+Due to technical limitations, calling [`abmplot`](@ref) as a standalone function is currently not fully supported.
 While it can be used to create relatively simple static plots, some of its built-in functionality (e.g. heatmap colorbar, model controls, parameter sliders) will not work out of the box.
 
-It is strongly advised to first explicitly construct a Figure and Axis to plot into, then provide `ax::Axis` as a keyword argument to your in-place function call.
+It is strongly advised to first explicitly construct a Figure and Axis to plot into, then provide `ax::Axis` as a *keyword argument* to your in-place function call.
+Please note that this is not the same as passing `ax` as a positional argument to an in-place plotting function call.
 For example:
 
 ```
