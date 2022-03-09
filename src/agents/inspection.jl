@@ -71,21 +71,19 @@ end
 
 function show_data_3D(inspector::DataInspector, 
             plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
-            idx, ::MeshScatter) where {S<:SUPPORTED_SPACES}
+            idx, source::MeshScatter) where {S<:SUPPORTED_SPACES}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
 
-    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, plot[:pos][][idx], 0))
+    pos = source.converted[1][][idx]
+    proj_pos = Makie.shift_project(scene, plot, to_ndim(Point3f, pos, 0))
     Makie.update_tooltip_alignment!(inspector, proj_pos)
-    sizes = plot.sizes[]
+    size = source.markersize[] isa Vector ? source.markersize[][idx] : source.markersize[]
 
-    if S <: Agents.ContinuousSpace
-        agent_pos = Tuple(plot[:pos][][idx])
-    elseif S <: Agents.GridSpace
-        agent_pos = Tuple(Int.(plot[:pos][][idx]))
-    end
-    a._display_text[] = agent2string(plot.model[], agent_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
+    model = plot.model[]
+    id = collect(Agents.allids(model))[idx]
+    a._display_text[] = agent2string(model, model[id].pos)
+    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* size .- Vec2f0(5), Vec2f0(size) .+ Vec2f0(10))
     a._px_bbox_visible[] = true
     a._bbox_visible[] = false
     a._visible[] = true
