@@ -1,8 +1,8 @@
 cd(@__DIR__)
 using Pkg
 CI = get(ENV, "CI", nothing) == "true" || get(ENV, "GITHUB_TOKEN", nothing) !== nothing
-CI && Pkg.activate(@__DIR__)
-CI && Pkg.instantiate()
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
 
 using InteractiveDynamics
 using DynamicalSystems, DynamicalBilliards, Agents
