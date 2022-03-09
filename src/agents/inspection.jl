@@ -105,7 +105,7 @@ function agent2string(model::Agents.ABM{<:S}, agent_pos) where {S<:SUPPORTED_SPA
     elseif S<:Agents.OpenStreetMapSpace
         ids = Agents.nearby_ids(agent_pos, model, 0.0)
     else
-
+        ids = []
     end
     s = ""
     
