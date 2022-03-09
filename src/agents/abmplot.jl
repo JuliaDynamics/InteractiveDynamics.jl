@@ -5,7 +5,7 @@
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. Requires `Agents`.
 
-### Order of plot layers inside `ABMPlot`
+### Plot layers inside `ABMPlot`
 
 1. OSMPlot, if `model.space isa OpenStreetMapSpace`
 2. static preplot, if `static_preplot! != nothing`
@@ -13,6 +13,12 @@ the agent's position field as its location on the plot. Requires `Agents`.
 4. agent positions as `scatter`, `poly` or `meshscatter`, depending on type of `model.space`
 
 ## Keyword arguments 
+
+### Axis related
+* `ax = nothing` : The axis to which the resulting abmplot will be added. This is currently 
+  necessary for some of the more advanced built-in functionality (e.g. heatmap colorbar, 
+  model controls, parameter sliders) to work. This kwarg can be omitted in the case of 
+  calling `abmplot` instead of `abmplot!`.
 
 ### Agent related
 * `ac, as, am` : These three keywords decided the color, size, and marker, that
@@ -62,10 +68,6 @@ the agent's position field as its location on the plot. Requires `Agents`.
       translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
-
-### Axis related
-* `ax = nothing` : The axis from which 
-* `aspect = DataAspect()` : The aspect ratio behavior of the axis `ax`.
 
 # Interactive application
 
