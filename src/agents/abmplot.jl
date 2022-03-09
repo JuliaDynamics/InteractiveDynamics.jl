@@ -77,11 +77,21 @@ its evolution in real time. Requires `Agents`.
 The two functions `agent_step!, model_step!` provided as keyword arguments will decide how 
 the model will evolve, as in the standard approach of Agents.jl and its `step!` function.
 
-The application has three buttons:
+The application has four buttons:
 
 * "step": advances the simulation once for `spu` steps.
 * "run": starts/stops the continuous evolution of the model.
-* "reset": resets the model to its original configuration. 
+* "reset model": resets the model to its initial state from right after starting the 
+  interactive application.
+* "clear data": deletes previously collected agent and model data by emptying the underlying 
+  DataFrames `adf`/`mdf`.
+
+Reset model and clear data can be used independently.
+This can be especially useful to "preheat" a model for a given number of steps via the 
+interactive application, then clear the collected data so far and afterwards continue to 
+explore the model with fresh plots.
+Consequently, it is necessary to click both buttons for a full reset of the interactive 
+application to its initial state.
 
 Two sliders control the animation speed: "spu" decides how many model steps should be done
 before the plot is updated, and "sleep" the `sleep()` time between updates.
