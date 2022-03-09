@@ -47,6 +47,8 @@ This is especially useful for interactive exploration of micro data on the agent
 
 For this functionality, we draw on the powerful features of Makie's [`DataInspector`](https://makie.juliaplots.org/dev/documentation/inspector/).
 
+![RabbitFoxHawk inspection example](https://github.com/JuliaDynamics/JuliaDynamics/tree/master/images/agents/RabbitFoxHawk_inspection.png)
+
 The tooltip can be customized both with regards to its content and its style by extending a single function and creating a specialized method for a given `A<:AbstractAgent`.
 
 ```@docs
