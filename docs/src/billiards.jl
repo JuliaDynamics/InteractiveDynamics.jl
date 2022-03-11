@@ -92,7 +92,7 @@ lines!(ax, xt, yt)
 bdplot!(ax, p; velocity_size = 0.1)
 fig
 
-### Boundary map plot
+# ### Boundary map plot
 using DynamicalBilliards, InteractiveDynamics, CairoMakie
 
 bd = billiard_mushroom()
