@@ -6,32 +6,32 @@ export abm_data_exploration, abm_video
 Open an interactive application for exploring an agent based model and
 the impact of changing parameters on the time evolution. Requires `Agents`.
 
-The application evolves an ABM interactively and plots its evolution, while allowing 
-changing any of the model parameters interactively and also showing the evolution of 
+The application evolves an ABM interactively and plots its evolution, while allowing
+changing any of the model parameters interactively and also showing the evolution of
 collected data over time (if any are asked for, see below).
 The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the `model` argument as well as splatted `kwargs` are propagated there as-is.
 This convencience function *only works for aggregated agent data*.
 
-Calling `abm_data_exploration` returns: `fig::Figure, p::ABMPlot`. So you can save and/or 
-further modify the figure. But it is also possible to access the collected data (if any) 
+Calling `abm_data_exploration` returns: `fig::Figure, p::ABMPlot`. So you can save and/or
+further modify the figure. But it is also possible to access the collected data (if any)
 via the plot object, just like in the case of using [`abmplot`](@ref) directly.
 
-Clicking the "reset" button will add a red vertical line to the data plots for visual 
+Clicking the "reset" button will add a red vertical line to the data plots for visual
 guidance.
 
 ## Keywords arguments (in addition to those in `abmplot`)
 * `alabels, mlabels`: If data are collected from agents or the model with `adata, mdata`,
   the corresponding plots' y-labels are automatically named after the collected data.
-  It is also possible to provide `alabels, mlabels` (vectors of strings with exactly same 
+  It is also possible to provide `alabels, mlabels` (vectors of strings with exactly same
   length as `adata, mdata`), and these labels will be used instead.
 * `figurekwargs = NamedTuple()`: Keywords to customize the created Figure.
 * `axiskwargs = NamedTuple()`: Keywords to customize the created Axis.
-* `plotkwargs = NamedTuple()`: Keywords to customize the styling of the resulting 
+* `plotkwargs = NamedTuple()`: Keywords to customize the styling of the resulting
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
-function abm_data_exploration(model; 
-        alabels = nothing, mlabels = nothing, 
+function abm_data_exploration(model;
+        alabels = nothing, mlabels = nothing,
         figurekwargs = NamedTuple(), axiskwargs = NamedTuple(), plotkwargs = NamedTuple(),
         kwargs...)
     fig = Figure(; resolution = (1600, 800), figurekwargs...)
@@ -89,7 +89,7 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
         for ax in @view(axs[1:end-1]); hidexdecorations!(ax, grid = false); end
     end
     axs[end].xlabel = "step"
-    
+
     return nothing
 end
 
@@ -98,7 +98,7 @@ end
 """
     abm_video(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
-saved at given path `file`, by recording the behavior of the interactive version of 
+saved at given path `file`, by recording the behavior of the interactive version of
 [`abmplot`](@ref) (without sliders).
 The plotting is identical as in [`abmplot`](@ref) and applicable keywords are propagated.
 
@@ -128,15 +128,15 @@ function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
     axiskwargs = (title = t, titlealign = :left, axiskwargs...)
 
     fig = Figure(; resolution = (600,600), backgroundcolor = DEFAULT_BG, figurekwargs...)
-    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ? 
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
-    abmplot!(model; ax, kwargs...)
+    p = abmplot!(model; ax, kwargs...)
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
             recordframe!(io)
             Agents.step!(model, agent_step!, model_step!, spf)
-            modelobs[] = modelobs[]
+            p.model[] = model
             s[] += spf; s[] = s[]
         end
         recordframe!(io)
