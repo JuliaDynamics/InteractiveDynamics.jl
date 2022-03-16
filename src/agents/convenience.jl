@@ -1,4 +1,5 @@
-export abm_data_exploration, abm_video
+export abm_data_exploration, abmvideo
+@deprecate abm_video abmvideo
 
 """
     abm_data_exploration(model::ABM; alabels, mlabels, kwargs...)
@@ -96,7 +97,7 @@ end
 
 ##########################################################################################
 """
-    abm_video(file, model, agent_step! [, model_step!]; kwargs...)
+    abmvideo(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
 saved at given path `file`, by recording the behavior of the interactive version of
 [`abmplot`](@ref) (without sliders).
@@ -113,7 +114,7 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
 * `axiskwargs = NamedTuple()`: Axis related keywords (e.g. aspect).
 * `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
-function abm_video(file, model, agent_step!, model_step! = Agents.dummystep;
+function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
             spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
             figurekwargs = NamedTuple(), axiskwargs = NamedTuple(), kwargs...)
     # add some title stuff
