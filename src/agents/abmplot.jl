@@ -103,9 +103,9 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
   slides is only propagated to the actual model after a press of the "update" button.
 * `agent_step!, model_step! = nothing` : If one or both aren't nothing, interactive buttons
   for model control will be added to the resulting figure.
-* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If one or both
-  aren't empty, plots for data exploration and sliders for altering the model parameters
-  will be added to the resulting figure.
+* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If either or both
+  aren't empty, data are collected and stored in the `abmplot_object` `.adf` and `.mdf`
+  fields as observables that can be lifted from.
 * `spu = 1:50`: The values of the "spu" slider.
 * `when = true` : When to perform data collection, as in `Agents.run!`.
 """
