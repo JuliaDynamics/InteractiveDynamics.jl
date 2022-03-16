@@ -15,6 +15,7 @@ fig = Figure()
 ax = Axis(fig[1,1]; axiskwargs...)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as)
+fig
 
 ## with parameter sliders
 
@@ -22,6 +23,7 @@ fig = Figure()
 ax = Axis(fig[1,1]; axiskwargs...)
 p = abmplot!(zombie_model; ax, agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.1:0.01:0.2))
+fig
 
 ## with data collection
 
@@ -48,6 +50,10 @@ scatter(plot_layout[end+1,:], xs, dt)
 
 share_zombies = @lift($(p.mdf).zombie_share)
 scatterlines(plot_layout[end+1,:], xs, share_zombies)
+
+fig
+
+
 
 ## abm_data_exploration convenience function
 

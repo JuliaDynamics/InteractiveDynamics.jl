@@ -1,30 +1,30 @@
 """
-    abmplot(model::ABM; kwargs...) → fig, ax, plot
-    abmplot!(model::ABM; ax::Axis/Axis3, kwargs...) → plot
+    abmplot(model::ABM; kwargs...) → fig, ax, abmplot_object
+    abmplot!(model::ABM; ax::Axis/Axis3, kwargs...) → abmplot_object
 
 Plot an agent based model by plotting each individual agent as a marker and using
-the agent's position field as its location on the plot. Requires `Agents`.
+the agent's position field as its location on the plot. The same function can be used
+to launch interactive applications for the model evolution,
+see Interactive Application below.
 
-### Plot layers inside `ABMPlot`
+The returned `abmplot_object` can be used to make custom compositions of plots and
+animations as illustrated in the online documentation.
 
-1. OSMPlot, if `model.space isa OpenStreetMapSpace`
-2. static preplot, if `static_preplot! != nothing`
-3. heatmap, if `heatarray != nothing`
-4. agent positions as `scatter`, `poly` or `meshscatter`, depending on type of `model.space`
+Requires `Agents`.
 
-## Keyword arguments 
+## Keyword arguments
 
 ### Axis related
-* `ax = nothing` : The axis to which the resulting abmplot will be added. This is currently 
-  necessary for some of the more advanced built-in functionality (e.g. heatmap colorbar, 
-  model controls, parameter sliders) to work. This kwarg can be omitted in the case of 
+* `ax = nothing` : The axis to which the resulting abmplot will be added. This is currently
+  necessary for some of the more advanced built-in functionality (e.g. heatmap colorbar,
+  model controls, parameter sliders) to work. This kwarg can be omitted in the case of
   calling `abmplot` instead of `abmplot!`.
 
 ### Agent related
 * `ac, as, am` : These three keywords decided the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
   which takes as an input a single argument and outputs the corresponding value.
-  
+
   Using constants: `ac = "#338c54", as = 10, am = :diamond`
 
   Using functions:
@@ -35,11 +35,11 @@ the agent's position field as its location on the plot. Requires `Agents`.
   ```
   Notice that for 2D models, `am` can be/return a `Polygon` instance, which plots each agent
   as an arbitrary polygon. It is assumed that the origin (0, 0) is the agent's position when
-  creating the polygon. In this case, the keyword `as` is meaningless, as each polygon has its
-  own size. Use the functions `scale, rotate2D` to transform this polygon.
+  creating the polygon. In this case, the keyword `as` is meaningless, as each polygon has
+  its own size. Use the functions `scale, rotate2D` to transform this polygon.
 
-  3D models currently do not support having different markers. As a result, `am` cannot be a function.
-  It should be a `Mesh` or 3D primitive (such as `Sphere` or `Rect3D`).
+  3D models currently do not support having different markers. As a result, `am` cannot be
+  a function. It should be a `Mesh` or 3D primitive (such as `Sphere` or `Rect3D`).
 * `offset = nothing` : If not `nothing`, it must be a function taking as an input an
   agent and outputting an offset position tuple to be added to the agent's position
   (which matters only if there is overlap).
@@ -69,50 +69,49 @@ the agent's position field as its location on the plot. Requires `Agents`.
   end
   ```
 
-# Interactive application
+### Plot layers inside `ABMPlot`
 
-Launch an interactive application that plots an agent based model and can animate
-its evolution in real time. Requires `Agents`.
+  1. OSMPlot, if `model.space isa OpenStreetMapSpace`
+  2. static preplot, if `static_preplot! != nothing`
+  3. heatmap, if `heatarray != nothing`
+  4. agent positions as `scatter`, `poly` or `meshscatter`, depending on type of `model.space`
 
-The two functions `agent_step!, model_step!` provided as keyword arguments will decide how 
+
+# Interactive Application
+If either, or both, of the keywords `agent_step!, model_step!` are provided, the
+plot switches to an interactive application mode.
+The two functions `agent_step!, model_step!` will decide how
 the model will evolve, as in the standard approach of Agents.jl and its `step!` function.
 
 The application has four buttons:
 
 * "step": advances the simulation once for `spu` steps.
 * "run": starts/stops the continuous evolution of the model.
-* "reset model": resets the model to its initial state from right after starting the 
+* "reset model": resets the model to its initial state from right after starting the
   interactive application.
-* "clear data": deletes previously collected agent and model data by emptying the underlying 
-  DataFrames `adf`/`mdf`.
-
-Reset model and clear data can be used independently.
-This can be especially useful to "preheat" a model for a given number of steps via the 
-interactive application, then clear the collected data so far and afterwards continue to 
-explore the model with fresh plots.
-Consequently, it is necessary to click both buttons for a full reset of the interactive 
-application to its initial state.
+* "clear data": deletes previously collected agent and model data by emptying the underlying
+  DataFrames `adf`/`mdf`. Reset model and clear data are independent processes.
 
 Two sliders control the animation speed: "spu" decides how many model steps should be done
 before the plot is updated, and "sleep" the `sleep()` time between updates.
 
-## Keywords arguments (in addition to those mentioned above)
-* `params = Dict()` : This is a dictionary which decides which parameters of the model will 
-  be configurable from the interactive application. Each entry of `params` is a pair of 
-  `Symbol` to an `AbstractVector`, and provides a range of possible values for the parameter 
-  named after the given symbol (see example online). Changing a value in the parameter 
+## Keywords arguments for interactive application
+* `params = Dict()` : This is a dictionary which decides which parameters of the model will
+  be configurable from the interactive application. Each entry of `params` is a pair of
+  `Symbol` to an `AbstractVector`, and provides a range of possible values for the parameter
+  named after the given symbol (see example online). Changing a value in the parameter
   slides is only propagated to the actual model after a press of the "update" button.
 * `agent_step!, model_step! = nothing` : If one or both aren't nothing, interactive buttons
   for model control will be added to the resulting figure.
-* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If one or both 
-  aren't empty, plots for data exploration and sliders for altering the model parameters 
+* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If one or both
+  aren't empty, plots for data exploration and sliders for altering the model parameters
   will be added to the resulting figure.
 * `spu = 1:50`: The values of the "spu" slider.
 * `when = true` : When to perform data collection, as in `Agents.run!`.
 """
 @recipe(ABMPlot, model) do scene
     Theme(
-        # insert InteractiveDynamics theme here?   
+        # insert InteractiveDynamics theme here?
     )
     Attributes(
         # Axis
@@ -122,20 +121,20 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
             # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
             # we will have to work around it with this "little hack".
             ax = nothing,
-        
+
         # Agent
         ac = JULIADYNAMICS_COLORS[1],
         as = 10,
         am = :circle,
         offset = nothing,
         scatterkwargs = NamedTuple(),
-        
+
         # Preplot
         heatarray = nothing,
         heatkwargs = NamedTuple(),
         add_colorbar = true,
-        static_preplot! = nothing, 
-        
+        static_preplot! = nothing,
+
         # Interactive application
         # Add parameter sliders if params are provided
         params = Dict(),
@@ -160,8 +159,8 @@ const SUPPORTED_SPACES =  Union{
     Agents.OpenStreetMapSpace,
 }
 
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}) 
-    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac, 
+function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
+    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac,
         abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     model = abmplot.model[]
