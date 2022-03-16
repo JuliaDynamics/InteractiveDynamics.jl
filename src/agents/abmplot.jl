@@ -160,6 +160,8 @@ const SUPPORTED_SPACES =  Union{
 }
 
 function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
+    # Following attributes are all lifted from the recipe observables (specifically,
+    # the model), see lifting.jl for source code.
     pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac,
         abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
