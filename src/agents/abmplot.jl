@@ -208,9 +208,9 @@ function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}}
         marker[] == :circle && (marker = Sphere(Point3f(0), 1))
         meshscatter!(abmplot, pos; color, marker, markersize, abmplot.scatterkwargs...)
     else
-        error("""
+        @warn("""
             Cannot resolve agent positions: $(T)
-            Please verify the correctness of the `pos` field of your agent struct.
+            Skipping plotting agents.
             """)
     end
 
@@ -238,3 +238,11 @@ function set_axis_limits!(ax, model)
 end
 
 @deprecate abm_plot abmplot
+
+# Extend `step!` for observable
+function Agents.step!(model::Observable{<:Agents.ABM}, args...; kwargs...)
+    m = model[]
+    Agents.step!(m, args...; kwargs...)
+    model[] = m
+    return
+end
