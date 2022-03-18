@@ -115,12 +115,12 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
     )
     Attributes(
         # Axis
-            # ax is currently necessary to have a reference to the parent Axis. This is needed
-            # for optional Colorbar of heatmap and optional buttons/sliders.
-            # Makie's recipe system still works on the old system of Scenes which have no
-            # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
-            # we will have to work around it with this "little hack".
-            ax = nothing,
+        # ax is currently necessary to have a reference to the parent Axis. This is needed
+        # for optional Colorbar of heatmap and optional buttons/sliders.
+        # Makie's recipe system still works on the old system of Scenes which have no
+        # concept of a parent Axis. Makie devs plan to enable this in the future. Until then
+        # we will have to work around it with this "little hack".
+        ax = nothing,
 
         # Agent
         ac = JULIADYNAMICS_COLORS[1],
