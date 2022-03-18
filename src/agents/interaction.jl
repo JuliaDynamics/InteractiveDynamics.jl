@@ -54,7 +54,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
         model[] = model[] # trigger Observable
         for element in fig.content
             # search for Axes but ignore those with ABMPlots in them
-            if element isa Axis && !any(p -> p isa ABMPlot, element.scene.plots)
+            if element isa Axis && !any(p -> p isa _ABMPlot, element.scene.plots)
                 autolimits!(element) # needed for custom plot limit updates
             end
         end

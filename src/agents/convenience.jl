@@ -1,8 +1,9 @@
-export abm_data_exploration, abmvideo
+export abmexploration, abmvideo
+@deprecate abm_data_exploration abmexploration
 @deprecate abm_video abmvideo
 
 """
-    abm_data_exploration(model::ABM; alabels, mlabels, kwargs...)
+    abmexploration(model::ABM; alabels, mlabels, kwargs...)
 
 Open an interactive application for exploring an agent based model and
 the impact of changing parameters on the time evolution. Requires `Agents`.
@@ -14,8 +15,8 @@ The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the `model` argument as well as splatted `kwargs` are propagated there as-is.
 This convencience function *only works for aggregated agent data*.
 
-Calling `abm_data_exploration` returns: `fig::Figure, p::ABMPlot`. So you can save and/or
-further modify the figure. But it is also possible to access the collected data (if any)
+Calling `abmexploration` returns: `fig::Figure, p::_ABMPlot`. So you can save and/or 
+further modify the figure. But it is also possible to access the collected data (if any) 
 via the plot object, just like in the case of using [`abmplot`](@ref) directly.
 
 Clicking the "reset" button will add a red vertical line to the data plots for visual
@@ -26,18 +27,19 @@ guidance.
   the corresponding plots' y-labels are automatically named after the collected data.
   It is also possible to provide `alabels, mlabels` (vectors of strings with exactly same
   length as `adata, mdata`), and these labels will be used instead.
-* `figurekwargs = NamedTuple()`: Keywords to customize the created Figure.
-* `axiskwargs = NamedTuple()`: Keywords to customize the created Axis.
+* `figure = NamedTuple()`: Keywords to customize the created Figure.
+* `axis = NamedTuple()`: Keywords to customize the created Axis.
 * `plotkwargs = NamedTuple()`: Keywords to customize the styling of the resulting
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
-function abm_data_exploration(model;
+function abmexploration(model;
         alabels = nothing, mlabels = nothing,
-        figurekwargs = NamedTuple(), axiskwargs = NamedTuple(), plotkwargs = NamedTuple(),
+        figure = NamedTuple(), axis = NamedTuple(), plotkwargs = NamedTuple(),
         kwargs...)
-    fig = Figure(; resolution = (1600, 800), figurekwargs...)
-    ax = Axis(fig[1,1]; axiskwargs...)
-    p = abmplot!(model; ax, kwargs...)
+    fig = Figure(; resolution = (1600, 800), figure...)
+    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    p = abmplot!(ax, model; kwargs...)
 
     adata, mdata, adf, mdf = p.adata[], p.mdata[], p.adf[], p.mdf[] # alias Observables
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
@@ -110,13 +112,13 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
 * `frames = 300`: How many frames to record in total, including the starting frame.
 * `title = ""`: The title of the figure.
 * `showstep = true`: If current step should be shown in title.
-* `figurekwargs = NamedTuple()`: Figure related keywords (e.g. resolution, backgroundcolor).
-* `axiskwargs = NamedTuple()`: Axis related keywords (e.g. aspect).
+* `figure = NamedTuple()`: Figure related keywords (e.g. resolution, backgroundcolor).
+* `axis = NamedTuple()`: Axis related keywords (e.g. aspect).
 * `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
 function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
             spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
-            figurekwargs = NamedTuple(), axiskwargs = NamedTuple(), kwargs...)
+            figure = NamedTuple(), axis = NamedTuple(), kwargs...)
     # add some title stuff
     s = Observable(0) # counter of current step
     if title ≠ "" && showstep
@@ -126,12 +128,12 @@ function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
     else
         t = title
     end
-    axiskwargs = (title = t, titlealign = :left, axiskwargs...)
+    axis = (title = t, titlealign = :left, axis...)
 
-    fig = Figure(; resolution = (600,600), backgroundcolor = DEFAULT_BG, figurekwargs...)
-    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
-        Axis3(fig; axiskwargs...) : Axis(fig; axiskwargs...)
-    p = abmplot!(model; ax, kwargs...)
+    fig = Figure(; resolution = (600,600), backgroundcolor = DEFAULT_BG, figure...)
+    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    p = abmplot!(ax, model; kwargs...)
 
     record(fig, file; framerate) do io
         for j in 1:frames-1

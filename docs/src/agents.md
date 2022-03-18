@@ -16,27 +16,18 @@ Another example application can be found in the [Agents.jl docs](https://juliady
 abmplot
 ```
 
-Due to technical limitations, calling [`abmplot`](@ref) as a standalone function is currently not fully supported.
-While it can be used to create relatively simple static plots, some of its built-in functionality (e.g. heatmap colorbar, model controls, parameter sliders) will not work out of the box.
-
-It is strongly advised to first explicitly construct a Figure and Axis to plot into, then provide `ax::Axis` as a *keyword argument* to your in-place function call.
-Please note that this is not the same as passing `ax` as a positional argument to an in-place plotting function call.
-For example:
-
-```
-fig = Figure()
-ax = Axis(fig[1,1])
-p = abmplot!(model; ax)
+```@docs
+_abmplot
 ```
 
 ## Convenience functions
 
-There are currently two extra convenience functions that execute the [`abmplot`](@ref) recipe under specific conditions.
-These can be helpful for having a quick look at time series of collected data ([`abm_data_exploration`](@ref)) or for recording the evolution of a model and saving it in a video file ([`abm_video`](@ref)).
+There are currently two extra convenience functions that execute the [`_abmplot`](@ref) recipe under specific conditions.
+These can be helpful for having a quick look at time series of collected data ([`abmexploration`](@ref)) or for recording the evolution of a model and saving it in a video file ([`abmvideo`](@ref)).
 
 ```@docs
-abm_data_exploration
-abm_video
+abmexploration
+abmvideo
 ```
 
 ## Agent inspection
@@ -58,6 +49,7 @@ InteractiveDynamics.agent2string
 ## Adding custom plots
 
 Tracking model variables is already made easy by adding them to the `adata`/`mdata` vectors.
+The provided [convenience function](@ref) `abmexploration` then allows for easily exploring the model dynamics by looking at the plots which are automatically created for each tracked variable in `adata`/`mdata`.
 
 ```julia
 using Agents
@@ -66,16 +58,35 @@ using InteractiveDynamics
 using GLMakie
 
 # initialise model
-model, agent_step!, model_step! = Models.schelling()
+model, daisy_step!, daisyworld_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
-# define a parameter slider
-params = Dict(:min_to_be_happy => 1:1:5)
+# define plot details
+daisycolor(a::Daisy) = a.breed
+
+plotkwargs = (
+    ac = daisycolor, as = 12, am = '♠',
+    heatarray = :temperature,
+    heatkwargs = (colorrange = (-20, 60),),
+)
+
+# define parameter sliders
+params = Dict(
+    :surface_albedo => 0:0.01:1,
+    :solar_change => -0.1:0.01:0.1,
+)
 
 # define data to collect and plot
-adata= [(:mood, mean)]
+black(a) = a.breed == :black
+white(a) = a.breed == :white
+adata = [(black, count), (white, count)]
+temperature(model) = mean(model.temperature)
+mdata = [temperature, :solar_luminosity]
 
 # open the interactive app
-fig, adf, mdf = abm_data_exploration(model, agent_step!, model_step!, params; adata)
+fig, p = abmexploration(model; 
+    agent_step! = daisy_step!, model_step! = daisyworld_step!, params, 
+    adata, alabels = ["Black daisys", "White daisys"], mdata, mlabels = ["T", "L"]
+)
 ```
 
 ```@raw html
@@ -92,25 +103,43 @@ This can be done by adding a new stepping function which wraps the original `mod
 For the sake of a simple example, let's assume we want to add a barplot showing the current amount of happy and unhappy agents in our Schelling segregation model.
 
 ```julia
-# add the new variable as an observable
-happiness = [count(a.mood == false for a in allagents(model)),
-    count(a.mood == true for a in allagents(model))] |> Observable
+# reset model
+model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
-# update its value after each model step
-function new_model_step!(model; happiness = happiness)
-    model_step!(model)
-    happiness[] = [count(a.mood == false for a in allagents(model)),
-        count(a.mood == true for a in allagents(model))]
-end
+# create a basic abmplot with controls and sliders
+fig, ax, p = abmplot(model; 
+        agent_step! = daisy_step!, model_step! = daisyworld_step!,
+        params, mdata, adata, figure = (; resolution = (1600,800)), plotkwargs...)
 
-# open the interactive app and use the enhanced stepping function as an argument
-fig, adf, mdf = abm_data_exploration(model, agent_step!, new_model_step!, params; adata)
+display(fig)
 
-# add the desired plot to a newly created column on the right
-barplot(fig[:,3], [0,1], happiness; bar_labels = ["Unhappy", "Happy"])
+# create a new layout to add new plots to to the right of the abmplot
+plot_layout = fig[:,end+1] = GridLayout()
 
-# as usual, we can also style this new plot to our liking
-hidexdecorations!(current_axis())
+# create a sublayout on its first row and column
+count_layout = plot_layout[1,1] = GridLayout()
+
+# collect tuples with x and y values for black and white daisys
+blacks = @lift(Point2f.($(p.adf).step, $(p.adf).count_black))
+whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
+
+# create an axis to plot into and style it to our liking
+ax_counts = Axis(count_layout[1,1]; 
+    backgroundcolor = :lightgrey, ylabel = "Number of daisys by color")
+
+# plot the data as scatterlines and color them accordingly
+scatterlines!(ax_counts, blacks; color = :black, label = "black")
+scatterlines!(ax_counts, whites; color = :white, label = "white")
+
+# add a legend to the right side of the plot
+Legend(count_layout[1,2], ax_counts, bgcolor = :lightgrey)
+
+# and another plot, written in a more condensed format
+hist(plot_layout[2,1], @lift($(p.mdf).temperature); 
+    bins = 10, color = GLMakie.Colors.colorant"#d31",
+    strokewidth = 2, strokecolor = (:black, 0.5),
+    axis = (; ylabel = "Distribution of mean temperatures\nacross all time steps")
+)
 ```
 
 ```@raw html

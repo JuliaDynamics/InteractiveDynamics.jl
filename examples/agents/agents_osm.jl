@@ -55,9 +55,9 @@ fig
 
 
 
-## abm_data_exploration convenience function
+## abmexploration convenience function
 
-fig, p = abm_data_exploration(zombie_model;
+fig, p = abmexploration(zombie_model;
     agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac, as, params = Dict(:dt => 0.01:0.001:0.02),
     adata = [(:infected, count)], mdata = [zombie_share, :dt],

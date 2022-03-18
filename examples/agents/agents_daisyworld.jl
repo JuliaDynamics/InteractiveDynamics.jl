@@ -157,19 +157,21 @@ plotkwargs = (
     heatkwargs = (colorrange = (-20, 60),),
 )
 
+abmplot(model; plotkwargs...)
+
 fig = Figure()
 ax = Axis(fig[1,1])
-p = abmplot!(model; ax, plotkwargs...)
+p = abmplot!(ax, model; plotkwargs...)
 
 # And after a couple of steps
 Agents.step!(p.model[], daisy_step!, daisyworld_step!, 5)
 fig = Figure()
 ax = Axis(fig[1,1])
-p = abmplot!(model; ax, plotkwargs...)
+p = abmplot!(ax, model; plotkwargs...)
 
 # %% Video
 model = daisyworld()
-abm_video(
+abmvideo(
     "daisyworld.mp4",
     model,
     daisy_step!,
@@ -183,8 +185,8 @@ abm_video(
 model = daisyworld()
 fig = Figure(resolution = (600,700))
 ax = Axis(fig[1,1])
-p = abmplot!(model; 
-        ax, agent_step! = daisy_step!, model_step! = daisyworld_step!, plotkwargs...)
+p = abmplot!(ax, model; 
+        agent_step! = daisy_step!, model_step! = daisyworld_step!, plotkwargs...)
 
 # ## Interactive
 # %% #src
@@ -202,29 +204,50 @@ params = Dict(
     :solar_change => -0.1:0.01:0.1,
 )
 
-fig = Figure(resolution = (800,700))
-ax = Axis(fig[1,1])
-p = abmplot!(model; 
-    ax, agent_step! = daisy_step!, model_step! = daisyworld_step!, params, 
-    mdata, adata, plotkwargs...)
+# exploration
 
-# data plots
+model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+fig, p = abmexploration(model; 
+    agent_step! = daisy_step!, model_step! = daisyworld_step!, params, plotkwargs...,
+    adata, alabels = ["Black daisys", "White daisys"], mdata, mlabels = ["T", "L"]
+)
 
-plot_layout = fig[:,end+1] = GridLayout()
+## custom plots
 
-# xs = @lift($(p.mdf).step)
+# reset model
+model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
-b = @lift($(p.adf).count_black)
-w = @lift($(p.adf).count_white)
-count_layout = plot_layout[1,1] = GridLayout()
-scatterlines(count_layout[1,1], b; color = :red, label = "black")
-scatterlines!(w; color = :blue, label = "white")
-Legend(count_layout[1,2], current_axis())
-
-T = @lift($(p.mdf).temperature)
-scatterlines(plot_layout[2,1], T; label = "T")
-
-L = @lift($(p.mdf).solar_luminosity)
-scatterlines(plot_layout[3,1], L; label = "L")
+# create basic abmplot with controls and sliders
+fig, ax, p = abmplot(model; 
+        agent_step! = daisy_step!, model_step! = daisyworld_step!,
+        params, mdata, adata, figure = (; resolution = (1600,800)), plotkwargs...)
 
 display(fig)
+
+# create a new layout to add new plots to to the right of the abmplot
+plot_layout = fig[:,end+1] = GridLayout()
+
+# create a sublayout on its first row and column
+count_layout = plot_layout[1,1] = GridLayout()
+
+# collect tuples with x and y values for black and white daisys
+blacks = @lift(Point2f.($(p.adf).step, $(p.adf).count_black))
+whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
+
+# create an axis to plot into and style it
+ax_counts = Axis(count_layout[1,1]; 
+    backgroundcolor = :lightgrey, ylabel = "Number of daisys by color")
+
+# plot the data as scatterlines and color accordingly
+scatterlines!(ax_counts, blacks; color = :black, label = "black")
+scatterlines!(ax_counts, whites; color = :white, label = "white")
+
+# add a legend to the right side of the plot
+Legend(count_layout[1,2], ax_counts, bgcolor = :lightgrey)
+
+# and another plot, written in a more condensed format
+hist(plot_layout[2,1], @lift($(p.mdf).temperature); 
+    bins = 10, color = GLMakie.Colors.colorant"#d31",
+    strokewidth = 2, strokecolor = (:black, 0.5),
+    axis = (; ylabel = "Distribution of mean temperatures\nacross all time steps")
+)

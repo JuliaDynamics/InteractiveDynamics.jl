@@ -6,7 +6,7 @@
 
 # 2D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}},
+            plot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}},
             idx, source::Scatter)
     if plot._used_poly[]
         return show_data_poly(inspector, plot, idx, source)
@@ -16,7 +16,7 @@ function Makie.show_data(inspector::DataInspector,
 end
 
 function show_data_2D(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}}, 
+            plot::_ABMPlot{<:Tuple{<:Agents.ABM{<:S}}}, 
             idx, source::Scatter) where {S<:SUPPORTED_SPACES}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
@@ -39,7 +39,7 @@ end
 
 # TODO: Fix this tooltip
 function show_data_poly(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
+            plot::_ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
             idx, ::Makie.Poly) where {S<:SUPPORTED_SPACES}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)
@@ -64,13 +64,14 @@ end
 
 # 3D space
 function Makie.show_data(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}},
+            plot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}},
             idx, source::MeshScatter)
+    # need to dispatch here should we for example have 3D polys at some point 
     return show_data_3D(inspector, plot, idx, source)
 end
 
 function show_data_3D(inspector::DataInspector, 
-            plot::ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
+            plot::_ABMPlot{<:Tuple{<:Agents.ABM{<:S}}},
             idx, source::MeshScatter) where {S<:SUPPORTED_SPACES}
     a = inspector.plot.attributes
     scene = Makie.parent_scene(plot)

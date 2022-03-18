@@ -1,6 +1,8 @@
+export abmplot, abmplot!
+
 """
     abmplot(model::ABM; kwargs...) → fig, ax, abmplot_object
-    abmplot!(model::ABM; ax::Axis/Axis3, kwargs...) → abmplot_object
+    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmplot_object
 
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. The same function can be used
@@ -14,11 +16,7 @@ Requires `Agents`.
 
 ## Keyword arguments
 
-### Axis related
-* `ax = nothing` : The axis to which the resulting abmplot will be added. This is currently
-  necessary for some of the more advanced built-in functionality (e.g. heatmap colorbar,
-  model controls, parameter sliders) to work. This kwarg can be omitted in the case of
-  calling `abmplot` instead of `abmplot!`.
+The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figure` and `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
 
 ### Agent related
 * `ac, as, am` : These three keywords decided the color, size, and marker, that
@@ -69,7 +67,7 @@ Requires `Agents`.
   end
   ```
 
-### Plot layers inside `ABMPlot`
+### Plot layers inside `_ABMPlot`
 
   1. OSMPlot, if `model.space isa OpenStreetMapSpace`
   2. static preplot, if `static_preplot! != nothing`
@@ -109,7 +107,25 @@ before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `spu = 1:50`: The values of the "spu" slider.
 * `when = true` : When to perform data collection, as in `Agents.run!`.
 """
-@recipe(ABMPlot, model) do scene
+function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
+    fig = Figure(; figure...)
+    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    p = _abmplot!(model; ax, kwargs...)
+
+    return fig, ax, p
+end
+
+abmplot!(ax, model::Agents.ABM; kwargs...) = _abmplot!(ax, model; ax, kwargs...)
+
+"""
+    _abmplot(model::ABM; kwargs...) → fig, ax, abmplot_object
+    _abmplot!(model::ABM; ax::Axis/Axis3, kwargs...) → abmplot_object
+
+This is the internal recipe for creating an `_ABMPlot`.
+It is not intended to be used directly. Please use `abmplot`/`abmplot!` instead.
+"""
+@recipe(_ABMPlot, model) do scene
     Theme(
         # insert InteractiveDynamics theme here?
     )
@@ -159,7 +175,7 @@ const SUPPORTED_SPACES =  Union{
     Agents.OpenStreetMapSpace,
 }
 
-function Makie.plot!(abmplot::ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
+function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
     pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac,
