@@ -2,16 +2,13 @@ include("model_observable.jl")
 export abmplot, abmplot!
 
 """
-    abmplot(model::ABM; kwargs...) → fig, ax, abmplot_object
-    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmplot_object
+    abmplot(model::ABM; kwargs...) → fig, ax, abmobs
+    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmobs
 
 Plot an agent based model by plotting each individual agent as a marker and using
-the agent's position field as its location on the plot. The same function can be used
-to launch interactive applications for the model evolution,
-see Interactive Application below.
-
-The returned `abmplot_object` can be used to make custom compositions of plots and
-animations as illustrated in the online documentation.
+the agent's position field as its location on the plot. The same function is used
+to make custom composite plots and interactive applications for the model evolution
+using the returned `abmobs`, see the discussion on Interactivity below.
 
 Requires `Agents`.
 
@@ -73,7 +70,10 @@ The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figur
   ```
 
 
-# Interactive Application
+# Interactivity
+See the documentation string of [`ABMObservable`](@ref) for a discussion.
+TODO: Actually finish the docs!
+
 If either, or both, of the keywords `agent_step!, model_step!` are provided, the
 plot switches to an interactive application mode.
 The two functions `agent_step!, model_step!` will decide how
@@ -109,12 +109,28 @@ function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), 
     fig = Figure(; figure...)
     ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    p = _abmplot!(model; ax, kwargs...)
-
-    return fig, ax, p
+    abmobs = abmplot!(ax, model; kwargs...)
+    return fig, ax, abmobs
 end
 
-abmplot!(ax, model::Agents.ABM; kwargs...) = _abmplot!(ax, model; ax, kwargs...)
+function abmplot!(ax, model::Agents.ABM;
+        # Add controls if agent_step! and/or model_step! are provided
+        # TODO: Expose the add_controls keyword in the docstring,
+        # to allow possibility of initializing observables without controls
+        agent_step! = Agents.dummystep,
+        model_step! = Agents.dummystep,
+        adata = nothing,
+        mdata = nothing,
+        when = true,
+        kwargs...
+    )
+
+    abmobs = ABMObservable(
+        model; agent_step!, model_step!, adata, mdata, when
+    )
+    _abmplot!(ax, model; ax, abmombs, kwargs...)
+    return abmobs
+end
 
 """
     _abmplot(model::ABM; kwargs...) → fig, ax, abmplot_object
@@ -149,17 +165,11 @@ This is the internal recipe for creating an `_ABMPlot`.
         static_preplot! = nothing,
 
         # Interactive application
+        abmobs::ABMObservable, # initialized from the main `abmplot` method.
         # Add parameter sliders if params are provided
         params = Dict(),
-        # Add controls if agent_step! and/or model_step! are provided
-        agent_step! = Agents.dummystep,
-        model_step! = Agents.dummystep,
-        adata = nothing,
-        mdata = nothing,
-        adf = nothing,
-        mdf = nothing,
+        # Animation evolution speed
         spu = 1:50,
-        when = true,
 
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,

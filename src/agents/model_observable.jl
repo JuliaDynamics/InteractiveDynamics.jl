@@ -1,5 +1,20 @@
 export ABMObservable
 
+"""
+    ABMObservable(model; agent_step!, model_step!, adata, mdata, when) → abombs
+`abmobs` contains all information necessary to step an agent based model interactively.
+It is also returned by [`abmplot`](@ref).
+
+Calling `Agents.step!(abmobs, n)` will step the model for `n` using the provided
+`agent_step!, model_step!, n` as in [`Agents.step!`](@ref).
+
+The fields `abmobs.model, abmobs.adf, abmobs.mdf` are _observables_ that contain
+the [`AgentBasedModel`](@ref), and the agent and model dataframes with collected data.
+Data are collected as described in [`Agents.run!`](@ref) using the `adata, mdata, when`
+keywords. These observables are updated on stepping (when it makes sense).
+
+All plotting and interactivity should be defined by `lift`ing these observables.
+"""
 struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
     model::M # this is an observable
     agent_step!::AS
@@ -12,34 +27,42 @@ struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
     when::W
 end
 
-function Agents.step!(mobs::ABMObservable, n; kwargs...)
-    model, adf, mdf = mobs.model, mobs.adf, mobs.mdf
-    Agents.step!(model[], mobs.agent_step!, mobs.model_step!, n; kwargs...)
+function ABMObservable(model;
+        agent_step! = Agents.dummystep,
+        model_step! = Agents.dummystep,
+        adata = nothing,
+        mdata = nothing,
+        when = true,
+    )
+    adf = mdf = nothing
+    if !isnothing(adata)
+        adf = Observable(Agents.init_agent_dataframe(model, adata))
+    end
+    if !isnothing(mdata)
+        mdf = Observable(Agents.init_model_dataframe(model, mdata))
+    end
+    return ABMObservable(
+        Observable(model), agent_step!, model_step!, adata, mdata, adf, mdf, Ref(0), when
+    )
+end
+
+
+function Agents.step!(abmobs::ABMObservable, n; kwargs...)
+    model, adf, mdf = abmobs.model, abmobs.adf, abmobs.mdf
+    Agents.step!(model[], abmobs.agent_step!, abmobs.model_step!, n; kwargs...)
     notify(model)
-    mobs.s[] = mobs.s[] + n # increment step counter
-    if Agents.should_we_collect(mobs.s, model[], mobs.when)
-        if !isnothing(mobs.adata)
-            Agents.collect_agent_data!(adf[], model[], mobs.adata, mobs.s[])
+    abmobs.s[] = abmobs.s[] + n # increment step counter
+    if Agents.should_we_collect(abmobs.s, model[], abmobs.when)
+        if !isnothing(abmobs.adata)
+            Agents.collect_agent_data!(adf[], model[], abmobs.adata, abmobs.s[])
             notify(adf)
         end
         if !isnothing(mdata)
-            Agents.collect_model_data!(mdf[], model, mobs.mdata, mobs.s[])
+            Agents.collect_model_data!(mdf[], model, abmobs.mdata, abmobs.s[])
             notify(mdf)
         end
     end
     return nothing
 end
 
-function Base.show(io::IO, ::ABMObservable)
-    print(io,
-"""
-    mobs::ABMObservable
-An object that contains all information necessary to step an agent based model
-interactively. Calling `Agents.step!(mobs, n)` will step te model for `n`.
-The fields `mobs.model, mobs.adf, mobs.mdf` are _observables_ that contain
-the actual model, and then agent and model dataframes with collected data.
-These observables are updated on stepping (when it makes sense).
-All plotting and interactivity should be defined by `lift`ing these observables.
-"""
-)
-end
+Base.show(io::IO, ::ABMObservable) = print(io, "ABMObservable")
