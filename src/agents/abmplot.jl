@@ -16,7 +16,8 @@ Requires `Agents`.
 
 ## Keyword arguments
 
-The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figure` and `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
+The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figure` and
+`axis` which can be used to change the automatically created `Figure` and `Axis` objects.
 
 ### Agent related
 * `ac, as, am` : These three keywords decided the color, size, and marker, that
@@ -52,6 +53,9 @@ The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figur
   But you could also define `f(model) = create_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
+
+  It is strongly recommended to use `abmplot` instead of the `abmplot!` method if
+  you use `heatarray`, so that a colorbar can be placed naturally.
 * `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
 * `add_colorbar = true` : Whether or not a Colorbar should be added to the right side of the
@@ -66,13 +70,6 @@ The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figur
       translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
-
-### Plot layers inside `_ABMPlot`
-
-  1. OSMPlot, if `model.space isa OpenStreetMapSpace`
-  2. static preplot, if `static_preplot! != nothing`
-  3. heatmap, if `heatarray != nothing`
-  4. agent positions as `scatter`, `poly` or `meshscatter`, depending on type of `model.space`
 
 
 # Interactive Application
@@ -123,7 +120,6 @@ abmplot!(ax, model::Agents.ABM; kwargs...) = _abmplot!(ax, model; ax, kwargs...)
     _abmplot!(model::ABM; ax::Axis/Axis3, kwargs...) → abmplot_object
 
 This is the internal recipe for creating an `_ABMPlot`.
-It is not intended to be used directly. Please use `abmplot`/`abmplot!` instead.
 """
 @recipe(_ABMPlot, model) do scene
     Theme(

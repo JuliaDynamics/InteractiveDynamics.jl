@@ -16,14 +16,9 @@ Another example application can be found in the [Agents.jl docs](https://juliady
 abmplot
 ```
 
-```@docs
-_abmplot
-```
-
 ## Convenience functions
 
-There are currently two extra convenience functions that execute the [`_abmplot`](@ref) recipe under specific conditions.
-These can be helpful for having a quick look at time series of collected data ([`abmexploration`](@ref)) or for recording the evolution of a model and saving it in a video file ([`abmvideo`](@ref)).
+There are currently two extra convenience functions that can be helpful for having a quick look at time series of collected data ([`abmexploration`](@ref)) or for recording the evolution of a model and saving it in a video file ([`abmvideo`](@ref)).
 
 ```@docs
 abmexploration
@@ -83,8 +78,8 @@ temperature(model) = mean(model.temperature)
 mdata = [temperature, :solar_luminosity]
 
 # open the interactive app
-fig, p = abmexploration(model; 
-    agent_step! = daisy_step!, model_step! = daisyworld_step!, params, 
+fig, p = abmexploration(model;
+    agent_step! = daisy_step!, model_step! = daisyworld_step!, params,
     adata, alabels = ["Black daisys", "White daisys"], mdata, mlabels = ["T", "L"]
 )
 ```
@@ -107,7 +102,7 @@ For the sake of a simple example, let's assume we want to add a barplot showing 
 model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 
 # create a basic abmplot with controls and sliders
-fig, ax, p = abmplot(model; 
+fig, ax, p = abmplot(model;
         agent_step! = daisy_step!, model_step! = daisyworld_step!,
         params, mdata, adata, figure = (; resolution = (1600,800)), plotkwargs...)
 
@@ -124,7 +119,7 @@ blacks = @lift(Point2f.($(p.adf).step, $(p.adf).count_black))
 whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
 
 # create an axis to plot into and style it to our liking
-ax_counts = Axis(count_layout[1,1]; 
+ax_counts = Axis(count_layout[1,1];
     backgroundcolor = :lightgrey, ylabel = "Number of daisys by color")
 
 # plot the data as scatterlines and color them accordingly
@@ -135,7 +130,7 @@ scatterlines!(ax_counts, whites; color = :white, label = "white")
 Legend(count_layout[1,2], ax_counts, bgcolor = :lightgrey)
 
 # and another plot, written in a more condensed format
-hist(plot_layout[2,1], @lift($(p.mdf).temperature); 
+hist(plot_layout[2,1], @lift($(p.mdf).temperature);
     bins = 10, color = GLMakie.Colors.colorant"#d31",
     strokewidth = 2, strokecolor = (:black, 0.5),
     axis = (; ylabel = "Distribution of mean temperatures\nacross all time steps")
