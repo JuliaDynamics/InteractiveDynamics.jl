@@ -1,23 +1,18 @@
-"""
-    mobs::ModelObservable
-A sruct that contains all information necessary to step a model interactively. Calling
-`Agents.step!(mobs, n)` will step te model for `n`.
-The fields `mobs.model, mobs.adf, mobs.mdf` are _observables_ that are updated on stepping.
-All plotting and interactivity should be defined by `lift`ing these observables.
-"""
-struct ModelObservable{M, AS, MS, AD, MD, ADF, MDF, W}
-    model::M
+export ABMObservable
+
+struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
+    model::M # this is an observable
     agent_step!::AS
     model_step!::MS
     adata::AD
     mdata::MD
-    adf::ADF
-    mdf::MDF
+    adf::ADF # this is an observable
+    mdf::MDF # this is an observable
     s::Ref{Int}
     when::W
 end
 
-function Agents.step!(mobs::ModelObservable, n; kwargs...)
+function Agents.step!(mobs::ABMObservable, n; kwargs...)
     model, adf, mdf = mobs.model, mobs.adf, mobs.mdf
     Agents.step!(model[], mobs.agent_step!, mobs.model_step!, n; kwargs...)
     notify(model)
@@ -33,4 +28,18 @@ function Agents.step!(mobs::ModelObservable, n; kwargs...)
         end
     end
     return nothing
+end
+
+function Base.show(io::IO, ::ABMObservable)
+    print(io,
+"""
+    mobs::ABMObservable
+An object that contains all information necessary to step an agent based model
+interactively. Calling `Agents.step!(mobs, n)` will step te model for `n`.
+The fields `mobs.model, mobs.adf, mobs.mdf` are _observables_ that contain
+the actual model, and then agent and model dataframes with collected data.
+These observables are updated on stepping (when it makes sense).
+All plotting and interactivity should be defined by `lift`ing these observables.
+"""
+)
 end

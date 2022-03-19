@@ -1,3 +1,4 @@
+include("model_observable.jl")
 export abmplot, abmplot!
 
 """
