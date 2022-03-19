@@ -52,8 +52,12 @@ using Statistics
 using InteractiveDynamics
 using GLMakie
 
-# initialise model
-model, daisy_step!, daisyworld_step! = Models.daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+# Here we will use a pre-defined model, the Daisyworld.
+# To learn about this model you can visit the [full example](https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/daisyworld/),
+daisypath = joinpath(dirname(pathof(InteractiveDynamics)), "agents", "daisyworld_def.jl")
+include(daisypath)
+model, daisy_step!, daisyworld_step! = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+model
 
 # define plot details
 daisycolor(a::Daisy) = a.breed
