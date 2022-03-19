@@ -1,13 +1,13 @@
 
 function add_interaction!(fig, ax, abmplot)
-    add_controls = (abmplot.agent_step![] != Agents.dummystep) || 
+    add_controls = (abmplot.agent_step![] != Agents.dummystep) ||
                     (abmplot.model_step![] != Agents.dummystep)
     add_param_sliders = !isempty(abmplot.params[])
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
-        add_controls!(fig, abmplot.model, abmplot.agent_step!, abmplot.model_step!, 
-            abmplot.adata, abmplot.mdata, abmplot.adf, abmplot.mdf, 
+        add_controls!(fig, abmplot.model, abmplot.agent_step!, abmplot.model_step!,
+            abmplot.adata, abmplot.mdata, abmplot.adf, abmplot.mdf,
             abmplot.spu, abmplot.when)
     end
 
@@ -43,7 +43,7 @@ function add_controls!(fig, model, agent_step!, model_step!,
     sleep_slider = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
     controllayout[2, :] = sleep_slider.layout
     slep = sleep_slider.slider.value
-    
+
     # Step button
     step = Button(fig, label = "step")
     on(step.clicks) do c
@@ -55,6 +55,10 @@ function add_controls!(fig, model, agent_step!, model_step!,
         for element in fig.content
             # search for Axes but ignore those with ABMPlots in them
             if element isa Axis && !any(p -> p isa _ABMPlot, element.scene.plots)
+                # TODO: This autolimits can be made more performant
+                # by linking the x-axis of all data plots, and then
+                # autolimiting the first one only, while autolimiting the
+                # y axis for all plots.
                 autolimits!(element) # needed for custom plot limit updates
             end
         end
