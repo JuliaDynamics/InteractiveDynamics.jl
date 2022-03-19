@@ -250,11 +250,3 @@ function set_axis_limits!(ax, model)
 end
 
 @deprecate abm_plot abmplot
-
-# Extend `step!` for observable
-function Agents.step!(model::Observable{<:Agents.ABM}, args...; kwargs...)
-    m = model[]
-    Agents.step!(m, args...; kwargs...)
-    model[] = m
-    return
-end

@@ -152,6 +152,5 @@ function add_param_sliders!(fig, model, params)
         end
     end
     datalayout[end+1, :] = MakieLayout.hbox!(update; tellwidth = false)
-
     return nothing
 end
