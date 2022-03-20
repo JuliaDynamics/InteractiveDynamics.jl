@@ -15,11 +15,8 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 
 ## Keyword arguments
 
-The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figure` and
-`axis` which can be used to change the automatically created `Figure` and `Axis` objects.
-
 ### Agent related
-* `ac, as, am` : These three keywords decided the color, size, and marker, that
+* `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
   which takes as an input a single argument and outputs the corresponding value.
 
@@ -70,6 +67,8 @@ The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figur
   end
   ```
 
+The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
+`axis` which can be used to change the automatically created `Figure` and `Axis` objects.
 
 # Interactivity
 
@@ -105,7 +104,7 @@ See the documentation string of [`ABMObservable`](@ref) for custom interactive p
 """
 function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
     fig = Figure(; figure...)
-    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
     abmobs = abmplot!(ax, model; kwargs...)
     return fig, ax, abmobs
@@ -188,8 +187,8 @@ const SUPPORTED_SPACES =  Union{
 function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac,
-        abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
+    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.abmobs[].model,
+        abmplot.ac, abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
@@ -211,7 +210,9 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         if abmplot.add_colorbar[]
             @assert !isnothing(ax) "Need `ax` to add a colorbar for the heatmap."
-            Colorbar(fig[1,end+1], hmap, width = 20)
+            Colorbar(fig[1, 1][1, 2], hmap, width = 20)
+            # TODO: here set col height so that colorbar and axis always same height
+            # TODO: Set colorbar to be "glued" to axis
         end
     end
 

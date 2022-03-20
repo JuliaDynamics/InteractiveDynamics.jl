@@ -15,8 +15,8 @@ The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the `model` argument as well as splatted `kwargs` are propagated there as-is.
 This convencience function *only works for aggregated agent data*.
 
-Calling `abmexploration` returns: `fig::Figure, p::_ABMPlot`. So you can save and/or 
-further modify the figure. But it is also possible to access the collected data (if any) 
+Calling `abmexploration` returns: `fig::Figure, p::_ABMPlot`. So you can save and/or
+further modify the figure. But it is also possible to access the collected data (if any)
 via the plot object, just like in the case of using [`abmplot`](@ref) directly.
 
 Clicking the "reset" button will add a red vertical line to the data plots for visual
@@ -33,22 +33,16 @@ guidance.
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
 function abmexploration(model;
-        alabels = nothing, mlabels = nothing,
-        figure = NamedTuple(), axis = NamedTuple(), plotkwargs = NamedTuple(),
-        kwargs...)
-    fig = Figure(; resolution = (1600, 800), figure...)
-    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
-        Axis3(fig; axis...) : Axis(fig; axis...)
-    p = abmplot!(ax, model; kwargs...)
+        alabels = nothing, mlabels = nothing, plotkwargs = NamedTuple(),
+        kwargs...
+    )
+    fig, ax, p = abmplot(model; figure = (resolution = (1600, 800),), kwargs...)
 
-    adata, mdata, adf, mdf = p.adata[], p.mdata[], p.adf[], p.mdf[] # alias Observables
+    adata, mdata = p.adata, p.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    L = (isnothing(adata) ? 0 : size(adf)[2]-1) + (isnothing(mdata) ? 0 : size(mdf)[2]-1)
-
     init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs)
-
     return fig, p
 end
 

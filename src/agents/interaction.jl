@@ -6,7 +6,7 @@ function add_interaction!(fig, ax, abmplot)
         @assert !isnothing(ax) "Need `ax` to add model controls."
         add_controls!(fig, abmplot.abmobs[].model, abmplot.abmobs[].agent_step!, abmplot.abmobs[].model_step!,
             abmplot.abmobs[].adata, abmplot.abmobs[].mdata, abmplot.abmobs[].adf, abmplot.abmobs[].mdf,
-            abmplot.abmobs[].spu, abmplot.abmobs[].when)
+            abmplot.spu, abmplot.abmobs[].when)
     end
 
     if add_controls && add_param_sliders
@@ -21,8 +21,8 @@ end
 function add_controls!(fig, model, agent_step!, model_step!,
             adata, mdata, adf, mdf, spu, when)
     s = 0 # current step
-    init_dataframes!(model[], adata[], mdata[], adf, mdf)
-    collect_data!(model[], when[], adata[], mdata[], adf, mdf, s)
+    init_dataframes!(model[], adata, mdata, adf, mdf)
+    collect_data!(model[], when[], adata, mdata, adf, mdf, s)
 
     # Create new layout for control buttons
     controllayout = fig[end+1,:][1,1] = GridLayout(tellheight = true)
@@ -46,9 +46,9 @@ function add_controls!(fig, model, agent_step!, model_step!,
     step = Button(fig, label = "step")
     on(step.clicks) do c
         n = speed[]
-        Agents.step!(model[], agent_step![], model_step![], n)
+        Agents.step!(model[], agent_step!, model_step!, n)
         s += n # increment step counter
-        collect_data!(model[], when[], adata[], mdata[], adf, mdf, s)
+        collect_data!(model[], when[], adata, mdata, adf, mdf, s)
         model[] = model[] # trigger Observable
         for element in fig.content
             # search for Axes but ignore those with ABMPlots in them
@@ -80,15 +80,15 @@ function add_controls!(fig, model, agent_step!, model_step!,
     on(reset.clicks) do c
         model[] = deepcopy(model0)
         s = 0 # reset step counter
-        Agents.step!(model[], agent_step![], model_step![], s)
+        Agents.step!(model[], agent_step!, model_step!, s)
     end
 
     # Clear button
     clear = Button(fig, label = "clear\ndata")
     on(clear.clicks) do c
         adf.val, mdf.val = nothing, nothing # reset dataframes without triggering Observable
-        init_dataframes!(model[], adata[], mdata[], adf, mdf)
-        collect_data!(model[], when[], adata[], mdata[], adf, mdf, s)
+        init_dataframes!(model[], adata, mdata, adf, mdf)
+        collect_data!(model[], when[], adata, mdata, adf, mdf, s)
     end
 
     # Layout buttons
