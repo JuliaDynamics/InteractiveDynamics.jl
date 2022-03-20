@@ -65,4 +65,7 @@ function Agents.step!(abmobs::ABMObservable, n; kwargs...)
     return nothing
 end
 
-Base.show(io::IO, ::ABMObservable) = print(io, "ABMObservable")
+function Base.show(io::IO, p::ABMObservable)
+    print(io, "ABMObservable with model:\n")
+    print(io, p.model[])
+end

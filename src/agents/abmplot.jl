@@ -250,10 +250,11 @@ function set_axis_limits!(ax, model)
         return
     elseif model.space isa Agents.ContinuousSpace
         e = model.space.extent
+        o = zero.(e)
     elseif model.space isa Agents.DiscreteSpace
-        e = size(model.space.s) .+ 1
+        e = size(model.space.s) .- 0.5
+        o = zero.(e) .+ 0.5
     end
-    o = zero.(e)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
     is3d = length(o) == 3
