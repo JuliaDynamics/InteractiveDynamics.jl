@@ -57,8 +57,8 @@ function Agents.step!(abmobs::ABMObservable, n; kwargs...)
             Agents.collect_agent_data!(adf[], model[], abmobs.adata, abmobs.s[])
             notify(adf)
         end
-        if !isnothing(mdata)
-            Agents.collect_model_data!(mdf[], model, abmobs.mdata, abmobs.s[])
+        if !isnothing(abmobs.mdata)
+            Agents.collect_model_data!(mdf[], model[], abmobs.mdata, abmobs.s[])
             notify(mdf)
         end
     end

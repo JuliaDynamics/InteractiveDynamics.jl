@@ -18,14 +18,14 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 ### Agent related
 * `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single argument and outputs the corresponding value.
+  which takes as an input a single agent and outputs the corresponding value.
 
   Using constants: `ac = "#338c54", as = 10, am = :diamond`
 
   Using functions:
   ```julia
   ac(a) = a.status == :S ? "#2b2b33" : a.status == :I ? "#bf2642" : "#338c54"
-  as(a) = 10*randn() + 1
+  as(a) = 10rand()
   am(a) = a.status == :S ? :circle : a.status == :I ? :diamond : :rect
   ```
   Notice that for 2D models, `am` can be/return a `Polygon` instance, which plots each agent
@@ -235,10 +235,7 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
         marker[] == :circle && (marker = Sphere(Point3f(0), 1))
         meshscatter!(abmplot, pos; color, marker, markersize, abmplot.scatterkwargs...)
     else
-        @warn("""
-            Cannot resolve agent positions: $(T)
-            Skipping plotting agents.
-            """)
+        @warn("Unknown agent position type: $(T). Skipping plotting agents.")
     end
 
     # Model controls, parameter sliders, data plots

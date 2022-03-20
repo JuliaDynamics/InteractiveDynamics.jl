@@ -81,7 +81,7 @@ function show_data_3D(inspector::DataInspector,
     Makie.update_tooltip_alignment!(inspector, proj_pos)
     size = source.markersize[] isa Vector ? source.markersize[][idx] : source.markersize[]
 
-    model = plot.model[]
+    model = plot.abmobs[].model[]
     id = collect(Agents.allids(model))[idx]
     a._display_text[] = agent2string(model, model[id].pos)
     a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* size .- Vec2f0(5), Vec2f0(size) .+ Vec2f0(10))
