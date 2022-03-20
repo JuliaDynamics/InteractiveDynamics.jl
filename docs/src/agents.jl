@@ -48,7 +48,7 @@ plotkwargs = (;
     ac = daisycolor, as, am,
     scatterkwargs = (strokewidth = 1.0,),
     heatarray = :temperature,
-    heatkwargs = (colorrange = (-20, 60),),
+    heatkwargs = (colorrange = (-20, 60), colormap = :thermal),
 )
 
 fig, ax, abmobs = abmplot(model; plotkwargs...)

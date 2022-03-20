@@ -28,7 +28,7 @@ Themes.compile(joinpath(@__DIR__, "juliadynamics-dark.scss"), joinpath(@__DIR__,
 using Literate
 indir = joinpath(@__DIR__, "src")
 outdir = indir
-files = ("billiards.jl", )
+files = ("billiards.jl", "agents.jl")
 for file in files
     Literate.markdown(joinpath(indir, file), outdir; credit = false)
 end
