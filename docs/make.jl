@@ -1,8 +1,8 @@
 cd(@__DIR__)
 using Pkg
 CI = get(ENV, "CI", nothing) == "true" || get(ENV, "GITHUB_TOKEN", nothing) !== nothing
-Pkg.activate(@__DIR__)
-Pkg.instantiate()
+CI && Pkg.activate(@__DIR__)
+CI && Pkg.instantiate()
 
 using InteractiveDynamics
 using DynamicalSystems, DynamicalBilliards, Agents
@@ -28,7 +28,10 @@ Themes.compile(joinpath(@__DIR__, "juliadynamics-dark.scss"), joinpath(@__DIR__,
 using Literate
 indir = joinpath(@__DIR__, "src")
 outdir = indir
-files = ("billiards.jl", "agents.jl")
+files = (
+    "agents.jl",
+    "billiards.jl",
+)
 for file in files
     Literate.markdown(joinpath(indir, file), outdir; credit = false)
 end
@@ -53,7 +56,7 @@ pages = [
     "Cobweb Diagram" => "cobweb.md",
     "Poincaré Surface of Section" => "psos.md",
     "Brainscanning PSOS" => "brainscan.md",
-    "Billiards" => "billiards.md",
+    # "Billiards" => "billiards.md",
     "Agent Based Models" => "agents.md",
     # "Trajectory Highlighter" => "highlight.md",
 ],

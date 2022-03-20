@@ -31,7 +31,7 @@ include(daisypath)
 model, daisy_step!, daisyworld_step! = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
 model
 
-# Now, to plot daisywolrd is as simple as
+# Now, to plot daisyworld is as simple as
 
 daisycolor(a::Daisy) = a.breed # color of agents
 as = 14 # size of agents
@@ -107,6 +107,13 @@ abmvideo(
     plotkwargs...
 )
 
+# ```@raw html
+# <video width="auto" controls autoplay loop>
+# <source src="../daisyworld.mp4" type="video/mp4">
+# </video>
+# ```
+
+
 # ## Agent inspection
 
 # It is possible to inspect agents at a given position by hovering the mouse cursor over
@@ -122,15 +129,15 @@ abmvideo(
 # InteractiveDynamics.agent2string
 # ```
 
-## Creating custom ABM plots
+# ## Creating custom ABM plots
 # The existing convenience function [`abmexploration`](@ref) will
 # always display aggregated collected data as scatterpoints connected with lines.
 # In cases where more granular control over the displayed plots is needed, we need to take
 # a few extra steps and utilize the [`ABMObservable`](@ref) returned by [`abmplot`](@ref).
 
-```@docs
-ABMObservable
-```
+# ```@docs
+# ABMObservable
+# ```
 # To do custom animations you need to have a good idea of how Makie's animation system works.
 # Have a look [at this tutorial](https://www.youtube.com/watch?v=L-gyDvhjzGQ) if you are
 # not familiar yet.
@@ -147,6 +154,8 @@ fig
 
 p
 
+#
+
 ## create a new layout to add new plots to to the right of the abmplot
 plot_layout = fig[:,end+1] = GridLayout()
 
@@ -159,7 +168,7 @@ whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
 
 ## create an axis to plot into and style it to our liking
 ax_counts = Axis(count_layout[1,1];
-    backgroundcolor = :lightgrey, ylabel = "Number of daisys by color")
+    backgroundcolor = :lightgrey, ylabel = "Number of daisies by color")
 
 ## plot the data as scatterlines and color them accordingly
 scatterlines!(ax_counts, blacks; color = :black, label = "black")
