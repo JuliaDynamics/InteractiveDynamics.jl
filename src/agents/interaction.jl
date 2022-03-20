@@ -1,19 +1,17 @@
-
 function add_interaction!(fig, ax, abmplot)
-    add_controls = (abmplot.agent_step![] != Agents.dummystep) ||
-                    (abmplot.model_step![] != Agents.dummystep)
+    add_controls = abmplot.add_controls[]
     add_param_sliders = !isempty(abmplot.params[])
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
-        add_controls!(fig, abmplot.model, abmplot.agent_step!, abmplot.model_step!,
-            abmplot.adata, abmplot.mdata, abmplot.adf, abmplot.mdf,
-            abmplot.spu, abmplot.when)
+        add_controls!(fig, abmplot.abmobs[].model, abmplot.abmobs[].agent_step!, abmplot.abmobs[].model_step!,
+            abmplot.abmobs[].adata, abmplot.abmobs[].mdata, abmplot.abmobs[].adf, abmplot.abmobs[].mdf,
+            abmplot.abmobs[].spu, abmplot.abmobs[].when)
     end
 
     if add_controls && add_param_sliders
         @assert !isnothing(ax) "Need `ax` to add plots and parameter sliders."
-        add_param_sliders!(fig, abmplot.model, abmplot.params[])
+        add_param_sliders!(fig, abmplot.abmobs[].model, abmplot.params[])
     end
 
     return nothing

@@ -14,10 +14,11 @@ end
 ## simple plot
 
 fig, ax, p = abmplot(model; am = bird_marker)
+fig
 
 ## interactive app
 
 fig = Figure()
 ax = Axis(fig[1,1], title = "Flocking")
-abmplot!(model; ax, agent_step! = flocking_agent_step!, model_step! = flocking_model_step!, 
+abmplot!(model; ax, agent_step! = flocking_agent_step!, model_step! = flocking_model_step!,
     am = bird_marker)

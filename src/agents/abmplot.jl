@@ -8,9 +8,10 @@ export abmplot, abmplot!
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. The same function is used
 to make custom composite plots and interactive applications for the model evolution
-using the returned `abmobs`, see the discussion on Interactivity below.
+using the returned `abmobs`. `abmplot` is also used to launch interactive GUIs for
+evolving agent based models, see "Interactivity" below.
 
-Requires `Agents`.
+Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 
 ## Keyword arguments
 
@@ -71,39 +72,36 @@ The stand-alone function `abmplot` takes two optional `NamedTuple`s named `figur
 
 
 # Interactivity
-See the documentation string of [`ABMObservable`](@ref) for a discussion.
-TODO: Actually finish the docs!
 
-If either, or both, of the keywords `agent_step!, model_step!` are provided, the
-plot switches to an interactive application mode.
-The two functions `agent_step!, model_step!` will decide how
-the model will evolve, as in the standard approach of Agents.jl and its `step!` function.
-
-The application has four buttons:
-
-* "step": advances the simulation once for `spu` steps.
-* "run": starts/stops the continuous evolution of the model.
-* "reset model": resets the model to its initial state from right after starting the
-  interactive application.
-* "clear data": deletes previously collected agent and model data by emptying the underlying
-  DataFrames `adf`/`mdf`. Reset model and clear data are independent processes.
-
-Two sliders control the animation speed: "spu" decides how many model steps should be done
-before the plot is updated, and "sleep" the `sleep()` time between updates.
-
-## Keywords arguments for interactive application
+## Evolution related
+* `agent_step!, model_step! = Agents.dummystep`: Stepping functions to pass to
+  [`ABMObservable`](@ref) which itself passes to `Agents.step!`.
+* `add_controls::Bool`: If `true`, `abmplot` switches to "interactive application" mode.
+  This is by default `true` if either `agent_step!` or `model_step!` keywords are provided.
+  These stepping functions are used to evolve the model interactively using `Agents.step!`.
+  The application has the following interactive elements:
+  1. "step": advances the simulation once for `spu` steps.
+  1. "run": starts/stops the continuous evolution of the model.
+  1. "reset model": resets the model to its initial state from right after starting the
+     interactive application.
+  1. Two sliders control the animation speed: "spu" decides how many model steps should be done
+     before the plot is updated, and "sleep" the `sleep()` time between updates.
+* `spu = 1:50`: The values of the "spu" slider.
 * `params = Dict()` : This is a dictionary which decides which parameters of the model will
   be configurable from the interactive application. Each entry of `params` is a pair of
   `Symbol` to an `AbstractVector`, and provides a range of possible values for the parameter
   named after the given symbol (see example online). Changing a value in the parameter
   slides is only propagated to the actual model after a press of the "update" button.
-* `agent_step!, model_step! = nothing` : If one or both aren't nothing, interactive buttons
-  for model control will be added to the resulting figure.
-* `adata, mdata = []` : Same as the keyword arguments of `Agents.run!`. If either or both
-  aren't empty, data are collected and stored in the `abmplot_object` `.adf` and `.mdf`
-  fields as observables that can be lifted from.
-* `spu = 1:50`: The values of the "spu" slider.
-* `when = true` : When to perform data collection, as in `Agents.run!`.
+
+## Data collection related
+* `adata, mdata, when`: Same as the keyword arguments of `Agents.run!`. If either or both
+  `adata, mdata` are given, data are collected and stored in the `abmobs`,
+  see [`ABMObservable`](@ref). The same keywords provide the data plots
+  of [`abmexploration`](@ref). This also adds the button "clear data" which deletes
+  previously collected agent and model data by emptying the underlying
+  `DataFrames` `adf`/`mdf`. Reset model and clear data are independent processes.
+
+See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
 function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
     fig = Figure(; figure...)
@@ -114,21 +112,21 @@ function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), 
 end
 
 function abmplot!(ax, model::Agents.ABM;
-        # Add controls if agent_step! and/or model_step! are provided
-        # TODO: Expose the add_controls keyword in the docstring,
-        # to allow possibility of initializing observables without controls
+        # These keywords are given to `ABMObservable`
         agent_step! = Agents.dummystep,
         model_step! = Agents.dummystep,
         adata = nothing,
         mdata = nothing,
         when = true,
+        # These keywords are propagated to the _ABMPlot recipe
+        add_controls = _default_add_controls(agent_step!, model_step!),
         kwargs...
     )
 
     abmobs = ABMObservable(
         model; agent_step!, model_step!, adata, mdata, when
     )
-    _abmplot!(ax, model; ax, abmombs, kwargs...)
+    _abmplot!(ax, model; ax, abmobs, add_controls, kwargs...)
     return abmobs
 end
 
@@ -165,7 +163,8 @@ This is the internal recipe for creating an `_ABMPlot`.
         static_preplot! = nothing,
 
         # Interactive application
-        abmobs::ABMObservable, # initialized from the main `abmplot` method.
+        abmobs = nothing, # initialized from the main `abmplot` method.
+        add_controls = false,
         # Add parameter sliders if params are provided
         params = Dict(),
         # Animation evolution speed
@@ -174,6 +173,10 @@ This is the internal recipe for creating an `_ABMPlot`.
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
     )
+end
+
+function _default_add_controls(agent_step!, model_step!)
+    (agent_step! != Agents.dummystep) || (model_step! != Agents.dummystep)
 end
 
 const SUPPORTED_SPACES =  Union{
@@ -188,7 +191,7 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
     pos, color, marker, markersize, heatobs = lift_attributes(abmplot.model, abmplot.ac,
         abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
-    model = abmplot.model[]
+    model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
     if !isnothing(ax)
         isnothing(ax.aspect[]) && (ax.aspect = DataAspect())

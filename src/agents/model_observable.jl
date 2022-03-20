@@ -11,7 +11,7 @@ Calling `Agents.step!(abmobs, n)` will step the model for `n` using the provided
 The fields `abmobs.model, abmobs.adf, abmobs.mdf` are _observables_ that contain
 the [`AgentBasedModel`](@ref), and the agent and model dataframes with collected data.
 Data are collected as described in [`Agents.run!`](@ref) using the `adata, mdata, when`
-keywords. These observables are updated on stepping (when it makes sense).
+keywords. All three observables are updated on stepping (when it makes sense).
 
 All plotting and interactivity should be defined by `lift`ing these observables.
 """
