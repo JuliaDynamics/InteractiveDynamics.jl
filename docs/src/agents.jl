@@ -88,7 +88,13 @@ fig, p = abmexploration(model;
     agent_step! = daisy_step!, model_step! = daisyworld_step!, params, plotkwargs...,
     adata, alabels = ["Black daisys", "White daisys"], mdata, mlabels = ["T", "L"]
 )
-fig
+nothing # hide
+
+# ```@raw html
+# <video width="100%" height="auto" controls autoplay loop>
+# <source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/agents.mp4?raw=true" type="video/mp4">
+# </video>
+# ```
 
 # ```@docs
 # abmexploration

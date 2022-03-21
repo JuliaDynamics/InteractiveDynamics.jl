@@ -4,14 +4,14 @@ function add_interaction!(fig, ax, abmplot)
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
-        stepclick = add_controls!(fig, abmplot.abmobs[], abmplot.spu)
+        stepclick, resetclick = add_controls!(fig, abmplot.abmobs[], abmplot.spu)
     else
-        stepclick = nothing
+        stepclick = resetclick = nothing
     end
 
     if add_controls && add_param_sliders
         @assert !isnothing(ax) "Need `ax` to add plots and parameter sliders."
-        add_param_sliders!(fig, abmplot.abmobs[].model, abmplot.params[])
+        add_param_sliders!(fig, abmplot.abmobs[].model, abmplot.params[], resetclick)
     end
 
     return stepclick
@@ -84,7 +84,7 @@ function add_controls!(fig, abmobs, spu)
     controllayout[3, :][:, 1] = MakieLayout.hbox!(step, run; tellwidth = false)
     controllayout[3, :][:, 2] = MakieLayout.hbox!(reset, clear; tellwidth = false)
 
-    return step.clicks
+    return step.clicks, reset.clicks
 end
 
 "Initialize agent and model dataframes."
@@ -115,7 +115,7 @@ function collect_data!(model, when, adata, mdata, adf, mdf, s)
 end
 
 "Initialize parameter control sliders."
-function add_param_sliders!(fig, model, params)
+function add_param_sliders!(fig, model, params, resetclick)
     datalayout = fig[end,:][1,2] = GridLayout(tellheight = true)
 
     slidervals = Dict{Symbol, Observable}()
@@ -139,5 +139,9 @@ function add_param_sliders!(fig, model, params)
         end
     end
     datalayout[end+1, :] = MakieLayout.hbox!(update; tellwidth = false)
+    # Ensure resetted model has new parameters
+    on(resetclick) do c
+        update.clicks[] = update.clicks[] + 1
+    end
     return nothing
 end
