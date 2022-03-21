@@ -103,25 +103,11 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
-function abmplot(model::Agents.ABM; 
-        figure = NamedTuple(), 
-        axis = NamedTuple(), 
-        agent_step! = Agents.dummystep,
-        model_step! = Agents.dummystep,
-        add_controls = _default_add_controls(agent_step!, model_step!),
-        enable_inspection = false,
-        kwargs...
-    )
-    
+function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
     abmobs = abmplot!(ax, model; kwargs...)
-
-    # Model inspection on mouse hover
-    if enable_inspection || add_controls
-        DataInspector(fig)
-    end
 
     return fig, ax, abmobs
 end
@@ -136,6 +122,7 @@ function abmplot!(ax, model::Agents.ABM;
         # These keywords are propagated to the _ABMPlot recipe
         _add_interaction = true, # hack for faster plot update
         add_controls = _default_add_controls(agent_step!, model_step!),
+        enable_inspection = false,
         kwargs...
     )
 
@@ -143,6 +130,13 @@ function abmplot!(ax, model::Agents.ABM;
         model; agent_step!, model_step!, adata, mdata, when
     )
     abmplot_object = _abmplot!(ax, model; ax, abmobs, add_controls, _add_interaction, kwargs...)
+    
+    # Model inspection on mouse hover
+    if enable_inspection || add_controls
+        fig = parent(ax)
+        DataInspector(fig)
+    end
+    
     if _add_interaction
         return abmobs
     else
