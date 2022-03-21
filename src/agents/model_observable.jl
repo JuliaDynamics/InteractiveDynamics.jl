@@ -43,7 +43,7 @@ function ABMObservable(model;
         mdf = Observable(Agents.init_model_dataframe(model, mdata))
     end
     return ABMObservable(
-        Observable(model), agent_step!, model_step!, adata, mdata, adf, mdf, Ref(0), when
+        Observable(model), agent_step!, model_step!, adata, mdata, adf, mdf, Observable(0), when
     )
 end
 
