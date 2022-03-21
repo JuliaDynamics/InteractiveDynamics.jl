@@ -133,8 +133,7 @@ function abmplot!(ax, model::Agents.ABM;
     
     # Model inspection on mouse hover
     if enable_inspection || add_controls
-        fig = parent(ax)
-        DataInspector(fig)
+        DataInspector(ax.parent)
     end
     
     if _add_interaction
