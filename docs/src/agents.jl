@@ -125,7 +125,8 @@ abmvideo(
 # the scatter points in the agent plot. Inspection is automatically enabled for interactive
 # applications (i.e. when either agent or model stepping functions are provided). To 
 # manually enable this functionality, simply add `enable_inspection = true` as an 
-# additional keyword argument to the `abmplot` call.
+# additional keyword argument to the `abmplot` call. When using the in-place method 
+# `abmplot!`, the inspection can also be enabled by running `DataInspector(fig)`.
 # A tooltip will appear which by default provides the name of the agent type, its `id`, 
 # `pos`, and all other fieldnames together with their current values. This is especially 
 # useful for interactive exploration of micro data on the agent level.
