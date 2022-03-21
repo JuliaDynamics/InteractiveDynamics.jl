@@ -12,6 +12,7 @@ The fields `abmobs.model, abmobs.adf, abmobs.mdf` are _observables_ that contain
 the [`AgentBasedModel`](@ref), and the agent and model dataframes with collected data.
 Data are collected as described in [`Agents.run!`](@ref) using the `adata, mdata, when`
 keywords. All three observables are updated on stepping (when it makes sense).
+The field `abmobs.s` is also an observable containing the current step number.
 
 All plotting and interactivity should be defined by `lift`ing these observables.
 """
@@ -23,7 +24,7 @@ struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
     mdata::MD
     adf::ADF # this is `nothing` or `Observable`
     mdf::MDF # this is `nothing` or `Observable`
-    s::Ref{Int}
+    s::Observable{Int}
     when::W
 end
 
@@ -68,4 +69,7 @@ end
 function Base.show(io::IO, p::ABMObservable)
     print(io, "ABMObservable with model:\n")
     print(io, p.model[])
+    print(io, "\nand with data collection:\n")
+    print(io, " adata: $(p.adata)\n")
+    print(io, " mdata: $(p.mdata)")
 end
