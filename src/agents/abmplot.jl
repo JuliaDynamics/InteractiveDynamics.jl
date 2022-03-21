@@ -266,5 +266,3 @@ function set_axis_limits!(ax, model)
     is3d && zlims!(ax, o[3], e[3])
     return
 end
-
-@deprecate abm_plot abmplot

@@ -28,6 +28,7 @@ function __init__()
         include("agents/interaction.jl")
         include("agents/inspection.jl")
         include("agents/convenience.jl")
+        include("agents/deprecations.jl")
     end
 end
 
