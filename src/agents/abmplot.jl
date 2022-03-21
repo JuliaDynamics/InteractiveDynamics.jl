@@ -102,11 +102,15 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
-function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
-    agent_step! = get(kwargs, :agent_step!, Agents.dummystep)
-    model_step! = get(kwargs, :model_step!, Agents.dummystep)
-    add_controls = get(kwargs, :add_controls, _default_add_controls(agent_step!, model_step!))
-    enable_inspection = get(kwargs, :enable_inspection, false)
+function abmplot(model::Agents.ABM; 
+        figure = NamedTuple(), 
+        axis = NamedTuple(), 
+        agent_step! = Agents.dummystep,
+        model_step! = Agents.dummystep,
+        add_controls = _default_add_controls(agent_step!, model_step!),
+        enable_inspection = false,
+        kwargs...
+    )
     
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
