@@ -1,6 +1,6 @@
 module InteractiveDynamics
 
-using Makie, Observables
+using Makie, Observables, OSMMakie
 
 include("colors.jl")
 include("utils.jl")
@@ -24,9 +24,11 @@ function __init__()
     end
     @require Agents = "46ada45e-f475-11e8-01d0-f70cc89e6671" begin
         include("agents/abmplot.jl")
-        include("agents/stepping.jl")
-        include("agents/plots_videos.jl")
-        include("agents/interactive_parameters.jl")
+        include("agents/lifting.jl")
+        include("agents/interaction.jl")
+        include("agents/inspection.jl")
+        include("agents/convenience.jl")
+        include("agents/deprecations.jl")
     end
 end
 

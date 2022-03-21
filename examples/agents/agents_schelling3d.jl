@@ -43,5 +43,5 @@ using InteractiveDynamics, GLMakie
 
 model = initialize()
 ac(agent) = (:red, :blue)[agent.group]
-am(agent) = (:circle, :rect)[agent.group]
-fig, step = abm_play(model, agent_step!, dummystep; ac, am, as = 5000)
+fig, ax, abmobs = abmplot(model; ac, as = 0.5, agent_step!)
+fig

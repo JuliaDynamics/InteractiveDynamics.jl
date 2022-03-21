@@ -38,7 +38,7 @@ function diffuse_temperature!(pos, model::DaisyWorld)
         sum(model.temperature[p...] for p in npos) * 0.125 * ratio
 end
 
-function propagate!(pos, model::DaisyWorld)
+function propagate_daisy!(pos, model::DaisyWorld)
     ids = ids_in_position(pos, model)
     if !isempty(ids)
         daisy = model[ids[1]]
@@ -72,7 +72,7 @@ function daisyworld_step!(model)
     for p in positions(model)
         update_surface_temperature!(p, model)
         diffuse_temperature!(p, model)
-        propagate!(p, model)
+        propagate_daisy!(p, model)
     end
     model.tick += 1
     solar_activity!(model)
@@ -92,7 +92,6 @@ function solar_activity!(model::DaisyWorld)
 end
 
 import StatsBase
-import DrWatson: @dict
 using Random
 
 function daisyworld(;
@@ -111,7 +110,8 @@ function daisyworld(;
 
     rng = MersenneTwister(seed)
     space = GridSpace(griddims)
-    properties = @dict max_age surface_albedo solar_luminosity solar_change scenario
+    properties = (;max_age, surface_albedo, solar_luminosity, solar_change, scenario,)
+    properties = Dict(pairs(properties))
     properties[:tick] = 0
     properties[:temperature] = zeros(griddims)
 
@@ -139,73 +139,5 @@ function daisyworld(;
         update_surface_temperature!(p, model)
     end
 
-    return model
+    return model, daisy_step!, daisyworld_step!
 end
-
-# ## Visualizing & animating
-# %% #src
-using InteractiveDynamics
-using GLMakie
-
-model = daisyworld()
-
-daisycolor(a::Daisy) = a.breed
-
-plotkwargs = (
-    ac = daisycolor, as = 12, am = '♠',
-    heatarray = :temperature,
-    heatkwargs = (colorrange = (-20, 60),),
-)
-fig, abmstepper = abm_plot(model; plotkwargs...)
-fig
-
-# And after a couple of steps
-Agents.step!(model, daisy_step!, daisyworld_step!, 5)
-fig, abmstepper = abm_plot(model; heatarray = model.temperature, plotkwargs...)
-fig
-
-# %% Video
-model = daisyworld()
-abm_video(
-    "daisyworld.mp4",
-    model,
-    daisy_step!,
-    daisyworld_step!;
-    title = "Daisy World",
-    plotkwargs...,
-)
-
-# %% Play
-model = daisyworld()
-abm_play(
-    model,
-    daisy_step!,
-    daisyworld_step!;
-    title = "Daisy World",
-    plotkwargs...,
-)
-
-# ## Interactive
-# %% #src
-using InteractiveDynamics, GLMakie, Random
-model = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
-
-black(a) = a.breed == :black
-white(a) = a.breed == :white
-adata = [(black, count), (white, count)]
-temperature(model) = mean(model.temperature)
-mdata = [temperature, :solar_luminosity]
-
-params = Dict(
-    :surface_albedo => 0:0.01:1,
-    :solar_change => -0.1:0.01:0.1,
-)
-alabels = ["black", "white"]
-mlabels = ["T", "L"]
-
-fig, adf, mdf = abm_data_exploration(
-    model, daisy_step!, daisyworld_step!, params;
-    mdata, adata, alabels, mlabels, plotkwargs...
-)
-
-display(fig)

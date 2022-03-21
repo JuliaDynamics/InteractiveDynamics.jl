@@ -11,8 +11,15 @@ function bird_marker(b::Bird)
     scale(rotate2D(bird_polygon, φ), 2)
 end
 
-abm_play(
-    model, flocking_agent_step!, flocking_model_step!;
-    am = bird_marker,
-    title = "Flocking"
-)
+## simple plot
+
+fig, ax, p = abmplot(model; am = bird_marker)
+fig
+
+## interactive app
+
+fig = Figure()
+ax = Axis(fig[1,1], title = "Flocking")
+fig, ax, abmobs = abmplot(model; agent_step! = flocking_agent_step!,
+    model_step! = flocking_model_step!, am = bird_marker)
+fig
