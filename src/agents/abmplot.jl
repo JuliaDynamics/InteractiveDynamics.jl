@@ -106,7 +106,7 @@ function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), 
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    args = abmplot!(ax, model; kwargs...)
+    abmobs = abmplot!(ax, model; kwargs...)
     return fig, ax, abmobs
 end
 
