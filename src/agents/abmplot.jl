@@ -103,10 +103,21 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
 function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
+    agent_step! = get(kwargs, :agent_step!, Agents.dummystep)
+    model_step! = get(kwargs, :model_step!, Agents.dummystep)
+    add_controls = get(kwargs, :add_controls, _default_add_controls(agent_step!, model_step!))
+    enable_inspection = get(kwargs, :enable_inspection, false)
+    
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
     abmobs = abmplot!(ax, model; kwargs...)
+
+    # Model inspection on mouse hover
+    if enable_inspection || add_controls
+        DataInspector(fig)
+    end
+
     return fig, ax, abmobs
 end
 
@@ -117,8 +128,8 @@ function abmplot!(ax, model::Agents.ABM;
         adata = nothing,
         mdata = nothing,
         when = true,
-        _add_interaction = true, # hack for faster plot update
         # These keywords are propagated to the _ABMPlot recipe
+        _add_interaction = true, # hack for faster plot update
         add_controls = _default_add_controls(agent_step!, model_step!),
         kwargs...
     )
@@ -246,6 +257,7 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
 
     # Model controls, parameter sliders
     abmplot._add_interaction[] && add_interaction!(fig, ax, abmplot)
+
     return abmplot
 end
 
