@@ -85,6 +85,7 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
      interactive application.
   1. Two sliders control the animation speed: "spu" decides how many model steps should be done
      before the plot is updated, and "sleep" the `sleep()` time between updates.
+* `enable_inspection = false`: If `true`, enables agent inspection on mouse hover.
 * `spu = 1:50`: The values of the "spu" slider.
 * `params = Dict()` : This is a dictionary which decides which parameters of the model will
   be configurable from the interactive application. Each entry of `params` is a pair of
