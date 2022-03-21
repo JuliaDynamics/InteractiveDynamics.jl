@@ -4,7 +4,9 @@ function add_interaction!(fig, ax, abmplot)
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
-        add_controls!(fig, abmplot.abmobs[], abmplot.spu)
+        stepclick = add_controls!(fig, abmplot.abmobs[], abmplot.spu)
+    else
+        stepclick = nothing
     end
 
     if add_controls && add_param_sliders
@@ -12,7 +14,7 @@ function add_interaction!(fig, ax, abmplot)
         add_param_sliders!(fig, abmplot.abmobs[].model, abmplot.params[])
     end
 
-    return nothing
+    return stepclick
 end
 
 "Initialize model control buttons."
@@ -47,18 +49,6 @@ function add_controls!(fig, abmobs, spu)
     on(step.clicks) do c
         Agents.step!(abmobs, speed[])
         collect_data!(model[], when[], adata, mdata, adf, mdf, abmobs.s[])
-        for element in fig.content
-            # search for Axes but ignore those with ABMPlots in them
-            if element isa Axis && !any(p -> p isa _ABMPlot, element.scene.plots)
-                # TODO: This autolimits can be made more performant
-                # by linking the x-axis of all data plots, and then
-                # autolimiting the first one only, while autolimiting the
-                # y axis for all plots.
-                # TODO: There is no reason to search for axis here, we know
-                # which axis should get limtis. The data axis.
-                autolimits!(element) # needed for custom plot limit updates
-            end
-        end
     end
 
     # Run button
@@ -94,7 +84,7 @@ function add_controls!(fig, abmobs, spu)
     controllayout[3, :][:, 1] = MakieLayout.hbox!(step, run; tellwidth = false)
     controllayout[3, :][:, 2] = MakieLayout.hbox!(reset, clear; tellwidth = false)
 
-    return nothing
+    return step.clicks
 end
 
 "Initialize agent and model dataframes."

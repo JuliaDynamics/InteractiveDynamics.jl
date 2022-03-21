@@ -106,7 +106,7 @@ function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), 
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    abmobs = abmplot!(ax, model; kwargs...)
+    args = abmplot!(ax, model; kwargs...)
     return fig, ax, abmobs
 end
 
@@ -117,6 +117,7 @@ function abmplot!(ax, model::Agents.ABM;
         adata = nothing,
         mdata = nothing,
         when = true,
+        _add_interaction = true, # hack for faster plot update
         # These keywords are propagated to the _ABMPlot recipe
         add_controls = _default_add_controls(agent_step!, model_step!),
         kwargs...
@@ -125,8 +126,12 @@ function abmplot!(ax, model::Agents.ABM;
     abmobs = ABMObservable(
         model; agent_step!, model_step!, adata, mdata, when
     )
-    _abmplot!(ax, model; ax, abmobs, add_controls, kwargs...)
-    return abmobs
+    abmplot_object = _abmplot!(ax, model; ax, abmobs, add_controls, _add_interaction, kwargs...)
+    if _add_interaction
+        return abmobs
+    else
+        return abmobs, abmplot_object
+    end
 end
 
 """
@@ -171,6 +176,7 @@ This is the internal recipe for creating an `_ABMPlot`.
 
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
+        _add_interaction = true, # for `abmexploration`
     )
 end
 
@@ -238,9 +244,8 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
         @warn("Unknown agent position type: $(T). Skipping plotting agents.")
     end
 
-    # Model controls, parameter sliders, data plots
-    !isnothing(ax) && add_interaction!(fig, ax, abmplot)
-
+    # Model controls, parameter sliders
+    abmplot._add_interaction[] && add_interaction!(fig, ax, abmplot)
     return abmplot
 end
 

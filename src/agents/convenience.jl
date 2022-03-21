@@ -36,17 +36,20 @@ function abmexploration(model;
         alabels = nothing, mlabels = nothing, plotkwargs = NamedTuple(),
         kwargs...
     )
-    fig, ax, p = abmplot(model; figure = (resolution = (1600, 800),), kwargs...)
+    fig, ax, (p, abmplot_object) = abmplot(model;
+        _add_interaction = false, figure = (resolution = (1600, 800),), kwargs...)
+
+    stepclick = add_interaction!(fig, ax, abmplot_object)
 
     adata, mdata = p.adata, p.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs)
+    init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick)
     return fig, p
 end
 
-function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs)
+function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick)
     La = isnothing(adata) ? 0 : size(p.adf[])[2]-1
     Lm = isnothing(mdata) ? 0 : size(p.mdf[])[2]-1
     La + Lm == 0 && return nothing # failsafe; don't add plots if dataframes are empty
@@ -87,6 +90,14 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
     end
     axs[end].xlabel = "step"
 
+    # Trigger correct, and efficient, linking of x-axis
+    linkxaxes!(axs[end], axs[1:end-1]...)
+    on(stepclick) do clicks
+        xlims!(axs[1], Makie.MakieLayout.xautolimits(axs[1]))
+        for ax in axs
+            ylims!(ax, Makie.MakieLayout.yautolimits(ax))
+        end
+    end
     return nothing
 end
 

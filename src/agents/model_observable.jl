@@ -21,8 +21,8 @@ struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
     model_step!::MS
     adata::AD
     mdata::MD
-    adf::Observable{ADF}
-    mdf::Observable{MDF}
+    adf::ADF # this is `nothing` or `Observable`
+    mdf::MDF # this is `nothing` or `Observable`
     s::Ref{Int}
     when::W
 end
