@@ -257,7 +257,7 @@ function set_axis_limits!(ax, model)
         e = model.space.extent
         o = zero.(e)
     elseif model.space isa Agents.DiscreteSpace
-        e = size(model.space.s) .- 0.5
+        e = size(model.space.s) .+ 0.5
         o = zero.(e) .+ 0.5
     end
     xlims!(ax, o[1], e[1])
