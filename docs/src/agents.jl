@@ -183,7 +183,7 @@ scatterlines!(ax_counts, blacks; color = :black, label = "black")
 scatterlines!(ax_counts, whites; color = :white, label = "white")
 
 ## add a legend to the right side of the plot
-Legend(count_layout[1,2], ax_counts, bgcolor = :lightgrey)
+Legend(count_layout[1,2], ax_counts; bgcolor = :lightgrey)
 
 ## and another plot, written in a more condensed format
 ax_hist = Axis(plot_layout[2,1]; 
