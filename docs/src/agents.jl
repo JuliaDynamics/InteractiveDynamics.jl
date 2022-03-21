@@ -186,7 +186,8 @@ scatterlines!(ax_counts, whites; color = :white, label = "white")
 Legend(count_layout[1,2], ax_counts, bgcolor = :lightgrey)
 
 ## and another plot, written in a more condensed format
-ax_hist = Axis(plot_layout[2,1]; ylabel = "Distribution of mean temperatures\nacross all time steps")
+ax_hist = Axis(plot_layout[2,1]; 
+    ylabel = "Distribution of mean temperatures\nacross all time steps")
 hist!(ax_hist, @lift($(p.mdf).temperature);
     bins = 50, color = :red,
     strokewidth = 2, strokecolor = (:black, 0.5),
