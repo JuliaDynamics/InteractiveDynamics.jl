@@ -122,10 +122,13 @@ abmvideo(
 # ## Agent inspection
 
 # It is possible to inspect agents at a given position by hovering the mouse cursor over
-# the scatter points in the agent plot. A tooltip will appear which by default provides the
-# name of the agent type, its `id`, `pos`, and all other fieldnames together with their
-# current values. This is especially useful for interactive exploration of micro
-# data on the agent level.
+# the scatter points in the agent plot. Inspection is automatically enabled for interactive
+# applications (i.e. when either agent or model stepping functions are provided). To 
+# manually enable this functionality, simply add `enable_inspection = true` as an 
+# additional keyword argument to the `abmplot` call.
+# A tooltip will appear which by default provides the name of the agent type, its `id`, 
+# `pos`, and all other fieldnames together with their current values. This is especially 
+# useful for interactive exploration of micro data on the agent level.
 
 # ![RabbitFoxHawk inspection example](https://github.com/JuliaDynamics/JuliaDynamics/tree/master/videos/agents/RabbitFoxHawk_inspection.png)
 
