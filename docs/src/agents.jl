@@ -43,12 +43,11 @@ fig
 # To this, we can also plot the temperature of the planet by providing the access field
 # as a heat array:
 heatarray = :temperature
-heatkwargs = (colorrange = (-20, 60),)
+heatkwargs = (colorrange = (-20, 60), colormap = :thermal)
 plotkwargs = (;
     ac = daisycolor, as, am,
     scatterkwargs = (strokewidth = 1.0,),
-    heatarray = :temperature,
-    heatkwargs = (colorrange = (-20, 60), colormap = :thermal),
+    heatarray, heatkwargs
 )
 
 fig, ax, abmobs = abmplot(model; plotkwargs...)
