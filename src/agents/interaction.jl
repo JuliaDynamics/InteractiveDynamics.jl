@@ -4,9 +4,7 @@ function add_interaction!(fig, ax, abmplot)
 
     if add_controls
         @assert !isnothing(ax) "Need `ax` to add model controls."
-        add_controls!(fig, abmplot.abmobs[].model, abmplot.abmobs[].agent_step!, abmplot.abmobs[].model_step!,
-            abmplot.abmobs[].adata, abmplot.abmobs[].mdata, abmplot.abmobs[].adf, abmplot.abmobs[].mdf,
-            abmplot.spu, abmplot.abmobs[].when)
+        add_controls!(fig, abmplot.abmobs[], abmplot.spu)
     end
 
     if add_controls && add_param_sliders
@@ -18,11 +16,13 @@ function add_interaction!(fig, ax, abmplot)
 end
 
 "Initialize model control buttons."
-function add_controls!(fig, model, agent_step!, model_step!,
-            adata, mdata, adf, mdf, spu, when)
-    s = 0 # current step
+function add_controls!(fig, abmobs, spu)
+
+    model, agent_step!, model_step!, adata, mdata, adf, mdf, when =
+    getfield.(Ref(abmobs), (:model, :agent_step!, :model_step!, :adata, :mdata, :adf, :mdf, :when))
+
     init_dataframes!(model[], adata, mdata, adf, mdf)
-    collect_data!(model[], when[], adata, mdata, adf, mdf, s)
+    collect_data!(model[], when, adata, mdata, adf, mdf, abmobs.s[])
 
     # Create new layout for control buttons
     controllayout = fig[end+1,:][1,1] = GridLayout(tellheight = true)
@@ -45,11 +45,8 @@ function add_controls!(fig, model, agent_step!, model_step!,
     # Step button
     step = Button(fig, label = "step")
     on(step.clicks) do c
-        n = speed[]
-        Agents.step!(model[], agent_step!, model_step!, n)
-        s += n # increment step counter
-        collect_data!(model[], when[], adata, mdata, adf, mdf, s)
-        model[] = model[] # trigger Observable
+        Agents.step!(abmobs, speed[])
+        collect_data!(model[], when[], adata, mdata, adf, mdf, abmobs.s[])
         for element in fig.content
             # search for Axes but ignore those with ABMPlots in them
             if element isa Axis && !any(p -> p isa _ABMPlot, element.scene.plots)
@@ -57,6 +54,8 @@ function add_controls!(fig, model, agent_step!, model_step!,
                 # by linking the x-axis of all data plots, and then
                 # autolimiting the first one only, while autolimiting the
                 # y axis for all plots.
+                # TODO: There is no reason to search for axis here, we know
+                # which axis should get limtis. The data axis.
                 autolimits!(element) # needed for custom plot limit updates
             end
         end
@@ -86,9 +85,9 @@ function add_controls!(fig, model, agent_step!, model_step!,
     # Clear button
     clear = Button(fig, label = "clear\ndata")
     on(clear.clicks) do c
-        adf.val, mdf.val = nothing, nothing # reset dataframes without triggering Observable
+        abmobs.s[] = 0
         init_dataframes!(model[], adata, mdata, adf, mdf)
-        collect_data!(model[], when[], adata, mdata, adf, mdf, s)
+        collect_data!(model[], when, adata, mdata, adf, mdf, abmobs.s[])
     end
 
     # Layout buttons

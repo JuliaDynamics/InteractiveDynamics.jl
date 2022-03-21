@@ -16,13 +16,13 @@ keywords. All three observables are updated on stepping (when it makes sense).
 All plotting and interactivity should be defined by `lift`ing these observables.
 """
 struct ABMObservable{M, AS, MS, AD, MD, ADF, MDF, W}
-    model::M # this is an observable
+    model::Observable{M}
     agent_step!::AS
     model_step!::MS
     adata::AD
     mdata::MD
-    adf::ADF # this is an observable
-    mdf::MDF # this is an observable
+    adf::Observable{ADF}
+    mdf::Observable{MDF}
     s::Ref{Int}
     when::W
 end
