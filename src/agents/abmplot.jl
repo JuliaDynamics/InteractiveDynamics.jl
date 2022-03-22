@@ -130,12 +130,12 @@ function abmplot!(ax, model::Agents.ABM;
         model; agent_step!, model_step!, adata, mdata, when
     )
     abmplot_object = _abmplot!(ax, model; ax, abmobs, add_controls, _add_interaction, kwargs...)
-    
+
     # Model inspection on mouse hover
     if enable_inspection || add_controls
         DataInspector(ax.parent)
     end
-    
+
     if _add_interaction
         return abmobs
     else
@@ -226,7 +226,7 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
         if abmplot.add_colorbar[]
             @assert !isnothing(ax) "Need `ax` to add a colorbar for the heatmap."
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-            # TODO: here set col height so that colorbar and axis always same height
+            rowsize!(fig[1,1].layout, 1, ax.scene.px_area[].widths[2])
             # TODO: Set colorbar to be "glued" to axis
         end
     end

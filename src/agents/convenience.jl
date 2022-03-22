@@ -136,7 +136,7 @@ function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
     axis = (title = t, titlealign = :left, axis...)
 
     fig = Figure(; resolution = (600,600), backgroundcolor = DEFAULT_BG, figure...)
-    ax = fig[1,1] = agents_space_dimensionality(model) == 3 ?
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
     p = abmplot!(ax, model; kwargs...)
 
