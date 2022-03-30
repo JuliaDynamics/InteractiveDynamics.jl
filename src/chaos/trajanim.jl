@@ -40,13 +40,13 @@ The function returns `fig, obs`. `fig` is the overarching fig
   ```
 """
 function interactive_evolution(
-        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s;
+        ds::DynamicalSystems.DynamicalSystem, u0s;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
         tail = 1000, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, diffeq, DynamicalSystems.SVector(idxs...), transform),
-    ) where {IIP}
+    )
 
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
@@ -173,12 +173,12 @@ but in addition to the state space plot there is
 a panel with the variable timeseries plotted and animated in real time.
 
 If `ps` is not nothing, then it must be a dictionary, mapping keys
-of the system parameter container (`ds.p`) to possible ranges of values. The app then will 
+of the system parameter container (`ds.p`) to possible ranges of values. The app then will
 add some additional controls on the left side which allow one to interactively change
 system parameters and then click the "update" button to translate the new parameters to
 system evolution. This can be done without stopping the live system evolution.
 Notice that in this scenario it is recommended to provide the `lims` keyword manually.
-An extra argument is returned in this case: a dictionary mapping parameter keys 
+An extra argument is returned in this case: a dictionary mapping parameter keys
 to _observables_ containing their current values. You can use this to generate additional
 plot elements that may depend on system parameters and thus need to be changed
 if the sliders are changed.
@@ -190,7 +190,7 @@ The following additional keywords also apply:
   Only valid if `ps` is a dictionary and not `nothing`.
 """
 function interactive_evolution_timeseries(
-        ds::DynamicalSystems.DynamicalSystem{IIP}, u0s, ps = nothing;
+        ds::DynamicalSystems.DynamicalSystem, u0s, ps = nothing;
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
         tail = 1000, diffeq = NamedTuple(),
@@ -199,7 +199,7 @@ function interactive_evolution_timeseries(
         total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
         linekwargs = ds isa DynamicalSystems.ContinuousDynamicalSystem ? (linewidth = 4,) : (),
         pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
-    ) where {IIP}
+    )
 
     # TODO: Separate into traj_idxs and ts_idxs, in case one wants to plot
     # more timeseries than the ones in the state space plot
@@ -252,7 +252,7 @@ function interactive_evolution_timeseries(
         ylims!(ax, lims[i])
     end
     for i in 1:length(idxs)-1
-        linkxaxes!(ts_axes[i], ts_axes[end]) 
+        linkxaxes!(ts_axes[i], ts_axes[end])
         hidexdecorations!(ts_axes[i], grid = false)
     end
     xlims!(ts_axes[end], pinteg.t - tdt, total_span+tdt)
