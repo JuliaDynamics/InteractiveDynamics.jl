@@ -193,7 +193,7 @@ function _default_add_controls(agent_step!, model_step!)
     (agent_step! != Agents.dummystep) || (model_step! != Agents.dummystep)
 end
 
-const SUPPORTED_SPACES =  Union{
+const SUPPORTED_SPACES = Union{
     Agents.GridSpace,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
@@ -211,11 +211,9 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
-    if !isnothing(ax)
-        isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
-        set_axis_limits!(ax, model)
-        fig = ax.parent
-    end
+    isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
+    set_axis_limits!(ax, model)
+    fig = ax.parent
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
@@ -228,9 +226,8 @@ function Makie.plot!(abmplot::_ABMPlot)
     if !isnothing(heatobs[])
         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         if abmplot.add_colorbar[]
-            @assert !isnothing(ax) "Need `ax` to add a colorbar for the heatmap."
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-            rowsize!(fig[1,1].layout, 1, ax.scene.px_area[].widths[2])
+            rowsize!(fig[1, 1].layout, 1, ax.scene.px_area[].widths[2])
             # TODO: Set colorbar to be "glued" to axis
         end
     end
@@ -282,7 +279,6 @@ function set_axis_limits!(ax, model)
     end
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
-    is3d = length(o) == 3
-    is3d && zlims!(ax, o[3], e[3])
+    length(o) == 3 && zlims!(ax, o[3], e[3])
     return
 end
