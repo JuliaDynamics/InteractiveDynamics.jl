@@ -194,7 +194,7 @@ function _default_add_controls(agent_step!, model_step!)
 end
 
 const SUPPORTED_SPACES =  Union{
-    Agents.DiscreteSpace,
+    Agents.GridSpace,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
 }
