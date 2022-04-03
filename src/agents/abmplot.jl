@@ -262,7 +262,13 @@ end
 "Plot space and/or set axis limits."
 function set_axis_limits!(ax, model)
     if model.space isa Agents.OpenStreetMapSpace
-        return
+        o = [-Inf, -Inf]
+        e = [Inf, Inf]
+        for i ∈ Agents.positions(model)
+            x, y = Agents.OSM.lonlat(i, model)
+            o[1] = max(x, o[1]); o[2] = max(y, o[2])
+            e[1] = min(x, e[1]); e[2] = min(y, e[2])
+        end
     elseif model.space isa Agents.ContinuousSpace
         e = model.space.extent
         o = zero.(e)
