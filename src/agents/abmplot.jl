@@ -199,7 +199,11 @@ const SUPPORTED_SPACES =  Union{
     Agents.OpenStreetMapSpace,
 }
 
-function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
+function Makie.plot!(abmplot::_ABMPlot)
+    if !(model.space isa SUPPORTED_SPACES)
+        error("Space type $(typeof(model.space)) is not supported for plotting.")
+    end
+
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
     pos, color, marker, markersize, heatobs = lift_attributes(abmplot.abmobs[].model,
