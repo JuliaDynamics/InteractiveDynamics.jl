@@ -66,6 +66,8 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
       translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
+* `osmkwargs = NamedTuple()` : keywords directly passed to
+  `osmplot!` from OSMMakie.jl if model space is `OpenStreetMapSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
 `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
@@ -168,6 +170,7 @@ This is the internal recipe for creating an `_ABMPlot`.
         am = :circle,
         offset = nothing,
         scatterkwargs = NamedTuple(),
+        osmkwargs = NamedTuple(),
 
         # Preplot
         heatarray = nothing,
@@ -217,7 +220,7 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
-        osm_plot = osmplot!(abmplot, model.space.map)
+        osm_plot = osmplot!(abmplot.ax[], model.space.map; abmplot.osmkwargs...)
         osm_plot.plots[1].plots[1].plots[1].inspectable[] = false
         osm_plot.plots[1].plots[3].inspectable[] = false
     end
