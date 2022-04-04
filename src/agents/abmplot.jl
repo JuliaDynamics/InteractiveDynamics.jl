@@ -200,7 +200,7 @@ const SUPPORTED_SPACES = Union{
 }
 
 function Makie.plot!(abmplot::_ABMPlot)
-    if !(model.space isa SUPPORTED_SPACES)
+    if !(abmplot.model[].space isa SUPPORTED_SPACES)
         error("Space type $(typeof(model.space)) is not supported for plotting.")
     end
 
