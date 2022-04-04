@@ -237,8 +237,7 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Static preplot
     if !isnothing(abmplot.static_preplot![])
-        static_plot = abmplot.static_preplot![](abmplot, model)
-        static_plot.inspectable[] = false
+        abmplot.static_preplot![](ax, model)
     end
 
     # Dispatch on type of agent positions
