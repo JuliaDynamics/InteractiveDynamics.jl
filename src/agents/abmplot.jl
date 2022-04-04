@@ -66,6 +66,8 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
       translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
   end
   ```
+* `osmkwargs = NamedTuple()` : keywords directly passed to
+  `osmplot!` from OSMMakie.jl if model space is `OpenStreetMapSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
 `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
@@ -168,6 +170,7 @@ This is the internal recipe for creating an `_ABMPlot`.
         am = :circle,
         offset = nothing,
         scatterkwargs = NamedTuple(),
+        osmkwargs = NamedTuple(),
 
         # Preplot
         heatarray = nothing,
@@ -193,13 +196,17 @@ function _default_add_controls(agent_step!, model_step!)
     (agent_step! != Agents.dummystep) || (model_step! != Agents.dummystep)
 end
 
-const SUPPORTED_SPACES =  Union{
-    Agents.DiscreteSpace,
+const SUPPORTED_SPACES = Union{
+    Agents.GridSpace,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
 }
 
-function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}})
+function Makie.plot!(abmplot::_ABMPlot)
+    if !(abmplot.model[].space isa SUPPORTED_SPACES)
+        error("Space type $(typeof(model.space)) is not supported for plotting.")
+    end
+
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
     pos, color, marker, markersize, heatobs = lift_attributes(abmplot.abmobs[].model,
@@ -207,15 +214,13 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
 
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
-    if !isnothing(ax)
-        isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
-        set_axis_limits!(ax, model)
-        fig = ax.parent
-    end
+    isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
+    set_axis_limits!(ax, model)
+    fig = ax.parent
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
-        osm_plot = osmplot!(abmplot, model.space.map)
+        osm_plot = osmplot!(abmplot.ax[], model.space.map; abmplot.osmkwargs...)
         osm_plot.plots[1].plots[1].plots[1].inspectable[] = false
         osm_plot.plots[1].plots[3].inspectable[] = false
     end
@@ -224,9 +229,8 @@ function Makie.plot!(abmplot::_ABMPlot{<:Tuple{<:Agents.ABM{<:SUPPORTED_SPACES}}
     if !isnothing(heatobs[])
         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         if abmplot.add_colorbar[]
-            @assert !isnothing(ax) "Need `ax` to add a colorbar for the heatmap."
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
-            rowsize!(fig[1,1].layout, 1, ax.scene.px_area[].widths[2])
+            rowsize!(fig[1, 1].layout, 1, ax.scene.px_area[].widths[2])
             # TODO: Set colorbar to be "glued" to axis
         end
     end
@@ -262,7 +266,13 @@ end
 "Plot space and/or set axis limits."
 function set_axis_limits!(ax, model)
     if model.space isa Agents.OpenStreetMapSpace
-        return
+        o = [-Inf, -Inf]
+        e = [Inf, Inf]
+        for i ∈ Agents.positions(model)
+            x, y = Agents.OSM.lonlat(i, model)
+            o[1] = max(x, o[1]); o[2] = max(y, o[2])
+            e[1] = min(x, e[1]); e[2] = min(y, e[2])
+        end
     elseif model.space isa Agents.ContinuousSpace
         e = model.space.extent
         o = zero.(e)
@@ -272,7 +282,6 @@ function set_axis_limits!(ax, model)
     end
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
-    is3d = length(o) == 3
-    is3d && zlims!(ax, o[3], e[3])
+    length(o) == 3 && zlims!(ax, o[3], e[3])
     return
 end
