@@ -106,7 +106,7 @@ function interactive_evolution(
     end
 
     # Initialize statespace plot with correct dimensionality
-    statespaceax, obs, finalpoints, run, sleslider = _init_statespace_plot!(
+    statespaceax, obs, finalpoints, run, stepslider = _init_statespace_plot!(
         statespacelayout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
     )
 
@@ -120,22 +120,25 @@ function interactive_evolution(
     on(run) do clicks
         @async while isrunning[]
         # while isrunning[]
-
-        # TODO: Perhaps steppng of continuous time systems can be made a
-        # smoother process....?
-            DynamicalSystems.step!(pinteg)
-            for i in 1:N
-                ob = obs[i]
-                last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
-                pushupdate!(ob, last_state) # push and trigger update with `=`
-                for k in 1:length(idxs)
-                    pushupdate!(allts[k][i], Point2f(pinteg.t, last_state[k]))
+            n = stepslider[]
+            # Always store values, but only update observables at last step
+            for _ in 1:n
+                DynamicalSystems.step!(pinteg)
+                for i in 1:N
+                    ob = obs[i]
+                    last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
+                    push!(ob[], last_state)
+                    for k in 1:length(idxs)
+                        push!(allts[k][i][], Point2f(pinteg.t, last_state[k]))
+                    end
                 end
             end
+            # Here the observables are updated with their current values
+            notify.(obs)
+            for k in 1:length(idxs); notify.(allts[k]); end
             finalpoints[] = [x[][end] for x in obs]
-            sleslider[] == 0 ? yield() : sleep(sleslider[])
-            t_current = pinteg.t
-            xlims!(ts_axes[end], max(0, t_current - total_span), max(t_current, total_span))
+            xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
+            yield() # without yield things freeze forever
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
     end
@@ -191,8 +194,8 @@ function _init_statespace_plot!(
     !isnothing(lims) && (statespaceax.limits = lims)
     is3D && (statespaceax.protrusions = 50) # removes overlap of labels
 
-    run, sleslider = trajectory_plot_controls!(layout)
-    return statespaceax, obs, finalpoints, run, sleslider
+    run, stepslider = trajectory_plot_controls!(layout)
+    return statespaceax, obs, finalpoints, run, stepslider
 end
 function init_trajectory_observables(pinteg, tail, idxs, transform)
     N = length(DynamicalSystems.get_states(pinteg))
@@ -209,11 +212,9 @@ end
 function trajectory_plot_controls!(layout)
     layout[2, 1] = controllayout = GridLayout(tellwidth = false)
     run = Button(controllayout[1, 1]; label = "run")
-    _s, _v = 10.0 .^ (-5:0.1:0), 0.1
-    pushfirst!(_s, 0.0)
-    slesl = labelslider!(layout.parent.parent, "sleep =", _s;
-    sliderkw = Dict(:startvalue => _v), valuekw = Dict(:width => 100),
-    format = x -> "$(round(x; digits = 5))")
+    slider_vals = vcat(1:10, 100:100:1000)
+    slesl = labelslider!(layout.parent.parent, "steps =", slider_vals;
+    sliderkw = Dict(:startvalue => 1), valuekw = Dict(:width => 100))
     controllayout[1, 2] = slesl.layout
     return run.clicks, slesl.slider.value
 end
@@ -225,7 +226,9 @@ function _init_timeseries_plots!(
     )
     N = length(DynamicalSystems.get_states(pinteg))
     # Initialize timeseries data:
-    allts = [] # each entry is one timeseries plot, which contains N series
+    allts = [] # each entry is a vector of observables; the contained observables
+    # correspond to the timeseries of a given axis. So `length(ts)` == amount of axis.
+    # However, `length(allts[i])` == amount of initial conditions.
     for i in 1:length(idxs)
         individual_ts = Observable[]
         for j in 1:N
