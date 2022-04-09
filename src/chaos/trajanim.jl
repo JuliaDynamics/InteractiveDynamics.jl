@@ -1,9 +1,8 @@
 using DataStructures
 export interactive_evolution, interactive_evolution_timeseries
 
-
 # TODO: Allow plotted timeseries to be arbitrary functions of state
-# and to be more or less than the state.
+# and to be more or less than the state dimension.
 
 # TODO: Perhaps competely remove the sleeping part of the stepping,
 # and instead replace it with take "x" steps of the integrator...?
@@ -12,6 +11,9 @@ export interactive_evolution, interactive_evolution_timeseries
 # In the last step the update is propagated in all observables.
 # This would make much smoother animations.
 # YES. DO THIS.
+
+# TODO: Allow custom labels, by default x1, x2, x3.
+# How to incorporate this with arbitrary timeseries?
 
 
 """
@@ -52,13 +54,11 @@ The figure layout is as follows:
   the state space plot (`lines` for continuous, `scatter` for discrete systems).
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
   gets different arguments.
-* `diffeq`: Named tuple of keyword arguments propagated to
+* `diffeq = NamedTuple()`: Named tuple of keyword arguments propagated to
   the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
-  are not pre-computed and interpolated, ut rather calculated on the fly step by stpe,
-  it is **strongly recommended** to use a DiffEq solver thas has a constant step size
-  instead of being adaptive. For example `diffeq = (alg = SimpleTsit5(), dt = 0.01)`
-  or `diffeq = (alg = Tsit5(), adaptive = false, dt = 0.01)`.
-  This is done by default in this fuction.
+  are not pre-computed and interpolated, but rather calculated on the fly step by step,
+  it is **strongly recommended** to use an ODE solver thas has a constant step size
+  instead of being adaptive. For example `diffeq = (alg=Tsit5(), adaptive=false, dt=0.01)`.
 
 ## Timeseries Keywords
 * `total_span`: How much the x-axis of the timeseries plots should span (in real time units)
@@ -77,13 +77,12 @@ The figure layout is as follows:
   if the sliders are changed.
 * `pnames = Dict(keys(ps) .=> keys(ps))` : Dictionary mapping parameter keys to labels.
   Only valid if `params` is a dictionary and not `nothing`.
-
 """
 function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem, u0s = [ds.u0];
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
-        colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)],
-        tail = 1000, diffeq = (alg = DynamicalSystems.DynamicalSystemsBase.SimpleTsit5(),  dt = 0.01),
+        colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)], tail = 1000,
+        diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, DynamicalSystems.SVector(idxs...), transform),
         total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
@@ -115,9 +114,7 @@ function interactive_evolution(
         timeserieslayout, pinteg, idxs, colors, linekwargs, transform, tail, lims,
     )
 
-
     # Functionality of live evolution. This links all observables with triggers.
-    tdt = total_span/50
     isrunning = Observable(false)
     on(run) do clicks; isrunning[] = !isrunning[]; end
     on(run) do clicks
@@ -138,9 +135,7 @@ function interactive_evolution(
             finalpoints[] = [x[][end] for x in obs]
             sleslider[] == 0 ? yield() : sleep(sleslider[])
             t_current = pinteg.t
-            t_prev = max(0, t_current - total_span)
-            xlims!(ts_axes[end], t_prev-tdt, max(t_current, total_span)+tdt)
-
+            xlims!(ts_axes[end], max(0, t_current - total_span), max(t_current, total_span))
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
     end
@@ -173,10 +168,11 @@ function _init_statespace_plot!(
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 4000 : 15)
     statespaceax = is3D ? Axis3(layout[1,1]) : Axis(layout[1,1])
-    # Initialize trajectory plotted element
+
+    # Initialize trajectories plotted element
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
-        if ds isa DynamicalSystems.ContinuousDynamicalSystem
+        if !DynamicalSystems.isdiscretetime(ds)
             Makie.lines!(statespaceax, ob;
                 color = colors[i], linewidth = 2.0, pk...
             )
@@ -186,25 +182,20 @@ function _init_statespace_plot!(
             )
         end
     end
-    finalargs = if ds isa DynamicalSystems.ContinuousDynamicalSystem
+    finalargs = if !DynamicalSystems.isdiscretetime(ds)
         (marker = :circle, )
     else
         (marker = :diamond, )
     end
-    Makie.scatter!(statespaceax, finalpoints;
-        color = colors, markersize = ms, finalargs...
-    )
-    if !isnothing(lims)
-        statespaceax.limits = lims
-    end
+    Makie.scatter!(statespaceax, finalpoints; color = colors, markersize = ms, finalargs...)
+    !isnothing(lims) && (statespaceax.limits = lims)
     is3D && (statespaceax.protrusions = 50) # removes overlap of labels
-    # here we define the statespaceax updating functionality
-    run, sleslider = trajectory_plot_controls!(layout)
 
+    run, sleslider = trajectory_plot_controls!(layout)
     return statespaceax, obs, finalpoints, run, sleslider
 end
 function init_trajectory_observables(pinteg, tail, idxs, transform)
-    N = length(DynamicalSystems.get_state(pinteg))
+    N = length(DynamicalSystems.get_states(pinteg))
     obs = Observable[]
     T = length(idxs) == 2 ? Point2f : Point3f
     for i in 1:N
@@ -232,7 +223,7 @@ end
 function _init_timeseries_plots!(
         layout, pinteg, idxs, colors, linekwargs, transform, tail, lims
     )
-    N = length(pinteg.u)
+    N = length(DynamicalSystems.get_states(pinteg))
     # Initialize timeseries data:
     allts = [] # each entry is one timeseries plot, which contains N series
     for i in 1:length(idxs)
@@ -246,8 +237,7 @@ function _init_timeseries_plots!(
         end
         push!(allts, individual_ts)
     end
-
-    # Initialize timeseries plots:
+    # Initialize timeseries axis and plots:
     ts_axes = []
     for i in 1:length(idxs)
         ax = Axis(layout[i, 1]; xticks = LinearTicks(5))
