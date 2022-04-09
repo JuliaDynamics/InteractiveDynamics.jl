@@ -3,15 +3,6 @@ export interactive_evolution, interactive_evolution_timeseries
 
 # TODO: Allow plotted timeseries to be arbitrary functions of state
 # and to be more or less than the state dimension.
-
-# TODO: Perhaps competely remove the sleeping part of the stepping,
-# and instead replace it with take "x" steps of the integrator...?
-# So, do it like in the DynamicalBilliards.jl application?
-# So for all steps before the last, the CircularBuffers are updated.
-# In the last step the update is propagated in all observables.
-# This would make much smoother animations.
-# YES. DO THIS.
-
 # TODO: Allow custom labels, by default x1, x2, x3.
 # How to incorporate this with arbitrary timeseries?
 
@@ -21,16 +12,18 @@ export interactive_evolution, interactive_evolution_timeseries
 Launch an interactive GUI application that can evolve the initial conditions `u0s`
 (vector of vectors) of the given dynamical system.
 All initial conditions are evolved in parallel and at exactly the same time.
-Two controls allow you to pause/resume the evolution and to adjust the speed.
+
+Two controls allow you to pause/resume the evolution and to control after how many
+integrator steps the plots are updated.
 The application can run forever (trajectories are computed on demand).
 
 By default the GUI window displays statespace and timeseries plots.
 It also allows changing the parameters of `ds` live during the
-system evolution, see keyword `params` below in "Parameter Keywords".
+system evolution, see keyword `ps` below in "Parameter Keywords".
 
 The function returns `fig, obs`. `fig` is the overarching figure
 (the entire GUI) and can be recorded with `Makie.record`.
-`obs` is a vector of observables, each containing the current state of the trajectory.
+`obs` is a vector of observables, each containing the current state of each trajectory.
 
 The figure layout is as follows:
 1. `fig[1,1]` = state space plot and evolution control
@@ -42,7 +35,7 @@ The figure layout is as follows:
   before plotting. Can even return a vector that is of higher dimension than `ds`.
 * `idxs = 1:min(length(transform(u0s[1])), 3)`: Which variables to plot (up to three can be chosen).
   Variables are selected after `transform` has been applied.
-* `colors`: The color for each trajectory. Random colors are chosen by default.
+* `colors`: The color for each trajectory.
 * `lims`: A tuple of tuples (min, max) for the axis limits. If not given, they are
   automatically deduced by evolving each of `u0s` 1000 units and picking most extreme
   values (limits cannot be adjusted after application is launched).
@@ -85,8 +78,8 @@ function interactive_evolution(
         diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
         lims = traj_lim_estimator(ds, u0s, DynamicalSystems.SVector(idxs...), transform),
-        total_span = ds isa DynamicalSystems.ContinuousDynamicalSystem ? 10 : 50,
-        linekwargs = ds isa DynamicalSystems.ContinuousDynamicalSystem ? (linewidth = 4,) : (),
+        total_span = DynamicalSystems.isdiscretetime(ds) ? 50 : 10,
+        linekwargs = DynamicalSystems.isdiscretetime(ds)  ? () : (linewidth = 4,),
         ps = nothing,
         pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
     )
@@ -105,7 +98,6 @@ function interactive_evolution(
         paramlayout = fig[2, :] = GridLayout(tellheight = true, tellwidth = false)
     end
 
-    # Initialize statespace plot with correct dimensionality
     statespaceax, obs, finalpoints, run, stepslider = _init_statespace_plot!(
         statespacelayout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
     )
@@ -319,7 +311,7 @@ end
 ###############################################
 # DEPRECATED
 ###############################################
-function interactive_evolution_timeseries(ds, u0s, ps = nothing, kwargs...)
+function interactive_evolution_timeseries(ds, u0s, ps = nothing; kwargs...)
     @warn """
     Function `interactive_evolution_timeseries` is merged with `interactive_evolution`.
     Use that name instead from now on. Also, `ps` has now become a keyword.
