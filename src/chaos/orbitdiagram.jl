@@ -58,7 +58,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     end
     controllayout = figure[1, 2] = GridLayout()
     display(figure)
-    
+
     controllayout.tellheight[] = false
     odax.tellheight = true
 

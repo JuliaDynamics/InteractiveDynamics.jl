@@ -90,3 +90,29 @@ rrange = 1:0.001:4.0
 lo = Systems.logistic(0.4; r = rrange[1])
 interactive_cobweb(lo, rrange, 5)
 ```
+
+## Orbit Diagrams
+*Notice that orbit diagrams and bifurcation diagrams are different things in DynamicalSystems.jl*
+```@raw html
+<video width="100%" height="auto" controls autoplay loop>
+<source src="https://raw.githubusercontent.com/JuliaDynamics/JuliaDynamics/master/videos/interact/odhenon.mp4?raw=true" type="video/mp4">
+</video>
+```
+
+```@docs
+interactive_orbitdiagram
+scaleod
+```
+
+The animation at the top of this section was done with
+
+```julia
+i = p_index = 1
+ds, p_min, p_max, parname = Systems.henon(), 0.8, 1.4, "a"
+t = "orbit diagram for the Hénon map"
+
+oddata = interactive_orbitdiagram(ds, p_index, p_min, p_max, i;
+                                  parname = parname, title = t)
+
+ps, us = scaleod(oddata)
+```
