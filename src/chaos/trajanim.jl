@@ -250,7 +250,7 @@ function _init_timeseries_plots!(
     end
     for i in 1:length(idxs)-1
         linkxaxes!(ts_axes[i], ts_axes[end])
-        hidexdecorations!(ts_axes[i], grid = false)
+        hidexdecorations!(ts_axes[i]; grid = false)
     end
     return allts, ts_axes
 end

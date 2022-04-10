@@ -17,6 +17,7 @@ figure, obs = interactive_evolution(
 )
 
 # %% Lorenz63 with parameters and additional plotted elements
+diffeq = (alg = Tsit5(), adaptive = false, dt = 0.01)
 ps = Dict(
     1 => 1:0.1:30,
     2 => 10:0.1:50,
