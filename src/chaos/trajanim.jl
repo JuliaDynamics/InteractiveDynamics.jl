@@ -5,7 +5,7 @@ export interactive_evolution, interactive_evolution_timeseries
 # and to be more or less than the state dimension.
 # TODO: Allow custom labels, by default x1, x2, x3.
 # How to incorporate this with arbitrary timeseries?
-
+# TODO: Provide easy video making function.
 
 """
     interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs
@@ -26,7 +26,7 @@ The function returns `fig, obs`. `fig` is the overarching figure
 `obs` is a vector of observables, each containing the current state of each trajectory.
 
 The figure layout is as follows:
-1. `fig[1,1]` = state space plot and evolution control
+1. `fig[1,1]` = state space plot and time evolution controls
 2. `fig[1,2]` = timeseries plots
 3. `fig[2,:]` = parameter controls (if `ps` is given)
 
@@ -98,41 +98,48 @@ function interactive_evolution(
         paramlayout = fig[2, :] = GridLayout(tellheight = true, tellwidth = false)
     end
 
-    statespaceax, obs, finalpoints, run, stepslider = _init_statespace_plot!(
+    statespaceax, obs, finalpoints = _init_statespace_plot!(
         statespacelayout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
     )
+
+    # Add controls. Notice that run and step are already observables
+    run, step, stepslider = _trajectory_plot_controls!(statespacelayout)
 
     allts, ts_axes = _init_timeseries_plots!(
         timeserieslayout, pinteg, idxs, colors, linekwargs, transform, tail, lims,
     )
 
     # Functionality of live evolution. This links all observables with triggers.
+    # The run button just triggets perpetually the step button
     isrunning = Observable(false)
-    on(run) do clicks; isrunning[] = !isrunning[]; end
-    on(run) do clicks
+    on(run) do c; isrunning[] = !isrunning[]; end
+    on(run) do c
         @async while isrunning[]
-        # while isrunning[]
-            n = stepslider[]
-            # Always store values, but only update observables at last step
-            for _ in 1:n
-                DynamicalSystems.step!(pinteg)
-                for i in 1:N
-                    ob = obs[i]
-                    last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
-                    push!(ob[], last_state)
-                    for k in 1:length(idxs)
-                        push!(allts[k][i][], Point2f(pinteg.t, last_state[k]))
-                    end
+            step[] = step[] + 1
+            isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
+            yield()
+        end
+    end
+    # while the actual observables triggering happens from the step button
+    on(step) do clicks
+        n = stepslider[]
+        # Always store values, but only update observables after loop
+        for _ in 1:n
+            DynamicalSystems.step!(pinteg)
+            for i in 1:N
+                ob = obs[i]
+                last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
+                push!(ob[], last_state)
+                for k in 1:length(idxs)
+                    push!(allts[k][i][], Point2f(pinteg.t, last_state[k]))
                 end
             end
-            # Here the observables are updated with their current values
-            notify.(obs)
-            for k in 1:length(idxs); notify.(allts[k]); end
-            finalpoints[] = [x[][end] for x in obs]
-            xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
-            yield() # without yield things freeze forever
-            isopen(fig.scene) || break # crucial, ensures computations stop if closed window
         end
+        # Here the observables are updated with their current values
+        notify.(obs)
+        for k in 1:length(idxs); notify.(allts[k]); end
+        finalpoints[] = [x[][end] for x in obs]
+        xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
     end
 
     # Live parameter changing
@@ -186,8 +193,7 @@ function _init_statespace_plot!(
     !isnothing(lims) && (statespaceax.limits = lims)
     is3D && (statespaceax.protrusions = 50) # removes overlap of labels
 
-    run, stepslider = trajectory_plot_controls!(layout)
-    return statespaceax, obs, finalpoints, run, stepslider
+    return statespaceax, obs, finalpoints
 end
 function init_trajectory_observables(pinteg, tail, idxs, transform)
     N = length(DynamicalSystems.get_states(pinteg))
@@ -201,14 +207,15 @@ function init_trajectory_observables(pinteg, tail, idxs, transform)
     finalpoints = Observable([x[][end] for x in obs])
     return obs, finalpoints
 end
-function trajectory_plot_controls!(layout)
+function _trajectory_plot_controls!(layout)
     layout[2, 1] = controllayout = GridLayout(tellwidth = false)
     run = Button(controllayout[1, 1]; label = "run")
+    step = Button(controllayout[1, 2]; label = "step")
     slider_vals = vcat(1:10, 100:100:1000)
     slesl = labelslider!(layout.parent.parent, "steps =", slider_vals;
     sliderkw = Dict(:startvalue => 1), valuekw = Dict(:width => 100))
-    controllayout[1, 2] = slesl.layout
-    return run.clicks, slesl.slider.value
+    controllayout[1, 3] = slesl.layout
+    return run.clicks, step.clicks, slesl.slider.value
 end
 
 
