@@ -2,7 +2,9 @@ using DataStructures
 export interactive_evolution, interactive_evolution_timeseries
 
 # TODO: Allow plotted timeseries to be arbitrary functions of state
-# and to be more or less than the state dimension.
+# and to be more or less than the state dimension. Hence, separate timeseries
+# indices from state space indices.
+
 # TODO: Allow custom labels, by default x1, x2, x3.
 # How to incorporate this with arbitrary timeseries?
 # TODO: Provide easy video making function.
@@ -84,37 +86,51 @@ more such examples.
   if the sliders are changed.
 * `pnames = Dict(keys(ps) .=> keys(ps))` : Dictionary mapping parameter keys to labels.
   Only valid if `params` is a dictionary and not `nothing`.
+
+In addition the keywords `figure, axis` can be named tuples with arbitrary keywords
+propagated to the generation of the `Figure` and state space `Axis` instances.
 """
 function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem, u0s = [ds.u0];
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3),
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)], tail = 1000,
-        diffeq = NamedTuple(),
+        lims = nothing, diffeq = NamedTuple(),
         plotkwargs = NamedTuple(), m = 1.0,
-        lims = traj_lim_estimator(ds, u0s, DynamicalSystems.SVector(idxs...), transform),
         total_span = DynamicalSystems.isdiscretetime(ds) ? 50 : 10,
         linekwargs = DynamicalSystems.isdiscretetime(ds)  ? () : (linewidth = 4,),
         ps = nothing,
         pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
         add_controls = true, steps_per_update = 1,
+        figure = (resolution = (isnothing(idxs) ? 800 : 1600, 800), ),
+        axis = NamedTuple(),
     )
 
     N = length(u0s)
-    @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     @assert length(colors) ≥ length(u0s) "You need to provide enough colors!"
-    idxs = DynamicalSystems.SVector(idxs...)
-    fig = Figure(resolution = (1600, 800), )
+    fig = Figure(; figure...)
 
+    # Setup plots and integrator stuff
     pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
-
     statespacelayout = fig[1,1] = GridLayout()
-    timeserieslayout = fig[1,2] = GridLayout()
+    if !isnothing(idxs)
+        timeserieslayout = fig[1,2] = GridLayout()
+        allts, ts_axes = _init_timeseries_plots!(
+            timeserieslayout, pinteg, idxs, colors, linekwargs, transform, tail, lims,
+        )
+        update_ts = true
+    else
+        # We need idxs always, that's how we access the state.
+        idxs = 1:min(length(transform(ds.u0)), 3)
+        update_ts = false
+    end
     if !isnothing(ps)
         paramlayout = fig[2, :] = GridLayout(tellheight = true, tellwidth = false)
     end
-
-    statespaceax, obs, finalpoints = _init_statespace_plot!(
-        statespacelayout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
+    @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
+    idxs = DynamicalSystems.SVector(idxs...)
+    lims = isnothing(lims) ? traj_lim_estimator(ds, u0s, idxs, transform) : lims
+    statespaceax, obs, finalpoints = _init_statespace_plot!(statespacelayout, ds, idxs,
+        lims, pinteg, colors, plotkwargs, m, tail, transform, axis,
     )
     if add_controls # Notice that `run` and `step` are already observables
         run, step, stepslider = _trajectory_plot_controls!(statespacelayout)
@@ -123,9 +139,6 @@ function interactive_evolution(
         run = Observable(0); step = Observable(0); stepslider = Observable(steps_per_update)
     end
 
-    allts, ts_axes = _init_timeseries_plots!(
-        timeserieslayout, pinteg, idxs, colors, linekwargs, transform, tail, lims,
-    )
 
     # Functionality of live evolution. This links all observables with triggers.
     # The run button just triggers the step button perpetually
@@ -148,16 +161,20 @@ function interactive_evolution(
                 ob = obs[i]
                 last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
                 push!(ob[], last_state)
-                for k in 1:length(idxs)
-                    push!(allts[k][i][], Point2f(pinteg.t, last_state[k]))
+                if update_ts
+                    for k in 1:length(idxs)
+                        push!(allts[k][i][], Point2f(pinteg.t, last_state[k]))
+                    end
                 end
             end
         end
         # Here the observables are updated with their current values
         notify.(obs)
-        for k in 1:length(idxs); notify.(allts[k]); end
         finalpoints[] = [x[][end] for x in obs]
-        xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
+        if update_ts
+            for k in 1:length(idxs); notify.(allts[k]); end
+            xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
+        end
     end
 
     # Live parameter changing
@@ -180,13 +197,13 @@ end
 
 "Create the state space axis and evolution controls. Return the axis."
 function _init_statespace_plot!(
-        layout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
+        layout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform, axis,
     )
     obs, finalpoints = init_trajectory_observables(pinteg, tail, idxs, transform)
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 4000 : 15)
-    statespaceax = is3D ? Axis3(layout[1,1]) : Axis(layout[1,1])
+    statespaceax = is3D ? Axis3(layout[1,1]; axis...) : Axis(layout[1,1]; axis...)
 
     # Initialize trajectories plotted element
     for (i, ob) in enumerate(obs)
