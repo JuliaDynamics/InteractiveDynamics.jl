@@ -8,37 +8,47 @@ export interactive_evolution, interactive_evolution_timeseries
 # TODO: Provide easy video making function.
 
 """
-    interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs
+    interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs, step
 Launch an interactive GUI application that can evolve the initial conditions `u0s`
 (vector of vectors) of the given dynamical system.
 All initial conditions are evolved in parallel and at exactly the same time.
 
-Two controls allow you to pause/resume the evolution and to control after how many
-integrator steps the plots are updated.
+Added controls allow you to step/run/pause the evolution and to control after
+how many integrator steps the plots are updated.
 The application can run forever (trajectories are computed on demand).
 
 By default the GUI window displays statespace and timeseries plots.
 It also allows changing the parameters of `ds` live during the
 system evolution, see keyword `ps` below in "Parameter Keywords".
 
-The function returns `fig, obs`. `fig` is the overarching figure
+The function returns `fig, obs, step, paramvals`. `fig` is the overarching figure
 (the entire GUI) and can be recorded with `Makie.record`.
 `obs` is a vector of observables, each containing the current state of each trajectory.
+`step` is an observable that triggers the stepping of each trajectory and the update
+of the plots. Do `step[] = 0` (or any other integer), to trigger an update.
+`paramvals` is an observable containing current parameter values, and is only valid
+if `ps` is not nothing, see keyword `ps` below in "Parameter Keywords".
 
 The figure layout is as follows:
 1. `fig[1,1]` = state space plot and time evolution controls
 2. `fig[1,2]` = timeseries plots
 3. `fig[2,:]` = parameter controls (if `ps` is given)
 
+This means that you can make any kind of composite plots and videos starting from
+the figure returned from `interactive_evolution`. See the documentation online for
+more such examples.
+
 ## State Space Keywords
 * `transform = identity`: Transformation applied to the state of the dynamical system
   before plotting. Can even return a vector that is of higher dimension than `ds`.
-* `idxs = 1:min(length(transform(u0s[1])), 3)`: Which variables to plot (up to three can be chosen).
+* `idxs = 1:min(length(transform(u0s[1])), 3)`: Which variables to plot
+  (up to three can be chosen).
   Variables are selected after `transform` has been applied.
-* `colors`: The color for each trajectory.
+  Notice that you can pass `nothing` as `idxs`, in which case timeseries plots are skipped.
+* `colors`: The color for each trajectory / each initial condition.
 * `lims`: A tuple of tuples (min, max) for the axis limits. If not given, they are
   automatically deduced by evolving each of `u0s` 1000 units and picking most extreme
-  values (limits cannot be adjusted after application is launched).
+  values (limits are very hard to adjust after application is launched).
 * `m = 1.0`: The trajectory endpoints have a marker. A heuristic is done to choose
   appropriate marker size given the trajectory size. `m` is a multiplier that scales
   the marker size.
@@ -52,6 +62,10 @@ The figure layout is as follows:
   are not pre-computed and interpolated, but rather calculated on the fly step by step,
   it is **strongly recommended** to use an ODE solver thas has a constant step size
   instead of being adaptive. For example `diffeq = (alg=Tsit5(), adaptive=false, dt=0.01)`.
+* `add_controls = true`: Whether to add buttons and sliders for interactively
+  controlling the trajectory evolution. Should be `false` only if composite
+  videos are intended to be produced using the returned `step`. If `false`, the keyword
+  `steps_per_update = 1` decides how many steps to take before updating plots.
 
 ## Timeseries Keywords
 * `total_span`: How much the x-axis of the timeseries plots should span (in real time units)
@@ -82,6 +96,7 @@ function interactive_evolution(
         linekwargs = DynamicalSystems.isdiscretetime(ds)  ? () : (linewidth = 4,),
         ps = nothing,
         pnames = isnothing(ps) ? nothing : Dict(keys(ps) .=> keys(ps)),
+        add_controls = true, steps_per_update = 1,
     )
 
     N = length(u0s)
@@ -101,22 +116,25 @@ function interactive_evolution(
     statespaceax, obs, finalpoints = _init_statespace_plot!(
         statespacelayout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform,
     )
-
-    # Add controls. Notice that run and step are already observables
-    run, step, stepslider = _trajectory_plot_controls!(statespacelayout)
+    if add_controls # Notice that `run` and `step` are already observables
+        run, step, stepslider = _trajectory_plot_controls!(statespacelayout)
+        display(fig) # attemp to display by default in interactive scenarios
+    else
+        run = Observable(0); step = Observable(0); stepslider = Observable(steps_per_update)
+    end
 
     allts, ts_axes = _init_timeseries_plots!(
         timeserieslayout, pinteg, idxs, colors, linekwargs, transform, tail, lims,
     )
 
     # Functionality of live evolution. This links all observables with triggers.
-    # The run button just triggets perpetually the step button
+    # The run button just triggers the step button perpetually
     isrunning = Observable(false)
     on(run) do c; isrunning[] = !isrunning[]; end
     on(run) do c
         @async while isrunning[]
             step[] = step[] + 1
-            isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
+            isopen(fig.scene) || break # ensures computations stop if closed window
             yield()
         end
     end
@@ -144,18 +162,17 @@ function interactive_evolution(
 
     # Live parameter changing
     if !isnothing(ps)
-        slidervals, returnvals = _add_ds_param_controls!(paramlayout, ps, copy(ds.p), pnames)
+        slidervals, paramvals = _add_ds_param_controls!(paramlayout, ps, copy(ds.p), pnames)
         update = Button(fig, label = "update", tellwidth = false)
         paramlayout[length(ps)+1, :] = update
         on(update.clicks) do clicks
-            _update_ds_parameters!(ds, slidervals, returnvals)
+            _update_ds_parameters!(ds, slidervals, paramvals)
         end
     else
-        returnvals = nothing
+        paramvals = nothing
     end
 
-    display(fig)
-    return fig, obs, returnvals
+    return fig, obs, step, paramvals
 end
 
 
@@ -288,22 +305,22 @@ end
 function _add_ds_param_controls!(paramlayout, ps, p0, pnames)
     fig = paramlayout.parent.parent
     slidervals = Dict{keytype(ps), Observable}()
-    returnvals = Dict{keytype(ps), Observable}()
+    paramvals = Dict{keytype(ps), Observable}()
     for (i, (l, vals)) in enumerate(ps)
         startvalue = p0[l]
         label = string(pnames[l])
         sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
         slidervals[l] = sll.slider.value # directly add the observable
-        returnvals[l] = Observable(sll.slider.value[]) # will only get updated on button
+        paramvals[l] = Observable(sll.slider.value[]) # will only get updated on button
         paramlayout[i, :] = sll.layout
     end
-    return slidervals, returnvals
+    return slidervals, paramvals
 end
 
-function _update_ds_parameters!(ds, slidervals, returnvals)
+function _update_ds_parameters!(ds, slidervals, paramvals)
     for l in keys(slidervals)
         v = slidervals[l][]
-        returnvals[l][] = v
+        paramvals[l][] = v
         DynamicalSystems.set_parameter!(ds, l, v)
     end
 end
