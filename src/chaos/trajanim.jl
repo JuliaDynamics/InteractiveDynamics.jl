@@ -55,6 +55,8 @@ more such examples.
   appropriate marker size given the trajectory size. `m` is a multiplier that scales
   the marker size.
 * `tail = 1000`: Length of plotted trajectory (in step units of the integrator).
+* `fade = true`: For continuous time system, the trajectories in state space are faded
+  to full transparency if `true`.
 * `plotkwargs = NamedTuple()` : A named tuple of keyword arguments propagated to
   the state space plot (`lines` for continuous, `scatter` for discrete systems).
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
@@ -103,6 +105,7 @@ function interactive_evolution(
         add_controls = true, steps_per_update = 1,
         figure = (resolution = (isnothing(idxs) ? 800 : 1600, 800), ),
         axis = NamedTuple(),
+        fade = true,
     )
 
     N = length(u0s)
@@ -130,7 +133,7 @@ function interactive_evolution(
     idxs = DynamicalSystems.SVector(idxs...)
     lims = isnothing(lims) ? traj_lim_estimator(ds, u0s, idxs, transform) : lims
     statespaceax, obs, finalpoints = _init_statespace_plot!(statespacelayout, ds, idxs,
-        lims, pinteg, colors, plotkwargs, m, tail, transform, axis,
+        lims, pinteg, colors, plotkwargs, m, tail, transform, axis, fade,
     )
     if add_controls # Notice that `run` and `step` are already observables
         run, step, stepslider = _trajectory_plot_controls!(statespacelayout)
@@ -197,7 +200,7 @@ end
 
 "Create the state space axis and evolution controls. Return the axis."
 function _init_statespace_plot!(
-        layout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform, axis,
+        layout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform, axis, fade,
     )
     obs, finalpoints = init_trajectory_observables(pinteg, tail, idxs, transform)
     is3D = length(idxs) == 3
@@ -209,8 +212,12 @@ function _init_statespace_plot!(
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if !DynamicalSystems.isdiscretetime(ds)
+            x = colors[i]
+            if fade
+                x = [RGBAf(x.r, x.g, x.b, i/tail) for i in 1:tail]
+            end
             Makie.lines!(statespaceax, ob;
-                color = colors[i], linewidth = 2.0, pk...
+                color = x, linewidth = 2.0, pk...
             )
         else
             Makie.scatter!(statespaceax, ob; color = colors[i],
@@ -297,12 +304,12 @@ function _init_timeseries_plots!(
 end
 
 function traj_lim_estimator(ds, u0s, idxs, transform)
-    _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[1]; Δt = 1)
+    _tr = DynamicalSystems.trajectory(ds, 1000.0, u0s[1]; Δt = 0.1)
     tr = DynamicalSystems.Dataset(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        _tr = DynamicalSystems.trajectory(ds, 2000.0, u0s[i]; Δt = 1)
+        _tr = DynamicalSystems.trajectory(ds, 1000.0, u0s[i]; Δt = 0.1)
         tr = DynamicalSystems.Dataset(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
