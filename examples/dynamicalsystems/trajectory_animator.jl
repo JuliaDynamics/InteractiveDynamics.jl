@@ -56,6 +56,47 @@ fpobs = lift(lorenzfp, slidervals[2], slidervals[3])
 ax = content(figure[1,1][1,1])
 scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
 
+# %% Custom animation
+using DynamicalSystems, InteractiveDynamics
+using LinearAlgebra: dot, norm
+
+ds = Systems.thomas_cyclical(b = 0.2)
+u0s = ([3, 1, 1.], [1, 3, 1.], [1, 1, 3.])
+diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
+
+fig, obs, step, slidervals = interactive_evolution(
+    ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
+    # Some arguments that make final video nicer
+    figure = (resolution = (1200, 600),),
+)
+ax3D = content(fig[1,1][1,1])
+
+# Plot some stuff on a second axis that use `obs`
+# Plot distance of trajcetory from symmetry line
+ax = Axis(fig[1,1][1,2]; xlabel = "points", ylabel = "distance")
+function distance_from_symmetry(u)
+    v = SVector(1/√3, 1/√3, 1/√3)
+    t = dot(v, u)
+    return norm(u - t*v)
+end
+for (i, ob) in enumerate(obs)
+    y = lift(x -> distance_from_symmetry.(x) .+ 4(i-1), ob)
+    x = 1:length(y[])
+    lines!(ax, x, y; color = JULIADYNAMICS_COLORS[i])
+end
+ax.limits = ((0, 1000), (0, 12))
+fig
+
+record(fig, "thomas_cyclical.mp4"; framerate = 60) do io
+    for i in 1:720
+        recordframe!(io)
+        # Step multiple times per frame for "faster" animation
+        for j in 1:5; step[] = 0; end
+        ax3D.azimuth = ax3D.azimuth[] + 2π/2000
+    end
+end
+
+
 # %% towel
 ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]

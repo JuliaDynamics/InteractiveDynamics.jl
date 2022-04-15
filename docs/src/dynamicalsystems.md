@@ -50,7 +50,7 @@ u0s = [u1, u3]
 idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dt = 0.01, adaptive = false)
 
-figure, obs, slidervals = interactive_evolution(
+figure, obs, step, paramvals = interactive_evolution(
     ds, u0s; ps, idxs, tail = 1000, diffeq, pnames, lims
 )
 
@@ -65,7 +65,66 @@ ax = content(figure[1,1][1,1])
 scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
 ```
 
-Notice that the last part of the code plots the fixed points of the system (something `interactive_evolution` does not do by itself), and the fixed points plots are automatically updated when a parameter is changed in the GUI.
+Notice that the last part of the code plots the fixed points of the system (something `interactive_evolution` does not do by itself), and the fixed points plots are automatically updated when a parameter is changed in the GUI, because it uses the observable `paramvals`.
+
+### Customized animations
+It is straightforward to add custom plots and generate extra animations from the interface of the `step` observable returned by [`interactive_evolution`](@ref). In the following example we'll make a video that rotates around some interlaced periodic trajectories, and plot some stuff from them on an extra panel to the right.
+
+```@example DynamicalSystemsInter
+using DynamicalSystems, InteractiveDynamics, CairoMakie
+using LinearAlgebra: dot, norm
+
+ds = Systems.thomas_cyclical(b = 0.2)
+u0s = ([3, 1, 1.], [1, 3, 1.], [1, 1, 3.])
+diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
+
+fig, obs, step, slidervals = interactive_evolution(
+    ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
+    # Some arguments that make final video nicer
+    figure = (resolution = (1200, 600),),
+)
+ax3D = content(fig[1,1][1,1])
+
+# Plot some stuff on a second axis that use `obs`
+# Plot distance of trajcetory from symmetry line
+ax = Axis(fig[1,1][1,2]; xlabel = "points", ylabel = "distance")
+function distance_from_symmetry(u)
+    v = SVector(1/√3, 1/√3, 1/√3)
+    t = dot(v, u)
+    return norm(u - t*v)
+end
+for (i, ob) in enumerate(obs)
+    y = lift(x -> distance_from_symmetry.(x) .+ 4(i-1), ob)
+    x = 1:length(y[])
+    lines!(ax, x, y; color = JULIADYNAMICS_COLORS[i])
+end
+ax.limits = ((0, 1000), (0, 12))
+fig
+```
+
+Now we can step this animation arbitrarily many times
+```@example DynamicalSystemsInter
+for j in 1:500; step[] = 0; end
+fig
+```
+
+```@example DynamicalSystemsInter
+for j in 1:500; step[] = 0; end
+fig
+```
+
+Or we could produce a video with:
+```julia
+record(fig, "thomas_cyclical.mp4"; framerate = 60) do io
+    for i in 1:720
+        recordframe!(io)
+        # Step multiple times per frame for "faster" animation
+        for j in 1:5; step[] = 0; end
+        ax3D.azimuth = ax3D.azimuth[] + 2π/2000
+    end
+end
+```
+(be careful not to use CairoMakie.jl for producing videos of 3D plots like above)
 
 ## Cobweb Diagrams
 ```@raw html
