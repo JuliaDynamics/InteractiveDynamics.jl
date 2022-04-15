@@ -72,6 +72,7 @@ It is straightforward to add custom plots and generate extra animations from the
 
 ```@example DynamicalSystemsInter
 using DynamicalSystems, InteractiveDynamics, CairoMakie
+using OrdinaryDiffEq: Tsit5
 using LinearAlgebra: dot, norm
 
 ds = Systems.thomas_cyclical(b = 0.2)
