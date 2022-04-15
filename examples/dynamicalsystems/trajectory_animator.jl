@@ -12,8 +12,10 @@ u3 = [-1.5, 1.2, 1.3] .+ 1e-9 # chaotic
 u4 = [-1.5, 1.2, 1.3] .+ 21e-9 # chaotic 2
 u0s = [u1, u2, u3, u4]
 
-figure, obs = interactive_evolution(
-    ds, u0s; tail = 1000, diffeq
+interactive_evolution(
+    ds, u0s; tail = 1000, diffeq, fade = true,
+    tsidxs = [1,2],
+    # tsidxs = nothing, # comment/uncomment this line to remove timeseries
 )
 
 # %% Lorenz63 with parameters and additional plotted elements
@@ -37,10 +39,10 @@ u1 = [10,20,40.0]
 u3 = [20,10,40.0]
 u0s = [u1, u3]
 
-idxs = (1, 2, 3)
+idxs = [1,2,3]
 diffeq = (alg = Tsit5(), dt = 0.01, adaptive = false)
 
-figure, obs, slidervals = interactive_evolution(
+figure, obs, step, slidervals = interactive_evolution(
     ds, u0s; ps, idxs, tail = 1000, diffeq, pnames, lims
 )
 
@@ -57,10 +59,9 @@ scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
 # %% towel
 ds = Systems.towel()
 u0s = [0.1ones(3) .+ 1e-3rand(3) for _ in 1:3]
-idxs = (1, 2, 3)
 
 figure, obs = interactive_evolution(
-    ds, u0s; idxs, tail = 10000,
+    ds, u0s; tail = 10000,
 )
 
 # %% SM
