@@ -131,13 +131,9 @@ record(fig, "thomas_cyclical.mp4"; framerate = 60) do io
         recordframe!(io)
         # Step multiple times per frame for "faster" animation
         for j in 1:5; step[] = 0; end
-        if axss isa Axis3
-            axss.azimuth = axss.azimuth[] + 2π/2000
-        end
     end
 end
 ```
-(be careful not to use CairoMakie.jl for producing videos of 3D plots like above)
 
 ## Cobweb Diagrams
 ```@raw html
