@@ -49,17 +49,13 @@ format = Documenter.HTML(
         asset("https://fonts.googleapis.com/css?family=Montserrat|Source+Code+Pro&display=swap", class=:css),
         ],
     ),
-pages = [
-    "Introduction" => "index.md",
-    "Trajectory Evolution" => "trajectory.md",
-    "Orbit Diagram" => "od.md",
-    "Cobweb Diagram" => "cobweb.md",
-    "Poincaré Surface of Section" => "psos.md",
-    "Brainscanning PSOS" => "brainscan.md",
-    # "Billiards" => "billiards.md",
-    "Agent Based Models" => "agents.md",
-    # "Trajectory Highlighter" => "highlight.md",
-],
+    pages = [
+        "Introduction" => "index.md",
+        "Dynamical Systems" => "dynamicalsystems.md",
+        "Billiards" => "billiards.md",
+        "Agent Based Models" => "agents.md",
+        # "Trajectory Highlighter" => "highlight.md",
+    ],
 )
 
 if CI
