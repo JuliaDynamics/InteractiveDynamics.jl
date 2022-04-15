@@ -2,7 +2,7 @@ using GLMakie, DynamicalSystems, InteractiveDynamics
 using OrdinaryDiffEq
 
 ds = Systems.henonheiles()
-diffeq = (alg = Vern9(),)
+diffeq = (alg = Vern9(), abstol = 1e-9, reltol = 1e-9)
 u0s = [
     [0.0, -0.25, 0.42081, 0.0],
     [0.0, 0.1, 0.5, 0.0],

@@ -24,66 +24,66 @@ function brainscan_poincaresos(A::DynamicalSystems.AbstractDataset, j::Int; kwar
 end
 
 function brainscan_poincaresos(
-    As::Vector{<:DynamicalSystems.AbstractDataset}, j::Int;
-    linekw = (), scatterkw = (), direction = -1,
-    colors = [CYCLIC_COLORS[i] for i in 1:length(As)]
-)
+        As::Vector{<:DynamicalSystems.AbstractDataset}, j::Int;
+        linekw = (), scatterkw = (), direction = -1,
+        colors = [CYCLIC_COLORS[i] for i in 1:length(As)]
+    )
 
-for A in As; @assert size(A, 2) == 3; end
-@assert j ∈ 1:3
-mi, ma = total_minmaxima(As)
-ms = 25maximum(abs(ma[i] - mi[i]) for i in 1:3)
+    for A in As; @assert size(A, 2) == 3; end
+    @assert j ∈ 1:3
+    mi, ma = total_minmaxima(As)
+    ms = 25maximum(abs(ma[i] - mi[i]) for i in 1:3)
 
-otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
+    otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
-figure = Figure(resolution = (2000, 800))
-display(figure)
-ax = figure[1, 1] = Axis3(figure)
-axp = figure[1, 2] = Axis(figure)
-sll = labelslider!(
-    figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
-    sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
-)
-figure[2, :] = sll.layout
-y = sll.slider.value
+    figure = Figure(resolution = (1600, 800))
+    display(figure)
+    ax = figure[1, 1] = Axis3(figure)
+    axp = figure[1, 2] = Axis(figure)
+    sll = labelslider!(
+        figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
+        sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
+    )
+    figure[2, :] = sll.layout
+    y = sll.slider.value
 
-for i in 1:length(As)
-    A = As[i]
-    # plot 3D trajectory
-    lines!(ax, A.data; color = colors[i], transparency = false, linekw...)
+    for i in 1:length(As)
+        A = As[i]
+        # plot 3D trajectory
+        lines!(ax, A.data; color = colors[i], transparency = false, linekw...)
 
-    # Poincare sos
-    psos = lift(y) do y
-        DynamicalSystems.poincaresos(A, (j, y); direction, warning = false)
+        # Poincare sos
+        psos = lift(y) do y
+            DynamicalSystems.poincaresos(A, (j, y); direction, warning = false)
+        end
+        psos2d = lift(p -> p[:, otheridxs].data, psos)
+        psos3d = lift(p -> p.data, psos)
+
+        Makie.scatter!(axp, psos2d; color = colors[i], scatterkw...)
+        Makie.scatter!(ax, psos3d; color = colors[i], markersize = ms, scatterkw...)
     end
-    psos2d = lift(p -> p[:, otheridxs].data, psos)
-    psos3d = lift(p -> p.data, psos)
 
-    Makie.scatter!(axp, psos2d; color = colors[i], scatterkw...)
-    Makie.scatter!(ax, psos3d; color = colors[i], markersize = ms, scatterkw...)
-end
+    xlims!(axp, mi[otheridxs[1]], ma[otheridxs[1]])
+    ylims!(axp, mi[otheridxs[2]], ma[otheridxs[2]])
 
-xlims!(axp, mi[otheridxs[1]], ma[otheridxs[1]])
-ylims!(axp, mi[otheridxs[2]], ma[otheridxs[2]])
+    # plot transparent plane
+    ss = [mi...]
+    ws = [(ma - mi)...]
+    ws[j] = 0
 
-# plot transparent plane
-ss = [mi...]
-ws = [(ma - mi)...]
-ws[j] = 0
+    p = lift(y) do y
+        ss[j] = y
+        o = Makie.Point3f(ss...)
+        w = Makie.Point3f(ws...)
+        Makie.FRect3D(o, w)
+    end
 
-p = lift(y) do y
-    ss[j] = y
-    o = Makie.Point3f(ss...)
-    w = Makie.Point3f(ws...)
-    Makie.FRect3D(o, w)
-end
+    a = RGBAf(0,0,0,0)
+    c = RGBAf(0.2, 0.2, 0.25, 1.0)
+    img = Makie.ImagePattern([c a; a c]);
+    Makie.mesh!(ax, p; color = img);
 
-a = RGBAf(0,0,0,0)
-c = RGBAf(0.2, 0.2, 0.25, 1.0)
-img = Makie.ImagePattern([c a; a c]);
-Makie.mesh!(ax, p; color = img);
-
-return figure, ax, axp
+    return figure, ax, axp
 end
 
 function total_minmaxima(As::Vector{<:DynamicalSystems.AbstractDataset})
@@ -98,4 +98,4 @@ function total_minmaxima(As::Vector{<:DynamicalSystems.AbstractDataset})
     end
     return mi, ma
 end
-    
+

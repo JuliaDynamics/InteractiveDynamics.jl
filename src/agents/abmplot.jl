@@ -232,6 +232,10 @@ function Makie.plot!(abmplot::_ABMPlot)
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
             rowsize!(fig[1, 1].layout, 1, ax.scene.px_area[].widths[2])
             # TODO: Set colorbar to be "glued" to axis
+            # Problem with the following code, which comes from the tutorial
+            # https://makie.juliaplots.org/stable/tutorials/aspect-tutorial/ ,
+            # is that it only works for axis that have 1:1 aspect ratio...
+            # colsize!(fig[1, 1].layout, 1, Aspect(1, 1.0))
         end
     end
 
@@ -282,5 +286,5 @@ function set_axis_limits!(ax, model)
     xlims!(ax, o[1], e[1])
     ylims!(ax, o[2], e[2])
     length(o) == 3 && zlims!(ax, o[3], e[3])
-    return
+    return o, e
 end

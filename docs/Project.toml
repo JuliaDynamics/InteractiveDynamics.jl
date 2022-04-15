@@ -11,6 +11,8 @@ DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5"
 DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634"
 InteractiveDynamics = "ec714cd0-5f51-11eb-0b6e-452e7367ff84"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 libsass_jll = "47bcb7c8-5119-555a-9eeb-0afcc36cd728"
 
 [extras]

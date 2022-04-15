@@ -1,6 +1,8 @@
 using Agents
 using Statistics: mean
-using Random # hide
+import StatsBase
+using Random
+
 
 mutable struct Daisy <: AbstractAgent
     id::Int
@@ -90,9 +92,6 @@ function solar_activity!(model::DaisyWorld)
         model.solar_luminosity += model.solar_change
     end
 end
-
-import StatsBase
-using Random
 
 function daisyworld(;
     griddims = (30, 30),
