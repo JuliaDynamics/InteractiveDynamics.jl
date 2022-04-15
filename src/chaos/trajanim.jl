@@ -2,11 +2,7 @@ using DataStructures
 export interactive_evolution, interactive_evolution_timeseries
 
 # TODO: Allow plotted timeseries to be arbitrary functions of state
-# and to be more or less than the state dimension. Hence, separate timeseries
-# indices from state space indices.
-
-# TODO: Allow custom labels, by default x1, x2, x3.
-# How to incorporate this with arbitrary timeseries?
+# and to be more or less than the state dimension.
 
 """
     interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs, step
@@ -31,7 +27,7 @@ of the plots. Do `step[] = 0` (or any other integer), to trigger an update.
 if `ps` is not nothing, see keyword `ps` below in "Parameter Keywords".
 
 The figure layout is as follows:
-1. `fig[1,1]` = state space plot and time evolution controls
+1. `fig[1,1]` = state space plot (`fig[1,1][1,1]`) and time evolution controls
 2. `fig[1,2]` = timeseries plots
 3. `fig[2,:]` = parameter controls (if `ps` is given)
 
@@ -204,7 +200,8 @@ function _init_statespace_plot!(
     is3D = length(idxs) == 3
     mm = maximum(abs(x[2] - x[1]) for x in lims)
     ms = m*(is3D ? 4000 : 15)
-    statespaceax = is3D ? Axis3(layout[1,1]; axis...) : Axis(layout[1,1]; axis...)
+    statespaceax = is3D ? Axis3(layout[1,1]; xlabel = "x1", ylabel = "x2", axis...) :
+        Axis(layout[1,1]; xlabel = "x1", ylabel = "x2", zlabel = "x3", axis...)
 
     # Initialize trajectories plotted element
     for (i, ob) in enumerate(obs)
