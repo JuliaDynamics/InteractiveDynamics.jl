@@ -67,8 +67,7 @@ diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
 
 fig, obs, step, = interactive_evolution(
     ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
-    # Replace this with [1, 2, 3] if using GLMakie (looks much cooler ;))
-    idxs = [1, 2],
+    idxs = [1, 2, 3],
     figure = (resolution = (1200, 600),),
 )
 axss = content(fig[1,1][1,1])

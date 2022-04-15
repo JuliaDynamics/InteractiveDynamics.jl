@@ -79,7 +79,7 @@ Notice that the last part of the code plots the fixed points of the system (some
 It is straightforward to add custom plots and generate extra animations from the interface of the `step` observable returned by [`interactive_evolution`](@ref). In the following example we'll make a video that rotates around some interlaced periodic trajectories, and plot some stuff from them on an extra panel to the right.
 
 ```@example DynamicalSystemsInter
-using DynamicalSystems, InteractiveDynamics, GLMakie
+using DynamicalSystems, InteractiveDynamics, CairoMakie
 using OrdinaryDiffEq: Tsit5
 using LinearAlgebra: dot, norm
 
@@ -97,7 +97,7 @@ axss = content(fig[1,1][1,1])
 axss.title = "State space (projected)"
 
 # Plot some stuff on a second axis that use `obs`
-# Plot distance of trajcetory from symmetry line
+# Plot distance of trajectory from symmetry line
 ax = Axis(fig[1,1][1,2]; xlabel = "points", ylabel = "distance")
 function distance_from_symmetry(u)
     v = 0*SVector(u...) .+ 1/√(length(u))
