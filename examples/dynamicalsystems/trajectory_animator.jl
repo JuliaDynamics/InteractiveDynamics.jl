@@ -57,25 +57,28 @@ ax = content(figure[1,1][1,1])
 scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
 
 # %% Custom animation
-using DynamicalSystems, InteractiveDynamics
+using DynamicalSystems, InteractiveDynamics, GLMakie
+using OrdinaryDiffEq: Tsit5
 using LinearAlgebra: dot, norm
 
 ds = Systems.thomas_cyclical(b = 0.2)
 u0s = ([3, 1, 1.], [1, 3, 1.], [1, 1, 3.])
 diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
 
-fig, obs, step, slidervals = interactive_evolution(
+fig, obs, step, = interactive_evolution(
     ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
-    # Some arguments that make final video nicer
+    # Replace this with [1, 2, 3] if using GLMakie (looks much cooler ;))
+    idxs = [1, 2],
     figure = (resolution = (1200, 600),),
 )
-ax3D = content(fig[1,1][1,1])
+axss = content(fig[1,1][1,1])
+axss.title = "State space (projected)"
 
 # Plot some stuff on a second axis that use `obs`
 # Plot distance of trajcetory from symmetry line
 ax = Axis(fig[1,1][1,2]; xlabel = "points", ylabel = "distance")
 function distance_from_symmetry(u)
-    v = SVector(1/√3, 1/√3, 1/√3)
+    v = 0*SVector(u...) .+ 1/√(length(u))
     t = dot(v, u)
     return norm(u - t*v)
 end
@@ -92,7 +95,9 @@ record(fig, "thomas_cyclical.mp4"; framerate = 60) do io
         recordframe!(io)
         # Step multiple times per frame for "faster" animation
         for j in 1:5; step[] = 0; end
-        ax3D.azimuth = ax3D.azimuth[] + 2π/2000
+        if axss isa Axis3
+            axss.azimuth = axss.azimuth[] + 2π/2000
+        end
     end
 end
 

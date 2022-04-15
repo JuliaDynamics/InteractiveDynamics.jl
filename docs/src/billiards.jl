@@ -11,6 +11,12 @@
 #   This function also allows you to create custom animations, see [Custom Billiards Animations](@ref).
 # - For producing videos of time evolution of particles in a billiard, use [`bdplot_video`](@ref).
 
+# This documentation page is built using versions:
+using Pkg
+Pkg.status(["DynamicalBilliards", "InteractiveDynamics"];
+    mode = PKGMODE_MANIFEST, io=stdout
+)
+
 
 # ```@raw html
 # <video width="auto" controls autoplay loop>

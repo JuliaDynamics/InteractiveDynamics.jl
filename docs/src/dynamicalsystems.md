@@ -8,6 +8,14 @@ and have been designed to favor generality and simple source code.
 This means that even if one of the available GUI apps does not do what you'd like to
 do, it should be easy to copy its source code and adjust accordingly!
 
+This documentation page is built using versions:
+```@example DynamicalSystemsInter
+using Pkg
+Pkg.status(["DynamicalSystems", "InteractiveDynamics"];
+    mode = PKGMODE_MANIFEST, io=stdout
+)
+```
+
 ## Interactive Trajectory Evolution
 
 ```@raw html
@@ -71,7 +79,7 @@ Notice that the last part of the code plots the fixed points of the system (some
 It is straightforward to add custom plots and generate extra animations from the interface of the `step` observable returned by [`interactive_evolution`](@ref). In the following example we'll make a video that rotates around some interlaced periodic trajectories, and plot some stuff from them on an extra panel to the right.
 
 ```@example DynamicalSystemsInter
-using DynamicalSystems, InteractiveDynamics, CairoMakie
+using DynamicalSystems, InteractiveDynamics, GLMakie
 using OrdinaryDiffEq: Tsit5
 using LinearAlgebra: dot, norm
 
@@ -79,18 +87,20 @@ ds = Systems.thomas_cyclical(b = 0.2)
 u0s = ([3, 1, 1.], [1, 3, 1.], [1, 1, 3.])
 diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
 
-fig, obs, step, slidervals = interactive_evolution(
+fig, obs, step, = interactive_evolution(
     ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
-    # Some arguments that make final video nicer
+    # Replace this with [1, 2, 3] if using GLMakie (looks much cooler ;))
+    idxs = [1, 2],
     figure = (resolution = (1200, 600),),
 )
-ax3D = content(fig[1,1][1,1])
+axss = content(fig[1,1][1,1])
+axss.title = "State space (projected)"
 
 # Plot some stuff on a second axis that use `obs`
 # Plot distance of trajcetory from symmetry line
 ax = Axis(fig[1,1][1,2]; xlabel = "points", ylabel = "distance")
 function distance_from_symmetry(u)
-    v = SVector(1/√3, 1/√3, 1/√3)
+    v = 0*SVector(u...) .+ 1/√(length(u))
     t = dot(v, u)
     return norm(u - t*v)
 end
@@ -121,7 +131,9 @@ record(fig, "thomas_cyclical.mp4"; framerate = 60) do io
         recordframe!(io)
         # Step multiple times per frame for "faster" animation
         for j in 1:5; step[] = 0; end
-        ax3D.azimuth = ax3D.azimuth[] + 2π/2000
+        if axss isa Axis3
+            axss.azimuth = axss.azimuth[] + 2π/2000
+        end
     end
 end
 ```

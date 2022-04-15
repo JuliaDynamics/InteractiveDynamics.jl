@@ -1,8 +1,20 @@
 using DataStructures
 export interactive_evolution, interactive_evolution_timeseries
 
+########################################################################################
+# Dynamical system stepping structure
+########################################################################################
+# TODO
+struct DynamicalSystemAnimator
+    pinteg
+    states::Observable{Vector} # vector of vectors
+    slidervals
+end
+
+########################################################################################
+# GUI launcing function
+########################################################################################
 # TODO: Allow plotted timeseries to be arbitrary functions of state
-# and to be more or less than the state dimension.
 
 """
     interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs, step
