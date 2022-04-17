@@ -219,7 +219,7 @@ function _init_statespace_plot!(
     for (i, ob) in enumerate(obs)
         pk = plotkwargs isa Vector ? plotkwargs[i] : plotkwargs
         if !DynamicalSystems.isdiscretetime(ds)
-            x = colors[i]
+            x = to_color(colors[i])
             if fade
                 x = [RGBAf(x.r, x.g, x.b, i/tail) for i in 1:tail]
             end
