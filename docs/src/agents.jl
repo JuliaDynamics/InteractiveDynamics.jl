@@ -60,14 +60,17 @@ fig
 
 # ## Interactive ABM Applications
 # Continuing from the Daisyworld plots above, we can turn them into interactive
-# interactive applications straightforwardly, simply by providing the stepping functions
+# applications straightforwardly, simply by providing the stepping functions
 # as illustrated in the documentation of [`abmplot`](@ref).
+# Note that [`GLMakie`](https://makie.juliaplots.org/v0.15/documentation/backends_and_output/)
+# should be used instead of `CairoMakie` when wanting to use the interactive
+# aspects of the plots.
 fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
     plotkwargs...)
 fig
 
 # One could click the run button and see the model evolve.
-# Furthermore, one can add more sliders that allow chancing the model parameters.
+# Furthermore, one can add more sliders that allow changing the model parameters.
 params = Dict(
     :surface_albedo => 0:0.01:1,
     :solar_change => -0.1:0.01:0.1,
