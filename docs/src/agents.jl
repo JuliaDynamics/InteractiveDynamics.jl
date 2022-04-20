@@ -62,8 +62,9 @@ fig
 # Continuing from the Daisyworld plots above, we can turn them into interactive
 # applications straightforwardly, simply by providing the stepping functions
 # as illustrated in the documentation of [`abmplot`](@ref).
-# Note that `GLMakie` [should be used](https://discourse.julialang.org/t/the-vs-code-plot-navigator-and-makie/67967)
-# instead of `CairoMakie` if on VSCode.
+# Note that [`GLMakie`](https://makie.juliaplots.org/v0.15/documentation/backends_and_output/)
+# should be used instead of `CairoMakie` when wanting to use the interactive
+# aspects of the plots.
 fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
     plotkwargs...)
 fig
