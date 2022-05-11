@@ -303,8 +303,8 @@ function _init_timeseries_plots!(
         ax.ylabel = "x$i"
         ylims!(ax, lims[i])
     end
+    linkxaxes!(ts_axes...)
     for i in 1:length(idxs)-1
-        linkxaxes!(ts_axes[i], ts_axes[end])
         hidexdecorations!(ts_axes[i]; grid = false)
     end
     return allts, ts_axes
