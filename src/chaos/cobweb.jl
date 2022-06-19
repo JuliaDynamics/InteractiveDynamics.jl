@@ -31,26 +31,22 @@ function interactive_cobweb(
     Tmax = 1000,
     pindex = 1,
     x0s = range(xmin, xmax; length = 101),
+    xs = range(xmin, xmax; length = 1000),
 )
 
 @assert O ≥ 1
-xs = range(xmin, xmax; length = 5000)
+@assert DynamicalSystems.dimension(ds) == 1
 
 figure = Figure(resolution = (1000, 800))
 axts = figure[1, :] = Axis(figure)
 axmap = figure[2, :] = Axis(figure)
 
-slr = labelslider!(figure, "$pname =", prange)
-figure[3, :] = slr.layout
-r_observable = slr.slider.value
-
-sln = labelslider!(figure, "n =", 1:Tmax; sliderkw = Dict(:startvalue => 20))
-figure[4, :] = sln.layout
-L = sln.slider.value
-
-sln = labelslider!(figure, "x₀ =", x0s; sliderkw = Dict(:startvalue => ds.u0))
-figure[5, :] = sln.layout
-x0 = sln.slider.value
+sg = SliderGrid(figure[3, :],
+    (label = pname, range = prange),
+    (label = "n", range = 1:Tmax, startvalue = 20),
+    (label = "x₀", range = x0s, startvalue = ds.u0),
+)
+r_observable, L, x0 = [sg.sliders[i].value for i in 1:3]
 
 # Timeseries plot
 function seriespoints(x)
@@ -114,7 +110,7 @@ for i in 1:O
     _b = Button(figure; label = "f$(superscript(i))")
     push!(fbuttons, _b)
 end
-figure[6, :] = buttonlayout = GridLayout(tellwidth = false)
+figure[4, :] = buttonlayout = GridLayout(tellwidth = false)
 buttonlayout[:, 1:O+1] = [cbutton, fbuttons...]
 
 # And add triggering for buttons

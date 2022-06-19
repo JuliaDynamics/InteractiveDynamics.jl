@@ -190,7 +190,7 @@ function interactive_evolution(
     if !isnothing(ps)
         slidervals, paramvals = _add_ds_param_controls!(paramlayout, ps, copy(ds.p), pnames)
         update = Button(fig, label = "update", tellwidth = false, tellheight = true)
-        paramlayout[length(ps)+1, :] = update
+        paramlayout[2, 1] = update
         on(update.clicks) do clicks
             _update_ds_parameters!(ds, slidervals, paramvals)
         end
