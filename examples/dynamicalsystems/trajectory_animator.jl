@@ -54,7 +54,7 @@ lorenzfp(ρ,β) = [
 
 fpobs = lift(lorenzfp, slidervals[2], slidervals[3])
 ax = content(figure[1,1][1,1])
-scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
+scatter!(ax, fpobs; markersize = 15, marker = :diamond, color = :black)
 
 # %% Custom animation
 using DynamicalSystems, InteractiveDynamics, GLMakie
@@ -115,20 +115,5 @@ u0s = [[0.1, 0.1], [2.5, 0.4], [1.88, 3.25]]
 lims = ((0, 2π), (0, 2π))
 
 figure, obs = interactive_evolution(
-    ds, u0s; tail = 100000, lims
-)
-
-# %% Henon helies
-ds = Systems.henonheiles()
-
-u0s = [[0.0, -0.25, 0.42081, 0.0],
-[0.0, 0.1, 0.5, 0.0],
-[0.0, -0.31596, 0.354461, 0.0591255]]
-
-diffeq = (alg = Vern9(), dt = 0.01, adaptive = false)
-idxs = (1, 2, 4)
-colors = Makie.to_color.(["#233B43", "#499cbf", "#E84646"])
-
-figure, obs = interactive_evolution(
-    ds, u0s; idxs, tail = 10000, colors, diffeq
+    ds, u0s; tail = 10000, lims
 )
