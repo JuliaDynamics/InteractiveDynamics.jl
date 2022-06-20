@@ -267,7 +267,7 @@ function bdplot_boundarymap(bmap, intervals;
 end
 
 function obstacle_axis!(figlocation, intervals)
-    bmapax = Axis(figlocation; alignmode = Inside())
+    bmapax = Axis(figlocation; alignmode = Mixed(bottom = 0))
     bmapax.xlabel = "arclength, ξ"
     bmapax.ylabel = "sine of normal angle, sin(θ)"
     bmapax.targetlimits[] = BBox(intervals[1], intervals[end], -1, 1)

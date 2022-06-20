@@ -47,7 +47,7 @@ function trajectory_highlighter(datasets, vals;
     N == length(vals) || error("data and value must have equal length")
 
     # First prepare the colors of the datasets:
-    colormap = to_colormap(cmap, length(datasets))
+    colormap = Makie.categorical_colors(cmap, length(datasets))
     get_color(i) = Makie.color(Makie.interpolated_getindex(
         colormap, vals[i], extrema(vals)
     ))
@@ -81,7 +81,7 @@ and return the scene together with the αs. The bins are colored
 according to a colormap.
 """
 function plot_histogram(hist::StatsBase.Histogram, cmap)
-    c = to_colormap(cmap, length(hist.weights))
+    c = Makie.categorical_colors(cmap, length(hist.weights))
     hist_αs = [Observable(1.) for i in c]
     bincolor(αs...) = RGBAf.(c, αs)
     colors = lift(bincolor, hist_αs...)

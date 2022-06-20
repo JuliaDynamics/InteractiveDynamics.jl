@@ -54,9 +54,9 @@ lines!(ax, t, d)
 
 # You can now use this loop to make an animation (using `record`)
 for i in 1:10
-    bdplot_animstep!(phs, chs, bd, 0.001; update = false)
+    bdplot_animstep!(phs, chs, bd, 0.01; update = false)
 end
-bdplot_animstep!(phs, chs, bd, 0.001; update = true)
+bdplot_animstep!(phs, chs, bd, 0.01; update = true)
 
 # %% Make a video with the premade function
 N = 10
