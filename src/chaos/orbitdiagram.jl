@@ -1,4 +1,5 @@
 export interactive_orbitdiagram, scaleod
+# TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
 
 """
     interactive_orbitdiagram(
@@ -52,7 +53,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
 
     figure = Figure(resolution = (1200, 600), backgroundcolor = DEFAULT_BG)
     display(figure)
-    odax = figure[1,1] = Axis(figure)
+    odax = figure[1,1] = Axis(figure; title)
     for z in (:xpanlock, :ypanlock, :xzoomlock, :yzoomlock)
         setproperty!(odax, z, true)
     end
@@ -164,10 +165,6 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
         set_close_to!(dslider, dens)
     end
 
-    if title ≠ ""
-        figure[0, 1] = Label(figure, title, textsize = 30)
-    end
-
     return figure, (od_obs, ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
 end
 
@@ -268,20 +265,25 @@ function scaleod(od, p₋, p₊, u₋, u₊)
     return ps, us
 end
 
-# TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
-
 function add_controls!(controllayout, figure, D, parname, i0)
     # Sliders
-    nslider, Tslider, dslider, αslider = od_sliders!(figure, controllayout)
+    sg = SliderGrid(controllayout[1,1],
+        (label = "n", range = 1000:100:100000, startvalue = 1000),
+        (label = "t", range = 1000:1000:10000, startvalue = 1000),
+        (label = "d", range = 100:100:10000, startvalue = 1000),
+        (label = "α", range = 0.001:0.001:1, startvalue = 0.1),
+    )
+    nslider, Tslider, dslider, αslider =  [s for s in sg.sliders]
     # Buttons (incl. variable chooser)
     ▢update = Button(figure, label = "update")
     ▢back = Button(figure, label = "← back")
     ▢reset = Button(figure, label = "reset")
     imenu = Menu(figure, options = [string(j) for j in 1:D], width = 60)
     imenu.i_selected = i0
-    buttonslayout = controllayout[5, :] = GridLayout()
+    buttonslayout = controllayout[2, 1] = GridLayout()
     buttonslayout[1, 1:5] = [▢update, ▢back, ▢reset, Label(figure, "variable:"), imenu]
-    # Limit boxes. Unfortunately can't be made observables yet...
+    # Limit boxes
+    # TODO: Make these text input boxes
     ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
     tsize = 16
     text_p₋ = Label(figure, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
@@ -292,7 +294,7 @@ function add_controls!(controllayout, figure, D, parname, i0)
         halign = :left, width = Auto(false), textsize = tsize)
     text_u₊ = Label(figure, lift(o -> "u₊ = $(o)", ⬜u₊),
         halign = :left, width = Auto(false), textsize = tsize)
-    controllayout[6, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
+    controllayout[3, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
     ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
     return nslider, Tslider, dslider,
            nslider.value, Tslider.value, dslider.value, αslider.value,

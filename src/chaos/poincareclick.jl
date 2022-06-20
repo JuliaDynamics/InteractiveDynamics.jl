@@ -52,16 +52,17 @@ This `newstate` is also given to the function `color` that
 gets a new color for the new points.
 """
 function interactive_poincaresos(ds, plane, idxs, complete;
-         # PSOS kwargs:
-         direction = -1,
-         tfinal = (1000.0, 10.0^4),
-         rootkw = (xrtol = 1e-6, atol = 1e-6),
-         # Makie kwargs:
-         color = randomcolor,
-         scatterkwargs = (),
-         labels = ("u₁" , "u₂"),
-         # DiffEq kwargs:
-         diffeq = NamedTuple())
+        # PSOS kwargs:
+        direction = -1,
+        tfinal = (1000.0, 10.0^4),
+        rootkw = (xrtol = 1e-6, atol = 1e-6),
+        # Makie kwargs:
+        color = randomcolor,
+        scatterkwargs = (),
+        labels = ("u₁" , "u₂"),
+        # DiffEq kwargs:
+        diffeq = NamedTuple()
+    )
 
     @assert typeof(plane) <: Tuple
     @assert length(idxs) == 2
@@ -122,15 +123,13 @@ function interactive_poincaresos(ds, plane, idxs, complete;
 end
 
 function _add_psos_controls!(figure, tfinal)
-    Tsln = labelslider!(
-        figure, "T =", range(tfinal[1], tfinal[2], length = 1000);
-        width = Auto(), format = x -> string(round(x)),
+    sg1 = SliderGrid(figure[1, :][1,1],
+        (label = "T", range = range(tfinal[1], tfinal[2], length = 1000),
+        format = x -> string(round(x)), )
     )
-    msln = labelslider!(
-        figure, "ms =", 10.0 .^ range(0, 2, length = 100);
-        sliderkw = Dict(:startvalue => 10), width = Auto(), format = x -> string(round(x)),
+    sg2 = SliderGrid(figure[1, :][1,2],
+        (label = "ms", range = 10.0 .^ range(0, 2, length = 100),
+        format = x -> string(round(x)), startvalue = 10)
     )
-    figure[1, :][1,1]=Tsln.layout
-    figure[1, :][1,2]=msln.layout
-    return Tsln.slider.value, msln.slider.value
+    return sg1.sliders[1].value, sg2.sliders[1].value
 end
