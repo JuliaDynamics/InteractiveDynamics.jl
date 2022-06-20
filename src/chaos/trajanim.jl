@@ -260,11 +260,6 @@ function _trajectory_plot_controls!(layout)
     run = Button(controllayout[1, 1]; label = "run")
     step = Button(controllayout[1, 2]; label = "step")
     slider_vals = vcat(1:10, 100:100:1000)
-    # Old code
-    # slesl = labelslider!(layout.parent.parent, "steps =", slider_vals;
-    # sliderkw = Dict(:startvalue => 1), valuekw = Dict(:width => 100))
-    # controllayout[1, 3] = slesl.layout
-    # New code
     sg = SliderGrid(controllayout[1,3],
         (label = "steps =", range = slider_vals, startvalue = 1),
     )
