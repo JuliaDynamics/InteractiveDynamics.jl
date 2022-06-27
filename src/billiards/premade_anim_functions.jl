@@ -118,23 +118,20 @@ end
 ######################################################################################
 function bdplot_animation_controls(fig, primary_layout)
     control_layout = primary_layout[2,:] = GridLayout(tellheight = true, tellwidth = false)
-
     height = 30
-    resetbutton = Button(fig;
+    resetbutton = Button(control_layout[1,1];
         label = "reset", buttoncolor = RGBf(0.8, 0.8, 0.8),
         height, width = 70
     )
-    runbutton = Button(fig; label = "run",
+    runbutton = Button(control_layout[1,2]; label = "run",
         buttoncolor = RGBf(0.8, 0.8, 0.8), height, width = 70
     )
-    stepslider = labelslider!(fig, "steps", 1:100; startvalue=1, height)
-    # put them in the layout
-    control_layout[:,1] = resetbutton
-    control_layout[:,2] = runbutton
-    control_layout[:,3] = stepslider.layout
-    isrunning = Observable(false)
+    slidergrid = SliderGrid(control_layout[1,3],
+        (label = "steps", range = 1:100, startvalue = 1, height)
+    )
+     isrunning = Observable(false)
     rowsize!(primary_layout, 2, height)
-    return isrunning, resetbutton.clicks, runbutton.clicks, stepslider.slider.value
+    return isrunning, resetbutton.clicks, runbutton.clicks, slidergrid.sliders[1].value
 end
 
 function bdplot_control_actions!(
@@ -175,7 +172,7 @@ function bdplot_control_actions!(
     ax = content(fig[1,1][1,1])
     MakieLayout.deactivate_interaction!(ax, :rectanglezoom)
     sline = select_line(ax.scene; color = JULIADYNAMICS_COLORS[1])
-    dx = 0.001 # TODO: keyword
+    dx = 0.001 # TODO: make this a keyword
     ω0 = DynamicalBilliards.ismagnetic(ps0[][1]) ? ps0[][1].ω : nothing
     N = length(ps0[])
     on(sline) do val

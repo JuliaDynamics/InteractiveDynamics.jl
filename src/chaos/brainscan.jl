@@ -14,9 +14,8 @@ The slider automatically gets all possible values the `j`-th variable can obtain
 If given multiple datasets, the keyword `colors` attributes a color to each one, e.g.
 `colors = [JULIADYNAMICS_COLORS[mod1(i, 6)] for i in 1:length(As)]`.
 
-The keywords `linekw, scatterkw` are named tuples or dictionaries that are propagated to
-as keyword arguments to the line
-and scatter plot respectively, while the keyword `direction = -1` is propagated
+The keywords `linekw, scatterkw` are named tuples that are propagated as keyword arguments
+to the line and scatter plot respectively, while the keyword `direction = -1` is propagated
 to the function `DyamicalSystems.poincaresos`.
 """
 function brainscan_poincaresos(A::DynamicalSystems.AbstractDataset, j::Int; kwargs...)
@@ -32,7 +31,6 @@ function brainscan_poincaresos(
     for A in As; @assert size(A, 2) == 3; end
     @assert j ∈ 1:3
     mi, ma = total_minmaxima(As)
-    ms = 25maximum(abs(ma[i] - mi[i]) for i in 1:3)
 
     otheridxs = DynamicalSystems.SVector(setdiff(1:3, j)...)
 
@@ -40,16 +38,23 @@ function brainscan_poincaresos(
     display(figure)
     ax = figure[1, 1] = Axis3(figure)
     axp = figure[1, 2] = Axis(figure)
-    sll = labelslider!(
-        figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
-        sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
+    # old
+    # sll = labelslider!(
+    #     figure, "$(('x':'z')[j]) =", range(mi[j], ma[j]; length = 100);
+    #     sliderkw = Dict(:startvalue => (ma[j]+mi[j])/2)
+    # )
+    # figure[2, :] = sll.layout
+    # y = sll.slider.value
+    # new
+    sg = SliderGrid(figure[2,:],
+        (label = "$(('x':'z')[j]) =", range =  range(mi[j], ma[j]; length = 1001),
+        startvalue = (ma[j]+mi[j])/2)
     )
-    figure[2, :] = sll.layout
-    y = sll.slider.value
+    y = sg.sliders[1].value
 
     for i in 1:length(As)
         A = As[i]
-        # plot 3D trajectory
+        # plot 3D trajectories
         lines!(ax, A.data; color = colors[i], transparency = false, linekw...)
 
         # Poincare sos
@@ -58,9 +63,8 @@ function brainscan_poincaresos(
         end
         psos2d = lift(p -> p[:, otheridxs].data, psos)
         psos3d = lift(p -> p.data, psos)
-
         Makie.scatter!(axp, psos2d; color = colors[i], scatterkw...)
-        Makie.scatter!(ax, psos3d; color = colors[i], markersize = ms, scatterkw...)
+        Makie.scatter!(ax, psos3d; color = colors[i], markersize = 5, scatterkw...)
     end
 
     xlims!(axp, mi[otheridxs[1]], ma[otheridxs[1]])

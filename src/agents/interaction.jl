@@ -17,7 +17,7 @@ function add_interaction!(fig, ax, abmplot)
     return stepclick
 end
 
-"Initialize model control buttons."
+"Initialize standard model control buttons."
 function add_controls!(fig, abmobs, spu)
 
     model, agent_step!, model_step!, adata, mdata, adf, mdf, when =
@@ -29,30 +29,25 @@ function add_controls!(fig, abmobs, spu)
     # Create new layout for control buttons
     controllayout = fig[end+1,:][1,1] = GridLayout(tellheight = true)
 
-    # Add steps-per-update slider
-    spu_slider = labelslider!(fig, "spu =", spu[]; tellwidth = true)
-    controllayout[1, :] = spu_slider.layout
-    speed = spu_slider.slider.value
-
-    # Add sleep slider
+    # Sliders
     if model[].space isa Agents.ContinuousSpace
-        _s, _v = 0:0.01:1, 0
+        _sleepr, _sleep0 = 0:0.01:1, 0
     else
-        _s, _v = 0:0.01:2, 1
+        _sleepr, _sleep0 = 0:0.01:2, 1
     end
-    sleep_slider = labelslider!(fig, "sleep =", _s, sliderkw = Dict(:startvalue => _v))
-    controllayout[2, :] = sleep_slider.layout
-    slep = sleep_slider.slider.value
+    sg = SliderGrid(controllayout[1,1], (label = "spu", range = spu[]),
+        (label = "sleep", range = _sleepr, startvalue = _sleep0),
+    )
+    speed, slep = [s.value for s in sg.sliders]
 
     # Step button
-    step = Button(fig, label = "step")
+    step = Button(fig, label = "step\nmodel")
     on(step.clicks) do c
         Agents.step!(abmobs, speed[])
         collect_data!(model[], when[], adata, mdata, adf, mdf, abmobs.s[])
     end
-
     # Run button
-    run = Button(fig, label = "run")
+    run = Button(fig, label = "run\nmodel")
     isrunning = Observable(false)
     on(run.clicks) do c; isrunning[] = !isrunning[]; end
     on(run.clicks) do c
@@ -62,7 +57,6 @@ function add_controls!(fig, abmobs, spu)
             isopen(fig.scene) || break # crucial, ensures computations stop if closed window.
         end
     end
-
     # Reset button
     reset = Button(fig, label = "reset\nmodel")
     model0 = deepcopy(model[]) # backup initial model state
@@ -71,7 +65,6 @@ function add_controls!(fig, abmobs, spu)
         s = 0 # reset step counter
         Agents.step!(model[], agent_step!, model_step!, s)
     end
-
     # Clear button
     clear = Button(fig, label = "clear\ndata")
     on(clear.clicks) do c
@@ -79,10 +72,8 @@ function add_controls!(fig, abmobs, spu)
         init_dataframes!(model[], adata, mdata, adf, mdf)
         collect_data!(model[], when, adata, mdata, adf, mdf, abmobs.s[])
     end
-
     # Layout buttons
-    controllayout[3, :][:, 1] = MakieLayout.hbox!(step, run; tellwidth = false)
-    controllayout[3, :][:, 2] = MakieLayout.hbox!(reset, clear; tellwidth = false)
+    controllayout[2, :] = MakieLayout.hbox!(step, run, reset, clear; tellwidth = false)
 
     return step.clicks, reset.clicks
 end
@@ -92,11 +83,9 @@ function init_dataframes!(model, adata, mdata, adf, mdf)
     if !isnothing(adata)
         adf.val = Agents.init_agent_dataframe(model, adata)
     end
-
     if !isnothing(mdata)
         mdf.val = Agents.init_model_dataframe(model, mdata)
     end
-
     return nothing
 end
 

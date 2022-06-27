@@ -189,8 +189,8 @@ function interactive_evolution(
     # Live parameter changing
     if !isnothing(ps)
         slidervals, paramvals = _add_ds_param_controls!(paramlayout, ps, copy(ds.p), pnames)
-        update = Button(fig, label = "update", tellwidth = false)
-        paramlayout[length(ps)+1, :] = update
+        update = Button(fig, label = "update", tellwidth = false, tellheight = true)
+        paramlayout[2, 1] = update
         on(update.clicks) do clicks
             _update_ds_parameters!(ds, slidervals, paramvals)
         end
@@ -210,10 +210,9 @@ function _init_statespace_plot!(
     )
     obs, finalpoints = init_trajectory_observables(pinteg, tail, idxs, transform)
     is3D = length(idxs) == 3
-    mm = maximum(abs(x[2] - x[1]) for x in lims)
-    ms = m*(is3D ? 4000 : 15)
-    statespaceax = is3D ? Axis3(layout[1,1]; xlabel = "x1", ylabel = "x2", axis...) :
-        Axis(layout[1,1]; xlabel = "x1", ylabel = "x2", zlabel = "x3", axis...)
+    markersize = 15
+    statespaceax = !is3D ? Axis(layout[1,1]; xlabel = "x1", ylabel = "x2", axis...) :
+        Axis3(layout[1,1]; xlabel = "x1", ylabel = "x2", zlabel = "x3", axis...)
 
     # Initialize trajectories plotted element
     for (i, ob) in enumerate(obs)
@@ -228,7 +227,7 @@ function _init_statespace_plot!(
             )
         else
             Makie.scatter!(statespaceax, ob; color = colors[i],
-                markersize = 2ms/3, strokewidth = 0.0, pk...
+                markersize = markersize/2, strokewidth = 0.0, pk...
             )
         end
     end
@@ -237,7 +236,8 @@ function _init_statespace_plot!(
     else
         (marker = :diamond, )
     end
-    Makie.scatter!(statespaceax, finalpoints; color = colors, markersize = ms, finalargs...)
+    Makie.scatter!(statespaceax, finalpoints;
+        color = colors, markersize = markersize, finalargs...)
     !isnothing(lims) && (statespaceax.limits = lims)
     is3D && (statespaceax.protrusions = 50) # removes overlap of labels
 
@@ -260,10 +260,10 @@ function _trajectory_plot_controls!(layout)
     run = Button(controllayout[1, 1]; label = "run")
     step = Button(controllayout[1, 2]; label = "step")
     slider_vals = vcat(1:10, 100:100:1000)
-    slesl = labelslider!(layout.parent.parent, "steps =", slider_vals;
-    sliderkw = Dict(:startvalue => 1), valuekw = Dict(:width => 100))
-    controllayout[1, 3] = slesl.layout
-    return run.clicks, step.clicks, slesl.slider.value
+    sg = SliderGrid(controllayout[1,3],
+        (label = "steps =", range = slider_vals, startvalue = 1),
+    )
+    return run.clicks, step.clicks, sg.sliders[1].value
 end
 
 
@@ -335,16 +335,25 @@ end
 
 
 function _add_ds_param_controls!(paramlayout, ps, p0, pnames)
-    fig = paramlayout.parent.parent
-    slidervals = Dict{keytype(ps), Observable}()
-    paramvals = Dict{keytype(ps), Observable}()
+    # fig = paramlayout.parent.parent
+    slidervals = Dict{keytype(ps), Observable}() # directly has the slider observables
+    paramvals = Dict{keytype(ps), Observable}()  # will only get updated on button
+    tuples_for_slidergrid = []
     for (i, (l, vals)) in enumerate(ps)
         startvalue = p0[l]
         label = string(pnames[l])
-        sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
-        slidervals[l] = sll.slider.value # directly add the observable
-        paramvals[l] = Observable(sll.slider.value[]) # will only get updated on button
-        paramlayout[i, :] = sll.layout
+        # old code:
+        # sll = labelslider!(fig, label, vals; sliderkw = Dict(:startvalue => startvalue))
+        # slidervals[l] = sll.slider.value # directly add the observable
+        # paramvals[l] = Observable(sll.slider.value[]) # will only get updated on button
+        # paramlayout[i, :] = sll.layout
+        # new code:
+        push!(tuples_for_slidergrid, (;label, range = vals, startvalue))
+    end
+    sg = SliderGrid(paramlayout[1,1], tuples_for_slidergrid...; tellheight = true)
+    for (i, (l, vals)) in enumerate(ps)
+        slidervals[l] = sg.sliders[i].value
+        paramvals[l] = Observable(sg.sliders[i].value[])
     end
     return slidervals, paramvals
 end

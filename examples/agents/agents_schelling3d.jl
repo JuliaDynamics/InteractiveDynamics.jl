@@ -1,4 +1,5 @@
 using Agents
+using InteractiveDynamics, GLMakie
 
 mutable struct SchellingAgent <: AbstractAgent
     id::Int             # The identifier number of the agent
@@ -39,9 +40,7 @@ function agent_step!(agent, model)
     return
 end
 
-using InteractiveDynamics, GLMakie
-
 model = initialize()
 ac(agent) = (:red, :blue)[agent.group]
-fig, ax, abmobs = abmplot(model; ac, as = 0.5, agent_step!)
+fig, ax, abmobs = abmplot(model; ac, as = 0.5, agent_step!, enable_inspection = false)
 fig

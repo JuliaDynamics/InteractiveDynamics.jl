@@ -146,8 +146,8 @@ end
 randomcolor(args...) = RGBAf(0.9 .* (rand(), rand(), rand())..., 0.75)
 
 function colors_from_map(cmap, N, α = 1)
-    N == 1 && return [Makie.to_colormap(cmap, 2)[1]]
-    return [RGBAf(c.r, c.g, c.b, α) for c in Makie.to_colormap(cmap, N)]
+    N == 1 && return [Makie.categorical_colors(cmap, 2)[1]]
+    return [RGBAf(c.r, c.g, c.b, α) for c in Makie.categorical_colors(cmap, N)]
 end
 
 function pushupdate!(o::Observable, v)
