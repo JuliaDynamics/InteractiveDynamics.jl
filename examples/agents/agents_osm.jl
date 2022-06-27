@@ -27,7 +27,6 @@ fig, abmobs = abmexploration(zombie_model;
     adata = [(:infected, count)], mdata = [zombie_share, :dt],
     alabels = ["Number of\nZombies"], mlabels = ["Zombification %", "distance per step"],
     axiskwargs,
-    enable_inspection = false,
 )
 
 fig

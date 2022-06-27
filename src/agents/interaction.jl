@@ -83,11 +83,9 @@ function init_dataframes!(model, adata, mdata, adf, mdf)
     if !isnothing(adata)
         adf.val = Agents.init_agent_dataframe(model, adata)
     end
-
     if !isnothing(mdata)
         mdf.val = Agents.init_model_dataframe(model, mdata)
     end
-
     return nothing
 end
 
