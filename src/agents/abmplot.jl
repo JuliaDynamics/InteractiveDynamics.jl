@@ -196,6 +196,7 @@ end
 
 const SUPPORTED_SPACES = Union{
     Agents.GridSpace,
+    Agents.GridSpaceSingle,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
 }
