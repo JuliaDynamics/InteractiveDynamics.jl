@@ -57,15 +57,7 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 * `add_colorbar = true` : Whether or not a Colorbar should be added to the right side of the
   heatmap if `heatarray` is not nothing.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
-  but before the agents. Notice that you can still make objects of this plot be visible
-  above the agents using a translation in the third dimension like below:
-  ```julia
-  function static_preplot!(ax, model)
-      obj = scatter!(ax, [50 50]; color = :red) # Show position of teacher
-      hidedecorations!(ax) # hide tick labels etc.
-      translate!(obj, 0, 0, 5) # be sure that the teacher will be above students
-  end
-  ```
+  but before the agents.
 * `osmkwargs = NamedTuple()` : keywords directly passed to
   `osmplot!` from OSMMakie.jl if model space is `OpenStreetMapSpace`.
 
@@ -196,6 +188,7 @@ end
 
 const SUPPORTED_SPACES = Union{
     Agents.GridSpace,
+    Agents.GridSpaceSingle,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
 }
@@ -277,7 +270,7 @@ function set_axis_limits!(ax, model)
     elseif model.space isa Agents.ContinuousSpace
         e = model.space.extent
         o = zero.(e)
-    elseif model.space isa Agents.DiscreteSpace
+    elseif model.space isa Agents.AbstractGridSpace
         e = size(model.space) .+ 0.5
         o = zero.(e) .+ 0.5
     end

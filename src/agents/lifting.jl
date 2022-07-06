@@ -38,7 +38,7 @@ function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids
 end
 
 agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
-agents_space_dimensionality(::Agents.GridSpace{D}) where {D} = D
+agents_space_dimensionality(::Agents.AbstractGridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 
@@ -80,7 +80,7 @@ function abmplot_markersizes(model, as, ids)
     markersizes = begin
         if as isa Function
             [as(model[i]) for i in ids]
-        else 
+        else
             as
         end
     end
