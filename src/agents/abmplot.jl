@@ -278,7 +278,7 @@ function set_axis_limits!(ax, model)
     elseif model.space isa Agents.ContinuousSpace
         e = model.space.extent
         o = zero.(e)
-    elseif model.space isa Agents.DiscreteSpace
+    elseif model.space isa Agents.AbstractGridSpace
         e = size(model.space) .+ 0.5
         o = zero.(e) .+ 0.5
     end
