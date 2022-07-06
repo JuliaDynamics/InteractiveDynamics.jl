@@ -32,7 +32,6 @@ model, daisy_step!, daisyworld_step! = daisyworld(; solar_luminosity = 1.0, sola
 model
 
 # Now, to plot daisyworld is as simple as
-
 daisycolor(a::Daisy) = a.breed # color of agents
 as = 14 # size of agents
 am = '♠' # marker of agents
@@ -126,11 +125,11 @@ abmvideo(
 
 # It is possible to inspect agents at a given position by hovering the mouse cursor over
 # the scatter points in the agent plot. Inspection is automatically enabled for interactive
-# applications (i.e. when either agent or model stepping functions are provided). To 
-# manually enable this functionality, simply add `enable_inspection = true` as an 
+# applications (i.e. when either agent or model stepping functions are provided). To
+# manually enable this functionality, simply add `enable_inspection = true` as an
 # additional keyword argument to the `abmplot`/`abmplot!` call.
-# A tooltip will appear which by default provides the name of the agent type, its `id`, 
-# `pos`, and all other fieldnames together with their current values. This is especially 
+# A tooltip will appear which by default provides the name of the agent type, its `id`,
+# `pos`, and all other fieldnames together with their current values. This is especially
 # useful for interactive exploration of micro data on the agent level.
 
 # ![RabbitFoxHawk inspection example](https://github.com/JuliaDynamics/JuliaDynamics/tree/master/videos/agents/RabbitFoxHawk_inspection.png)
@@ -189,7 +188,7 @@ scatterlines!(ax_counts, whites; color = :white, label = "white")
 Legend(count_layout[1,2], ax_counts; bgcolor = :lightgrey)
 
 ## and another plot, written in a more condensed format
-ax_hist = Axis(plot_layout[2,1]; 
+ax_hist = Axis(plot_layout[2,1];
     ylabel = "Distribution of mean temperatures\nacross all time steps")
 hist!(ax_hist, @lift($(p.mdf).temperature);
     bins = 50, color = :red,

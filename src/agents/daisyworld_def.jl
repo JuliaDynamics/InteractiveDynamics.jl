@@ -4,15 +4,13 @@ import StatsBase
 using Random
 
 
-mutable struct Daisy <: AbstractAgent
-    id::Int
-    pos::Dims{2}
+@agent Daisy GridAgent{2} begin
     breed::Symbol
     age::Int
     albedo::Float64 # 0-1 fraction
 end
 
-DaisyWorld = ABM{<:GridSpace, Daisy};
+DaisyWorld = ABM{<:GridSpaceSingle, Daisy};
 
 function update_surface_temperature!(pos, model::DaisyWorld)
     ids = ids_in_position(pos, model)
@@ -108,7 +106,7 @@ function daisyworld(;
 )
 
     rng = MersenneTwister(seed)
-    space = GridSpace(griddims)
+    space = GridSpaceSingle(griddims)
     properties = (;max_age, surface_albedo, solar_luminosity, solar_change, scenario,)
     properties = Dict(pairs(properties))
     properties[:tick] = 0
