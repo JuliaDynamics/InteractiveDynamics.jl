@@ -107,6 +107,7 @@ end
 function add_param_sliders!(fig, model, params, resetclick)
     datalayout = fig[end,:][1,2] = GridLayout(tellheight = true)
 
+    # TODO: This needs to become `SliderGrid`.
     slidervals = Dict{Symbol, Observable}()
     for (i, (k, vals)) in enumerate(params)
         startvalue = has_key(model[].properties, k) ?

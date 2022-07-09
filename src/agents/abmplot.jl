@@ -20,7 +20,7 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
   each agent will be plotted as. They can each be either a constant or a *function*,
   which takes as an input a single agent and outputs the corresponding value.
 
-  Using constants: `ac = "#338c54", as = 10, am = :diamond`
+  Using constants: `ac = "#338c54", as = 15, am = :diamond`
 
   Using functions:
   ```julia
@@ -156,7 +156,7 @@ This is the internal recipe for creating an `_ABMPlot`.
 
         # Agent
         ac = JULIADYNAMICS_COLORS[1],
-        as = 10,
+        as = 15,
         am = :circle,
         offset = nothing,
         scatterkwargs = NamedTuple(),
