@@ -119,11 +119,16 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
 * `showstep = true`: If current step should be shown in title.
 * `figure = NamedTuple()`: Figure related keywords (e.g. resolution, backgroundcolor).
 * `axis = NamedTuple()`: Axis related keywords (e.g. aspect).
+* `recordkwargs = NamedTuple()`: Keyword arguments given to `Makie.record`.
+  You can use `(compression = 1, profile = "high")` for a higher quality output,
+  and prefer the `CairoMakie` backend.
+  (compression 0 results in videos that are not playable by some software)
 * `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
 function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
-        figure = (resolution = (600, 600),), axis = NamedTuple(), kwargs...
+        figure = (resolution = (600, 600),), axis = NamedTuple(),
+        recordkwargs = (compression = 20,), kwargs...
     )
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -141,7 +146,7 @@ function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
 
     resize_to_layout!(fig)
 
-    record(fig, file; framerate) do io
+    record(fig, file; framerate, recordkwargs...) do io
         for j in 1:frames-1
             recordframe!(io)
             Agents.step!(abmobs, spf)
