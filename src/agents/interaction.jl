@@ -107,18 +107,21 @@ end
 function add_param_sliders!(fig, model, params, resetclick)
     datalayout = fig[end,:][1,2] = GridLayout(tellheight = true)
 
-    # TODO: This needs to become `SliderGrid`.
     slidervals = Dict{Symbol, Observable}()
+    tuples_for_slidergrid = []
     for (i, (k, vals)) in enumerate(params)
         startvalue = has_key(model[].properties, k) ?
             get_value(model[].properties, k) : vals[1]
-        sll = labelslider!(fig, string(k), vals; sliderkw = Dict(:startvalue => startvalue))
-        slidervals[k] = sll.slider.value # directly add the observable
-        datalayout[i, :] = sll.layout
+        label = string(k)
+        push!(tuples_for_slidergrid, (;label, range = vals, startvalue))
+    end
+    sg = SliderGrid(datalayout[1,1], tuples_for_slidergrid...; tellheight = true)
+    for (i, (l, vals)) in enumerate(params)
+        slidervals[l] = sg.sliders[i].value
     end
 
     # Update button
-    update = Button(fig, label = "update")
+    update = Button(datalayout[end+1, :], label = "update", tellwidth = false)
     on(update.clicks) do c
         for (k, v) in pairs(slidervals)
             if has_key(model[].properties, k)
@@ -128,7 +131,6 @@ function add_param_sliders!(fig, model, params, resetclick)
             end
         end
     end
-    datalayout[end+1, :] = MakieLayout.hbox!(update; tellwidth = false)
     # Ensure resetted model has new parameters
     on(resetclick) do c
         update.clicks[] = update.clicks[] + 1

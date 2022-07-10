@@ -35,8 +35,8 @@ model
 
 # Now, to plot daisyworld is as simple as
 daisycolor(a::Daisy) = a.breed # color of agents
-as = 14 # size of agents
-am = '♠' # marker of agents
+as = 20 # size of agents
+am = '✿' # marker of agents
 scatterkwargs = (strokewidth = 1.0,) # add stroke around each agent
 fig, ax, abmobs = abmplot(model; ac = daisycolor, as, am, scatterkwargs)
 fig
