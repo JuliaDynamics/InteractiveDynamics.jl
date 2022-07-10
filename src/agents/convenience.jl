@@ -122,8 +122,9 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
 * `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
 function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
-            spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
-            figure = NamedTuple(), axis = NamedTuple(), kwargs...)
+        spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
+        figure = (resolution = (600, 600),), axis = NamedTuple(), kwargs...
+    )
     # add some title stuff
     s = Observable(0) # counter of current step
     if title ≠ "" && showstep
@@ -135,16 +136,15 @@ function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
     end
     axis = (title = t, titlealign = :left, axis...)
 
-    fig = Figure(; resolution = (600,600), backgroundcolor = DEFAULT_BG, figure...)
-    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
-        Axis3(fig; axis...) : Axis(fig; axis...)
-    p = abmplot!(ax, model; kwargs...)
+    fig, ax, abmobs = abmplot(model;
+    add_controls = false, agent_step!, model_step!, figure, axis, kwargs...)
+
+    resize_to_layout!(fig)
 
     record(fig, file; framerate) do io
         for j in 1:frames-1
             recordframe!(io)
-            Agents.step!(model, agent_step!, model_step!, spf)
-            p.model[] = model
+            Agents.step!(abmobs, spf)
             s[] += spf; s[] = s[]
         end
         recordframe!(io)

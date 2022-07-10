@@ -59,16 +59,16 @@ function daisyworld_step!(model)
         diffuse_temperature!(p, model)
         propagate!(p, model)
     end
-    model.tick[] = model.tick[] + 1
+    model.tick = model.tick + 1
     solar_activity!(model)
 end
 
 function solar_activity!(model::DaisyWorld)
     if model.scenario == :ramp
-        if model.tick[] > 200 && model.tick[] ≤ 400
+        if model.tick > 200 && model.tick ≤ 400
             model.solar_luminosity += model.solar_change
         end
-        if model.tick[] > 500 && model.tick[] ≤ 750
+        if model.tick > 500 && model.tick ≤ 750
             model.solar_luminosity -= model.solar_change / 2
         end
     elseif model.scenario == :change
@@ -95,8 +95,9 @@ function daisyworld(;
     rng = MersenneTwister(seed)
     space = GridSpaceSingle(griddims)
     properties = (;max_age, surface_albedo, solar_luminosity, solar_change, scenario,
-        tick = Ref(0), ratio = 0.5, temperature = zeros(griddims)
+        tick = 0, ratio = 0.5, temperature = zeros(griddims)
     )
+    properties = Dict(k=>v for (k,v) in pairs(properties))
 
     model = ABM(Daisy, space; properties, rng)
 
@@ -120,5 +121,5 @@ function daisyworld(;
         update_surface_temperature!(p, model)
     end
 
-    return model
+    return model, daisy_step!, daisyworld_step!
 end

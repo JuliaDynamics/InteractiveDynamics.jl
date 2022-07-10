@@ -7,13 +7,13 @@
 
 # This page describes functions that can be used in conjunction with
 # [Agents.jl](https://juliadynamics.github.io/Agents.jl/dev/) to animate and interact
-#  with agent based models.
+# with agent based models.
 
 # The animation at the start of the page is created using the code of this page, see below.
 
 # The docs are built using versions:
 using Pkg
-Pkg.status(["Agents", "InteractiveDynamics"];
+Pkg.status(["Agents", "InteractiveDynamics", "CairoMakie"];
     mode = PKGMODE_MANIFEST, io=stdout
 )
 
@@ -28,13 +28,15 @@ using InteractiveDynamics, Agents
 using CairoMakie
 daisypath = joinpath(dirname(pathof(InteractiveDynamics)), "agents", "daisyworld_def.jl")
 include(daisypath)
-model, daisy_step!, daisyworld_step! = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+model, daisy_step!, daisyworld_step! = daisyworld(;
+    solar_luminosity = 1.0, solar_change = 0.0, scenario = :change
+)
 model
 
 # Now, to plot daisyworld is as simple as
 daisycolor(a::Daisy) = a.breed # color of agents
-as = 14 # size of agents
-am = '♠' # marker of agents
+as = 20 # size of agents
+am = '✿' # marker of agents
 scatterkwargs = (strokewidth = 1.0,) # add stroke around each agent
 fig, ax, abmobs = abmplot(model; ac = daisycolor, as, am, scatterkwargs)
 fig
@@ -64,7 +66,8 @@ fig
 # Note that [`GLMakie`](https://makie.juliaplots.org/v0.15/documentation/backends_and_output/)
 # should be used instead of `CairoMakie` when wanting to use the interactive
 # aspects of the plots.
-fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
+fig, ax, abmobs = abmplot(model;
+    agent_step! = daisy_step!, model_step! = daisyworld_step!,
     plotkwargs...)
 fig
 
@@ -74,7 +77,8 @@ params = Dict(
     :surface_albedo => 0:0.01:1,
     :solar_change => -0.1:0.01:0.1,
 )
-fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
+fig, ax, abmobs = abmplot(model;
+    agent_step! = daisy_step!, model_step! = daisyworld_step!,
     params, plotkwargs...)
 fig
 
