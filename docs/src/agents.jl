@@ -7,13 +7,13 @@
 
 # This page describes functions that can be used in conjunction with
 # [Agents.jl](https://juliadynamics.github.io/Agents.jl/dev/) to animate and interact
-#  with agent based models.
+# with agent based models.
 
 # The animation at the start of the page is created using the code of this page, see below.
 
 # The docs are built using versions:
 using Pkg
-Pkg.status(["Agents", "InteractiveDynamics"];
+Pkg.status(["Agents", "InteractiveDynamics", "CairoMakie"];
     mode = PKGMODE_MANIFEST, io=stdout
 )
 
@@ -66,7 +66,8 @@ fig
 # Note that [`GLMakie`](https://makie.juliaplots.org/v0.15/documentation/backends_and_output/)
 # should be used instead of `CairoMakie` when wanting to use the interactive
 # aspects of the plots.
-fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
+fig, ax, abmobs = abmplot(model;
+    agent_step! = daisy_step!, model_step! = daisyworld_step!,
     plotkwargs...)
 fig
 
@@ -76,7 +77,8 @@ params = Dict(
     :surface_albedo => 0:0.01:1,
     :solar_change => -0.1:0.01:0.1,
 )
-fig, ax, abmobs = abmplot(model; agent_step! = daisy_step!, model_step! = daisyworld_step!,
+fig, ax, abmobs = abmplot(model;
+    agent_step! = daisy_step!, model_step! = daisyworld_step!,
     params, plotkwargs...)
 fig
 
