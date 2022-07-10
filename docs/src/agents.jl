@@ -84,12 +84,13 @@ fig
 
 # One can furthermore collect data while the model evolves and visualize them using the
 # convenience function [`abmexploration`](@ref)
+using Statistics: mean
 black(a) = a.breed == :black
 white(a) = a.breed == :white
 adata = [(black, count), (white, count)]
 temperature(model) = mean(model.temperature)
 mdata = [temperature, :solar_luminosity]
-fig, p = abmexploration(model;
+fig, abmobs = abmexploration(model;
     agent_step! = daisy_step!, model_step! = daisyworld_step!, params, plotkwargs...,
     adata, alabels = ["Black daisys", "White daisys"], mdata, mlabels = ["T", "L"]
 )
@@ -158,7 +159,7 @@ abmvideo(
 
 # create a basic abmplot with controls and sliders
 model, = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
-fig, ax, p = abmplot(model;
+fig, ax, abmobs = abmplot(model;
     agent_step! = daisy_step!, model_step! = daisyworld_step!, params, plotkwargs...,
     adata, mdata, figure = (; resolution = (1600,800))
 )
@@ -166,7 +167,7 @@ fig
 
 #
 
-p
+abmobs
 
 #
 
