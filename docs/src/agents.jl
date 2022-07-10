@@ -28,7 +28,9 @@ using InteractiveDynamics, Agents
 using CairoMakie
 daisypath = joinpath(dirname(pathof(InteractiveDynamics)), "agents", "daisyworld_def.jl")
 include(daisypath)
-model, daisy_step!, daisyworld_step! = daisyworld(; solar_luminosity = 1.0, solar_change = 0.0, scenario = :change)
+model, daisy_step!, daisyworld_step! = daisyworld(;
+    solar_luminosity = 1.0, solar_change = 0.0, scenario = :change
+)
 model
 
 # Now, to plot daisyworld is as simple as

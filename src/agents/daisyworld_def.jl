@@ -120,5 +120,5 @@ function daisyworld(;
         update_surface_temperature!(p, model)
     end
 
-    return model
+    return model, daisy_step!, daisyworld_step!
 end
