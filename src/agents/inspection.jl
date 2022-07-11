@@ -124,8 +124,7 @@ Custom tooltips for agents can be implemented by adding a specialised method
 for `agent2string`.
 Example:
 ```julia
-import InteractiveDynamics.agent2string
-function agent2string(agent::SpecialAgent)
+function InteractiveDynamics.agent2string(agent::SpecialAgent)
     \"\"\"
     ✨ SpecialAgent ✨
     ID = \$(agent.id)
@@ -141,8 +140,8 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
     agentstring *= "id: $(getproperty(agent, :id))\n"
 
     agent_pos = getproperty(agent, :pos)
-    if agent_pos isa Tuple && agent_pos isa NTuple{length(agent_pos), AbstractFloat}
-        agent_pos = round.(agent_pos, digits=2)
+    if agent_pos isa NTuple{<:Any, <:AbstractFloat}
+        agent_pos = round.(agent_pos, sigdigits=2)
     end
     agentstring *= "pos: $(agent_pos)\n"
 
@@ -150,11 +149,11 @@ function agent2string(agent::A) where {A<:Agents.AbstractAgent}
         val = getproperty(agent, field)
         V = typeof(val)
         if V <: AbstractFloat
-            val = round(val, digits=2)
+            val = round(val, sigdigits=2)
         elseif V <: AbstractArray{<:AbstractFloat}
-            val = round.(val, digits=2)
-        elseif V <: Tuple && V <: NTuple{length(val), AbstractFloat}
-            val = round.(val, digits=2)
+            val = round.(val, sigdigits=2)
+        elseif V <: NTuple{<:Any, <:AbstractFloat}
+            val = round.(val, sigdigits=2)
         end
         agentstring *= "$(field): $val\n"
     end
