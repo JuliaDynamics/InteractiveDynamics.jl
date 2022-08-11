@@ -70,7 +70,7 @@ lorenzfp(ρ,β) = [
 
 fpobs = lift(lorenzfp, slidervals[2], slidervals[3])
 ax = content(figure[1,1][1,1])
-scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
+scatter!(ax, fpobs; markersize = 20, marker = :diamond, color = :black)
 ```
 
 Notice that the last part of the code plots the fixed points of the system (something `interactive_evolution` does not do by itself), and the fixed points plots are automatically updated when a parameter is changed in the GUI, because it uses the observable `paramvals`.
