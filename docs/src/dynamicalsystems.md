@@ -58,7 +58,7 @@ u0s = [u1, u3]
 idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dt = 0.01, adaptive = false)
 
-figure, obs, step, paramvals = interactive_evolution(
+figure, obs, step, slidervals = interactive_evolution(
     ds, u0s; ps, idxs, tail = 1000, diffeq, pnames, lims
 )
 
