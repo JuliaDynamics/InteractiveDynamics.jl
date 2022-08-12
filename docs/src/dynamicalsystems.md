@@ -58,7 +58,7 @@ u0s = [u1, u3]
 idxs = (1, 2, 3)
 diffeq = (alg = Tsit5(), dt = 0.01, adaptive = false)
 
-figure, obs, step, paramvals = interactive_evolution(
+figure, obs, step, slidervals = interactive_evolution(
     ds, u0s; ps, idxs, tail = 1000, diffeq, pnames, lims
 )
 
@@ -70,7 +70,7 @@ lorenzfp(ρ,β) = [
 
 fpobs = lift(lorenzfp, slidervals[2], slidervals[3])
 ax = content(figure[1,1][1,1])
-scatter!(ax, fpobs; markersize = 5000, marker = :diamond, color = :black)
+scatter!(ax, fpobs; markersize = 20, marker = :diamond, color = :black)
 ```
 
 Notice that the last part of the code plots the fixed points of the system (something `interactive_evolution` does not do by itself), and the fixed points plots are automatically updated when a parameter is changed in the GUI, because it uses the observable `paramvals`.
