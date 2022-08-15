@@ -23,7 +23,8 @@ Pkg.status(["Agents", "InteractiveDynamics", "CairoMakie"];
 # straight-forward, and in principle one simply defines functions for how the
 # agents should be plotted. Here we will use a pre-defined model, the Daisyworld
 # as an example throughout this docpage.
-# To learn about this model you can visit the [full example](https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/daisyworld/),
+# To learn about this model you can visit the [example hosted at AgentsExampleZoo
+# ](https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/daisyworld/),
 using InteractiveDynamics, Agents
 using CairoMakie
 daisypath = joinpath(dirname(pathof(InteractiveDynamics)), "agents", "daisyworld_def.jl")
@@ -149,6 +150,8 @@ abmvideo(
 # always display aggregated collected data as scatterpoints connected with lines.
 # In cases where more granular control over the displayed plots is needed, we need to take
 # a few extra steps and utilize the [`ABMObservable`](@ref) returned by [`abmplot`](@ref).
+# The same steps are necessary when we want to create custom plots that compose
+# animations of the model space and other aspects.
 
 # ```@docs
 # ABMObservable
@@ -171,40 +174,40 @@ abmobs
 
 #
 
-## create a new layout to add new plots to to the right of the abmplot
+# create a new layout to add new plots to to the right of the abmplot
 plot_layout = fig[:,end+1] = GridLayout()
 
-## create a sublayout on its first row and column
+# create a sublayout on its first row and column
 count_layout = plot_layout[1,1] = GridLayout()
 
-## collect tuples with x and y values for black and white daisys
-blacks = @lift(Point2f.($(p.adf).step, $(p.adf).count_black))
-whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
+# collect tuples with x and y values for black and white daisys
+blacks = @lift(Point2f.($(abmobs.adf).step, $(abmobs.adf).count_black))
+whites = @lift(Point2f.($(abmobs.adf).step, $(abmobs.adf).count_white))
 
-## create an axis to plot into and style it to our liking
+# create an axis to plot into and style it to our liking
 ax_counts = Axis(count_layout[1,1];
     backgroundcolor = :lightgrey, ylabel = "Number of daisies by color")
 
-## plot the data as scatterlines and color them accordingly
+# plot the data as scatterlines and color them accordingly
 scatterlines!(ax_counts, blacks; color = :black, label = "black")
 scatterlines!(ax_counts, whites; color = :white, label = "white")
 
-## add a legend to the right side of the plot
+# add a legend to the right side of the plot
 Legend(count_layout[1,2], ax_counts; bgcolor = :lightgrey)
 
-## and another plot, written in a more condensed format
+# and another plot, written in a more condensed format
 ax_hist = Axis(plot_layout[2,1];
     ylabel = "Distribution of mean temperatures\nacross all time steps")
-hist!(ax_hist, @lift($(p.mdf).temperature);
+hist!(ax_hist, @lift($(abmobs.mdf).temperature);
     bins = 50, color = :red,
     strokewidth = 2, strokecolor = (:black, 0.5),
 )
 
 fig
 
-# Now, once we step the `p::ABMObservable`, the whole plot will be updated
-Agents.step!(p, 1)
-Agents.step!(p, 1)
+# Now, once we step the `abmobs::ABMObservable`, the whole plot will be updated
+Agents.step!(abmobs, 1)
+Agents.step!(abmobs, 1)
 fig
 
 # Of course, you need to actually adjust axis limits given that the plot is interactive
@@ -212,10 +215,12 @@ autolimits!(ax_counts)
 autolimits!(ax_hist)
 
 # Or, simply trigger them on any update to the model observable:
-on(p.model) do m
+on(abmobs.model) do m
     autolimits!(ax_counts)
     autolimits!(ax_hist)
 end
 
-for i in 1:100; step!(p, 1); end
+# and then marvel at everything being auto-updated by calling `step!` :)
+
+for i in 1:100; step!(abmobs, 1); end
 fig
