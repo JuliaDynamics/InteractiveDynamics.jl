@@ -39,17 +39,17 @@ function abmexploration(model;
     fig, ax, (p, abmplot_object) = abmplot(model;
         _add_interaction = false, figure = (resolution = (1600, 800),), kwargs...)
 
-    stepclick = add_interaction!(fig, ax, abmplot_object)
+    stepclick, resetclick = add_interaction!(fig, ax, abmplot_object)
 
     adata, mdata = p.adata, p.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick)
+    init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
     return fig, p
 end
 
-function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick)
+function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
     La = isnothing(adata) ? 0 : size(p.adf[])[2]-1
     Lm = isnothing(mdata) ? 0 : size(p.mdf[])[2]-1
     La + Lm == 0 && return nothing # failsafe; don't add plots if dataframes are empty
@@ -96,6 +96,11 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
         xlims!(axs[1], Makie.MakieLayout.xautolimits(axs[1]))
         for ax in axs
             ylims!(ax, Makie.MakieLayout.yautolimits(ax))
+        end
+    end
+    on(resetclick) do clicks
+        for ax in axs
+            vlines!(ax, [p.s.val], color = "#c41818")
         end
     end
     return nothing

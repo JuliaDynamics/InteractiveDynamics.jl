@@ -14,7 +14,7 @@ function add_interaction!(fig, ax, abmplot)
         add_param_sliders!(fig, abmplot.abmobs[].model, abmplot.params[], resetclick)
     end
 
-    return stepclick
+    return stepclick, resetclick
 end
 
 "Initialize standard model control buttons."
