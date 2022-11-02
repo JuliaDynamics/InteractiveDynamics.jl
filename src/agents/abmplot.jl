@@ -211,7 +211,9 @@ function Makie.plot!(abmplot::_ABMPlot)
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
     isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
-    set_axis_limits!(ax, model)
+    if !(model.space isa Agents.GraphSpace)
+        set_axis_limits!(ax, model)
+    end
     fig = ax.parent
 
     # OpenStreetMapSpace preplot
