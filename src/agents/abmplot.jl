@@ -205,8 +205,9 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.abmobs[].model,
-        abmplot.ac, abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
+    pos, color, marker, markersize, heatobs = 
+        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
+        abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
@@ -246,7 +247,11 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Dispatch on type of agent positions
     T = typeof(pos[])
-    if T<:Vector{Point2f} # 2d space
+    if T<:Nothing # GraphSpace
+        graphplot!(abmplot, model.space.graph;
+            node_color = color, node_marker = marker, node_size = markersize,
+            abmplot.graphplotkwargs...)
+    elseif T<:Vector{Point2f} # 2d space
         if typeof(marker[])<:Vector{<:Polygon{2}}
             poly_plot = poly!(abmplot, marker; color, abmplot.scatterkwargs...)
             poly_plot.inspectable[] = false # disable inspection for poly until fixed
