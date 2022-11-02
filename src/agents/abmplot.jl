@@ -191,6 +191,7 @@ const SUPPORTED_SPACES = Union{
     Agents.GridSpaceSingle,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
+    Agents.GraphSpace,
 }
 
 function Makie.plot!(abmplot::_ABMPlot)
