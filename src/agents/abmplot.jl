@@ -58,8 +58,11 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
   heatmap if `heatarray` is not nothing.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
-* `osmkwargs = NamedTuple()` : keywords directly passed to
-  `osmplot!` from OSMMakie.jl if model space is `OpenStreetMapSpace`.
+* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!` 
+  if model space is `OpenStreetMapSpace`.
+* `graphplotkwargs = NamedTuple()` : keywords directly passed to 
+  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot) 
+  if model space is `GraphSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
 `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
@@ -161,6 +164,7 @@ This is the internal recipe for creating an `_ABMPlot`.
         offset = nothing,
         scatterkwargs = NamedTuple(),
         osmkwargs = NamedTuple(),
+        graphplotkwargs = NamedTuple(),
 
         # Preplot
         heatarray = nothing,
