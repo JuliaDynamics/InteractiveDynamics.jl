@@ -3,17 +3,19 @@ In this file we define how agents are plotted and how the plots are updated whil
 =#
 
 function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
-    ids = @lift(Agents.allids($model))
+    ids = @lift(abmplot_ids($model))
     pos = @lift(abmplot_pos($model, $offset, $ids))
     color = @lift(abmplot_colors($model, $ac, $ids))
-    marker = @lift(abmplot_markers($model, $used_poly, $am, $pos, $ids))
+    marker = @lift(abmplot_marker($model, used_poly, $am, $pos, $ids))
     markersize = @lift(abmplot_markersizes($model, $as, $ids))
     heatobs = @lift(abmplot_heatobs($model, $heatarray))
 
     return pos, color, marker, markersize, heatobs
 end
 
-# Do we have to exclude OpenStreetMapSpace here for this dispatch to work?
+abmplot_ids(model::Agents.ABM{<:SUPPORTED_SPACES}) = Agents.allids(model)
+abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = model.space.stored_ids
+
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
     pos = begin
@@ -37,15 +39,22 @@ function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids
     return pos
 end
 
+abmplot_pos(model::Agents.ABM{<:Agents.GraphSpace}, offset, ids) = nothing
+
 agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
 agents_space_dimensionality(::Agents.AbstractGridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
+agents_space_dimensionality(::Agents.GraphSpace) = 2
 
 function abmplot_colors(model, ac, ids)
     colors = begin
         if ac isa Function
-            to_color.([ac(model[i]) for i in ids])
+            if model.space isa Agents.GraphSpace
+                to_color.([ac(model, i) for i in eachindex(ids)])
+            else
+                to_color.([ac(model[i]) for i in ids])
+            end
         else
             to_color(ac)
         end
@@ -53,37 +62,41 @@ function abmplot_colors(model, ac, ids)
     return colors
 end
 
-function abmplot_markers(model, used_poly, am, pos, ids)
-    markers = am isa Function ? [am(model[i]) for i in ids] : am
-    used_poly = user_used_polygons(am, markers)
-    if used_poly
+function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am, pos, ids)
+    marker = am isa Function ? [am(model[i]) for i in ids] : am
+    used_poly[] = user_used_polygons(am, marker)
+    if used_poly[]
         if am isa Function
-            markers = [translate(m, p) for (m, p) in zip(markers, pos)]
+            marker = [translate(m, p) for (m, p) in zip(marker, pos)]
         else # for polygons we always need vector, even if all agents are same polygon
-            markers = [translate(am, p) for p in pos]
+            marker = [translate(am, p) for p in pos]
         end
     end
-    return markers
+    return marker
 end
 
-function user_used_polygons(am, markers)
+function abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am, pos, ids)
+    marker = am isa Function ? [am(model, i) for i in eachindex(ids)] : am
+    return marker
+end
+
+function user_used_polygons(am, marker)
     if (am isa Polygon)
         return true
-    elseif (am isa Function) && (markers isa Vector{<:Polygon})
+    elseif (am isa Function) && (marker isa Vector{<:Polygon})
         return true
     else
         return false
     end
 end
 
-function abmplot_markersizes(model, as, ids)
-    markersizes = begin
-        if as isa Function
-            [as(model[i]) for i in ids]
-        else
-            as
-        end
-    end
+function abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as, ids)
+    markersizes = as isa Function ? [as(model[i]) for i in ids] : as
+    return markersizes
+end
+
+function abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids)
+    markersizes = as isa Function ? [as(model, i) for i in ids] : as
     return markersizes
 end
 
