@@ -37,7 +37,8 @@ function abmexploration(model;
         kwargs...
     )
     fig, ax, (abmobs, abmplot_object) = abmplot(model;
-        _add_interaction = false, figure = (resolution = (1600, 800),), kwargs...)
+        _add_interaction = false, add_controls = true, 
+        figure = (resolution = (1600, 800),), kwargs...)
 
     stepclick, resetclick = add_interaction!(fig, ax, abmplot_object)
 
