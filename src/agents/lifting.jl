@@ -14,7 +14,7 @@ function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
 end
 
 abmplot_ids(model::Agents.ABM{<:SUPPORTED_SPACES}) = Agents.allids(model)
-abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = model.space.stored_ids
+abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = eachindex(model.space.stored_ids)
 
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
@@ -51,7 +51,7 @@ function abmplot_colors(model, ac, ids)
     colors = begin
         if ac isa Function
             if model.space isa Agents.GraphSpace
-                to_color.([ac(model, i) for i in eachindex(ids)])
+                to_color.([ac(model, idx) for idx in ids])
             else
                 to_color.([ac(model[i]) for i in ids])
             end
@@ -76,7 +76,7 @@ function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am, po
 end
 
 function abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am, pos, ids)
-    marker = am isa Function ? [am(model, i) for i in eachindex(ids)] : am
+    marker = am isa Function ? [am(model, idx) for idx in ids] : am
     return marker
 end
 
@@ -96,7 +96,7 @@ function abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as, ids)
 end
 
 function abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids)
-    markersizes = as isa Function ? [as(model, i) for i in ids] : as
+    markersizes = as isa Function ? [as(model, idx) for idx in ids] : as
     return markersizes
 end
 
