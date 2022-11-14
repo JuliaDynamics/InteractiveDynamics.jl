@@ -250,9 +250,14 @@ function Makie.plot!(abmplot::_ABMPlot)
     if T<:Nothing # GraphSpace
         ax.xticksvisible = ax.yticksvisible = false
         ax.xticklabelsvisible = ax.yticklabelsvisible = false
+        ec = get(abmplot.graphplotkwargs, :edge_color, Observable(:black))
+        edge_color = @lift(abmplot_edge_color($(abmplot.abmobs[].model), $ec))
+        ew = get(abmplot.graphplotkwargs, :edge_width, Observable(1))
+        edge_width = @lift(abmplot_edge_width($(abmplot.abmobs[].model), $ew))
         graphplot!(abmplot, model.space.graph;
             node_color = color, node_marker = marker, node_size = markersize,
-            abmplot.graphplotkwargs...)
+            abmplot.graphplotkwargs..., # must come first to not overwrite the lifting below
+            edge_color, edge_width)
     elseif T<:Vector{Point2f} # 2d space
         if typeof(marker[])<:Vector{<:Polygon{2}}
             poly_plot = poly!(abmplot, marker; color, abmplot.scatterkwargs...)

@@ -119,3 +119,7 @@ function abmplot_heatobs(model, heatarray)
     end
     return heatobs
 end
+
+abmplot_edge_color(model, ec) = ec isa Function ? to_color.(ec(model)) : to_color(ec)
+
+abmplot_edge_width(model, ew) = ew isa Function ? ew(model) : ew
