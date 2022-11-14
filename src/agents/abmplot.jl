@@ -248,6 +248,8 @@ function Makie.plot!(abmplot::_ABMPlot)
     # Dispatch on type of agent positions
     T = typeof(pos[])
     if T<:Nothing # GraphSpace
+        ax.xticksvisible = ax.yticksvisible = false
+        ax.xticklabelsvisible = ax.yticklabelsvisible = false
         graphplot!(abmplot, model.space.graph;
             node_color = color, node_marker = marker, node_size = markersize,
             abmplot.graphplotkwargs...)
