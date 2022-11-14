@@ -80,8 +80,8 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
   1. "run": starts/stops the continuous evolution of the model.
   1. "reset model": resets the model to its initial state from right after starting the
      interactive application.
-  1. Two sliders control the animation speed: "spu" decides how many model steps should be done
-     before the plot is updated, and "sleep" the `sleep()` time between updates.
+  1. Two sliders control the animation speed: "spu" decides how many model steps should be 
+     done before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `enable_inspection = add_controls`: If `true`, enables agent inspection on mouse hover.
 * `spu = 1:50`: The values of the "spu" slider.
 * `params = Dict()` : This is a dictionary which decides which parameters of the model will
@@ -207,7 +207,7 @@ function Makie.plot!(abmplot::_ABMPlot)
     # the model), see lifting.jl for source code.
     pos, color, marker, markersize, heatobs = 
         lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
-        abmplot.offset, abmplot.heatarray, abmplot._used_poly)
+            abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
