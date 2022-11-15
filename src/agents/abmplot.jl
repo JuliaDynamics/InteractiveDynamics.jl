@@ -2,8 +2,8 @@ include("model_observable.jl")
 export abmplot, abmplot!
 
 """
-    abmplot(model::ABM; kwargs...) → fig, ax, abmobs
-    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmobs
+    abmplot(model::ABM; kwargs...) → fig, abmobs
+    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmobs, abmplot_object
 
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. The same function is used
@@ -100,13 +100,17 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
-function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
+function abmplot(model::Agents.ABM; 
+        figure = NamedTuple(),
+        axis = NamedTuple(),
+        kwargs...
+    )
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    abmobs = abmplot!(ax, model; kwargs...)
+    abmobs, abmplot_object = abmplot!(ax, model; kwargs...)
 
-    return fig, ax, abmobs
+    return fig, abmobs
 end
 
 function abmplot!(ax, model::Agents.ABM;
@@ -116,26 +120,47 @@ function abmplot!(ax, model::Agents.ABM;
         adata = nothing,
         mdata = nothing,
         when = true,
-        # These keywords are propagated to the _ABMPlot recipe
-        _add_interaction = true, # hack for faster plot update
-        add_controls = _default_add_controls(agent_step!, model_step!),
-        enable_inspection = add_controls,
         kwargs...
     )
 
-    abmobs = ABMObservable(
-        model; agent_step!, model_step!, adata, mdata, when
+    abmobs = ABMObservable(model; agent_step!, model_step!, adata, mdata, when)
+    abmplot_object = abmplot!(ax, abmobs; kwargs...)
+
+    return abmobs, abmplot_object
+end
+
+"""
+    abmplot(abmobs::ABMObservable; kwargs...) → fig
+    abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmplot_object
+
+Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
+but allows to link an already existing `ABMObservable` to the created plots.
+"""
+function abmplot(abmobs::ABMObservable; 
+        figure = NamedTuple(), 
+        axis = NamedTuple(), 
+        kwargs...
     )
-    abmplot_object = _abmplot!(ax, model; ax, abmobs, add_controls, _add_interaction, kwargs...)
+    fig = Figure(; figure...)
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    abmplot_object = abmplot!(ax, model; kwargs...)
+
+    return fig
+end
+
+function abmplot!(ax, abmobs::ABMObservable;
+        # These keywords are propagated to the _ABMPlot recipe
+        add_controls = _default_add_controls(abmobs.agent_step!, abmobs.model_step!),
+        enable_inspection = add_controls,
+        kwargs...
+    )
+    abmplot_object = _abmplot!(ax, abmobs; ax, add_controls, kwargs...)
 
     # Model inspection on mouse hover
     enable_inspection && DataInspector(ax.parent)
 
-    if _add_interaction
-        return abmobs
-    else
-        return abmobs, abmplot_object
-    end
+    return abmplot_object
 end
 
 """
@@ -144,7 +169,7 @@ end
 
 This is the internal recipe for creating an `_ABMPlot`.
 """
-@recipe(_ABMPlot, model) do scene
+@recipe(_ABMPlot, abmobs) do scene
     Theme(
         # insert InteractiveDynamics theme here?
     )
@@ -173,7 +198,6 @@ This is the internal recipe for creating an `_ABMPlot`.
         static_preplot! = nothing,
 
         # Interactive application
-        abmobs = nothing, # initialized from the main `abmplot` method.
         add_controls = false,
         # Add parameter sliders if params are provided
         params = Dict(),
@@ -182,7 +206,6 @@ This is the internal recipe for creating an `_ABMPlot`.
 
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
-        _add_interaction = true, # for `abmexploration`
     )
 end
 
@@ -199,23 +222,22 @@ const SUPPORTED_SPACES = Union{
 }
 
 function Makie.plot!(abmplot::_ABMPlot)
-    if !(abmplot.model[].space isa SUPPORTED_SPACES)
+    model = abmplot.abmobs[].model[]
+    if !(model.space isa SUPPORTED_SPACES)
         error("Space type $(typeof(model.space)) is not supported for plotting.")
     end
-
-    # Following attributes are all lifted from the recipe observables (specifically,
-    # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = 
-        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
-            abmplot.offset, abmplot.heatarray, abmplot._used_poly)
-
-    model = abmplot.abmobs[].model[]
     ax = abmplot.ax[]
     isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
     if !(model.space isa Agents.GraphSpace)
         set_axis_limits!(ax, model)
     end
     fig = ax.parent
+
+    # Following attributes are all lifted from the recipe observables (specifically,
+    # the model), see lifting.jl for source code.
+    pos, color, marker, markersize, heatobs = 
+        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
+            abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
@@ -273,7 +295,7 @@ function Makie.plot!(abmplot::_ABMPlot)
     end
 
     # Model controls, parameter sliders
-    abmplot._add_interaction[] && add_interaction!(fig, ax, abmplot)
+    add_interaction!(fig, ax, abmplot)
 
     return abmplot
 end
