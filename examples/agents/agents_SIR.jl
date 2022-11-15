@@ -185,6 +185,11 @@ model_step! = dummystep
 fig, abmobs = abmplot(model; graphplotkwargs = (; layout = Shell(), arrow_show = false))
 fig
 
+## abmplot with abmobs instead of model
+abmobs = ABMObservable(model_initiation(; params...); agent_step!)
+fig = abmplot(abmobs; graphplotkwargs = (; layout = Shell(), arrow_show = false))
+fig
+
 ## abmexploration
 
 fig, abmobs = abmexploration(model_initiation(; params...); 
