@@ -182,7 +182,7 @@ model_step! = dummystep
 
 ## abmplot
 
-fig, ax, abmobs = abmplot(model; graphplotkwargs = (; layout = Shell(), arrow_show = false))
+fig, abmobs = abmplot(model; graphplotkwargs = (; layout = Shell(), arrow_show = false))
 fig
 
 ## abmexploration
