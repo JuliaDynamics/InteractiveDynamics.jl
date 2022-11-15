@@ -295,7 +295,7 @@ function Makie.plot!(abmplot::_ABMPlot)
     end
 
     # Model controls, parameter sliders
-    add_interaction!(fig, ax, abmplot)
+    abmplot.stepclick, abmplot.resetclick = add_interaction!(fig, ax, abmplot)
 
     return abmplot
 end
