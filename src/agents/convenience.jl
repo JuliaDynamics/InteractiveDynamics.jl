@@ -45,13 +45,11 @@ function abmexploration(model;
         Axis3(fig; axis...) : Axis(fig; axis...)
     abmobs, abmplot_object = abmplot!(ax, model; kwargs...)
 
-    stepclick, resetclick = add_interaction!(fig, ax, abmplot_object)
-
     adata, mdata = abmobs.adata, abmobs.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
+    init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotkwargs, abmplot_object.stepclick, abmplot_object.resetclick)
     return fig, abmobs
 end
 
