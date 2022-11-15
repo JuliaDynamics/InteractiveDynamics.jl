@@ -18,25 +18,19 @@ abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = eachindex(model.space.stor
 
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
-    pos = begin
-        if isnothing(offset)
-            [postype(model[i].pos) for i in ids]
-        else
-            [postype(model[i].pos .+ offset(model[i])) for i in ids]
-        end
+    if isnothing(offset)
+        return [postype(model[i].pos) for i in ids]
+    else
+        return [postype(model[i].pos .+ offset(model[i])) for i in ids]
     end
-    return pos
 end
 
 function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids)
-    pos = begin
-        if isnothing(offset)
-            [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
-        else
-            [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
-        end
+    if isnothing(offset)
+        return [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
+    else
+        return [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
     end
-    return pos
 end
 
 abmplot_pos(model::Agents.ABM{<:Agents.GraphSpace}, offset, ids) = nothing
@@ -47,58 +41,48 @@ agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
 agents_space_dimensionality(::Agents.GraphSpace) = 2
 
-function abmplot_colors(model, ac, ids)
-    colors = begin
-        if ac isa Function
-            if model.space isa Agents.GraphSpace
-                to_color.([ac(model, idx) for idx in ids])
-            else
-                to_color.([ac(model[i]) for i in ids])
-            end
-        else
-            to_color(ac)
-        end
-    end
-    return colors
-end
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac, ids) = to_color(ac)
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) = 
+    to_color.([ac(model[i]) for i in ids])
+abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) = 
+    to_color.([ac(model, idx) for idx in ids])
 
 function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am, pos, ids)
-    marker = am isa Function ? [am(model[i]) for i in ids] : am
+    marker = am
+    # need to update used_poly Observable here for inspection
+    used_poly[] = user_used_polygons(am, marker)
+    if used_poly[] # for polygons we always need vector, even if all agents are same polygon
+        marker = [translate(am, p) for p in pos]
+    end
+    return marker
+end
+
+function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am::Function, pos, ids)
+    marker = [am(model[i]) for i in ids]
+    # need to update used_poly Observable here for use with inspection
     used_poly[] = user_used_polygons(am, marker)
     if used_poly[]
-        if am isa Function
-            marker = [translate(m, p) for (m, p) in zip(marker, pos)]
-        else # for polygons we always need vector, even if all agents are same polygon
-            marker = [translate(am, p) for p in pos]
-        end
+        marker = [translate(m, p) for (m, p) in zip(marker, pos)]
     end
     return marker
 end
 
-function abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am, pos, ids)
-    marker = am isa Function ? [am(model, idx) for idx in ids] : am
-    return marker
-end
+# TODO: Add support for polygon markers for GraphSpace if possible with GraphMakie
+abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am, pos, ids) = am
+abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am::Function, pos, ids) = 
+    [am(model, idx) for idx in ids]
 
-function user_used_polygons(am, marker)
-    if (am isa Polygon)
-        return true
-    elseif (am isa Function) && (marker isa Vector{<:Polygon})
-        return true
-    else
-        return false
-    end
-end
+user_used_polygons(am, marker) = false
+user_used_polygons(am::Polygon, marker) = true
+user_used_polygons(am::Function, marker::Vector{<:Polygon}) = true
 
-function abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as, ids)
-    markersizes = as isa Function ? [as(model[i]) for i in ids] : as
-    return markersizes
-end
+abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as, ids) = as
+abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as::Function, ids) =
+    [as(model[i]) for i in ids]
 
-function abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids)
-    markersizes = as isa Function ? [as(model, idx) for idx in ids] : as
-    return markersizes
-end
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids) = as
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) = 
+    [as(model, idx) for idx in ids]
 
 function abmplot_heatobs(model, heatarray)
     heatobs = begin
@@ -120,6 +104,8 @@ function abmplot_heatobs(model, heatarray)
     return heatobs
 end
 
-abmplot_edge_color(model, ec) = ec isa Function ? to_color.(ec(model)) : to_color(ec)
+abmplot_edge_color(model, ec) = to_color(ec)
+abmplot_edge_color(model, ec::Function) = to_color.(ec(model))
 
-abmplot_edge_width(model, ew) = ew isa Function ? ew(model) : ew
+abmplot_edge_width(model, ew) = ew
+abmplot_edge_width(model, ew::Function) = ew(model)
