@@ -142,9 +142,9 @@ function abmplot(abmobs::ABMObservable;
         kwargs...
     )
     fig = Figure(; figure...)
-    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
+    ax = fig[1,1][1,1] = agents_space_dimensionality(abmobs.model[]) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    abmplot_object = abmplot!(ax, model; kwargs...)
+    abmplot_object = abmplot!(ax, abmobs; kwargs...)
 
     return fig
 end
