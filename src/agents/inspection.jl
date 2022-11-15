@@ -28,11 +28,8 @@ function show_data_2D(inspector::DataInspector,
 
     model = plot.abmobs[].model[]
     id = collect(Agents.allids(model))[idx]
-    a._display_text[] = agent2string(model, model[id].pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* size .- Vec2f0(5), Vec2f0(size) .+ Vec2f0(10))
-    a._px_bbox_visible[] = true
-    a._bbox_visible[] = false
-    a._visible[] = true
+    a.text[] = agent2string(model, model[id].pos)
+    a.visible[] = true
 
     return true
 end
@@ -53,11 +50,8 @@ function show_data_poly(inspector::DataInspector,
     elseif S <: Agents.GridSpace
         agent_pos = Tuple(Int.(plot[:pos][][idx]))
     end
-    a._display_text[] = agent2string(plot.abmobs[].model[], agent_pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* sizes .- Vec2f0(5), Vec2f0(sizes) .+ Vec2f0(10))
-    a._px_bbox_visible[] = true
-    a._bbox_visible[] = false
-    a._visible[] = true
+    a.text[] = agent2string(plot.abmobs[].model[], agent_pos)
+    a.visible[] = true
 
     return true
 end
@@ -83,11 +77,8 @@ function show_data_3D(inspector::DataInspector,
 
     model = plot.abmobs[].model[]
     id = collect(Agents.allids(model))[idx]
-    a._display_text[] = agent2string(model, model[id].pos)
-    a._bbox2D[] = FRect2D(proj_pos .- 0.5 .* size .- Vec2f0(5), Vec2f0(size) .+ Vec2f0(10))
-    a._px_bbox_visible[] = true
-    a._bbox_visible[] = false
-    a._visible[] = true
+    a.text[] = agent2string(model, model[id].pos)
+    a.visible[] = true
 
     return true
 end
