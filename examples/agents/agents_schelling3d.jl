@@ -42,5 +42,5 @@ end
 
 model = initialize()
 ac(agent) = (:red, :blue)[agent.group]
-fig, ax, abmobs = abmplot(model; ac, as = 0.5, agent_step!, enable_inspection = false)
+fig, abmobs = abmplot(model; ac, as = 0.5, agent_step!, enable_inspection = false)
 fig
