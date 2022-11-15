@@ -15,8 +15,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 DataStructures = "0.17, 0.18"
-Makie = "0.17, 0.18"
-OSMMakie = "0.0.5"
+Makie = "0.18"
+OSMMakie = "0.0.6"
 Observables = "0.5"
 Requires = "0.5, 1.0"
 StatsBase = "0.32, 0.33"
