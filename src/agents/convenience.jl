@@ -33,12 +33,17 @@ guidance.
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
 function abmexploration(model;
-        alabels = nothing, mlabels = nothing, plotkwargs = NamedTuple(),
+        figure = NamedTuple(),
+        axis = NamedTuple(),
+        alabels = nothing,
+        mlabels = nothing,
+        plotkwargs = NamedTuple(),
         kwargs...
     )
-    fig, ax, (abmobs, abmplot_object) = abmplot(model;
-        _add_interaction = false, add_controls = true, 
-        figure = (resolution = (1600, 800),), kwargs...)
+    fig = Figure(; figure...)
+    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    abmobs, abmplot_object = abmplot!(ax, model; kwargs...)
 
     stepclick, resetclick = add_interaction!(fig, ax, abmplot_object)
 
