@@ -65,10 +65,10 @@ function Agents.step!(abmobs::ABMObservable, n; kwargs...)
     return nothing
 end
 
-function Base.show(io::IO, p::ABMObservable)
+function Base.show(io::IO, abmobs::ABMObservable)
     print(io, "ABMObservable with model:\n")
-    print(io, p.model[])
+    print(io, abmobs.model[])
     print(io, "\nand with data collection:\n")
-    print(io, " adata: $(p.adata)\n")
-    print(io, " mdata: $(p.mdata)")
+    print(io, " adata: $(abmobs.adata)\n")
+    print(io, " mdata: $(abmobs.mdata)")
 end
