@@ -67,8 +67,7 @@ function init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotk
         ax.ylabel = isnothing(alabels) ? y_label : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
         scatterlines!(ax, points;
-            marker = MARKER, markersize = 5Makie.px, color = c,
-            strokecolor = c, strokewidth = 0.5,
+            color = c, strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
@@ -81,8 +80,7 @@ function init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotk
         ax.ylabel = isnothing(mlabels) ? y_label : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
         scatterlines!(ax, points;
-            marker = MARKER, markersize = 5Makie.px, color = c,
-            strokecolor = c, strokewidth = 0.5,
+            color = c, strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
