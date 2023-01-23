@@ -12,13 +12,12 @@ function bird_marker(b::Bird)
 end
 
 # simple plot
-fig, abmobs = abmplot(model; am = bird_marker)
+fig, ax, abmobs = abmplot(model; am = bird_marker)
 fig
 
 # interactive app
-fig = Figure()
-ax = Axis(fig[1,1], title = "Flocking")
-fig, abmobs = abmplot(model; 
+fig, ax, abmobs = abmplot(model;
+    axis = (; title = "Flocking"),
     agent_step! = flocking_agent_step!,
     model_step! = flocking_model_step!, 
     am = bird_marker, 

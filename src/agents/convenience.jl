@@ -40,10 +40,8 @@ function abmexploration(model;
         plotkwargs = NamedTuple(),
         kwargs...
     )
-    fig = Figure(; figure...)
-    ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
-        Axis3(fig; axis...) : Axis(fig; axis...)
-    abmobs, abmplot_object = abmplot!(ax, model; kwargs...)
+    fig, ax, abmobs = abmplot(model; figure, axis, kwargs...)
+    abmplot_object = ax.scene.plots[1]
 
     adata, mdata = abmobs.adata, abmobs.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."

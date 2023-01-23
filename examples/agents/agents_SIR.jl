@@ -182,12 +182,13 @@ model_step! = dummystep
 
 ## abmplot
 
-fig, abmobs = abmplot(model; graphplotkwargs = (; layout = Shell(), arrow_show = false))
+fig, ax, abmobs = abmplot(model; graphplotkwargs = (; layout = Shell(), arrow_show = false))
 fig
 
 ## abmplot with abmobs instead of model
 abmobs = ABMObservable(model_initiation(; params...); agent_step!)
-fig = abmplot(abmobs; graphplotkwargs = (; layout = Shell(), arrow_show = false))
+fig, ax, abmobs = abmplot(abmobs; 
+    graphplotkwargs = (; layout = Shell(), arrow_show = false))
 fig
 
 ## abmexploration
@@ -218,7 +219,7 @@ graphplotkwargs = (
     edge_width = edge_width,
 )
 
-fig, abmobs = abmplot(model_initiation(; params...);  
+fig, ax, abmobs = abmplot(model_initiation(; params...);  
     agent_step!, as = city_size, ac = city_color, graphplotkwargs)
 fig
 

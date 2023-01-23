@@ -8,11 +8,11 @@ aczombie(agent) = agent.infected ? (:green, 0.9) : (:purple, 0.75)
 aszombie(agent) = agent.infected ? 15 : 12
 
 axis = (; title = "Zombie outbreak", backgroundcolor = "#f3f3f3")
-fig, abmobs = abmplot(zombie_model; axis, ac = aczombie, as = aszombie)
+fig, ax, abmobs = abmplot(zombie_model; axis, ac = aczombie, as = aszombie)
 fig
 
 # %% with parameter sliders & time evolution
-fig, abmobs = abmplot(zombie_model; 
+fig, ax, abmobs = abmplot(zombie_model; 
     agent_step! = zombie_step!, model_step! = zombie_model_step!,
     ac = aczombie, as = aszombie, axiskwargs, params = Dict(:dt => 0.1:0.01:0.2),
     enable_inspection = false,

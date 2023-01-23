@@ -2,8 +2,8 @@ include("model_observable.jl")
 export abmplot, abmplot!
 
 """
-    abmplot(model::ABM; kwargs...) → fig, abmobs
-    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmobs, abmplot_object
+    abmplot(model::ABM; kwargs...) → fig, ax, abmobs
+    abmplot!(ax::Axis/Axis3, model::ABM; kwargs...) → abmobs
 
 Plot an agent based model by plotting each individual agent as a marker and using
 the agent's position field as its location on the plot. The same function is used
@@ -100,17 +100,16 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
-function abmplot(model::Agents.ABM; 
+function abmplot(model::Agents.ABM;
         figure = NamedTuple(),
         axis = NamedTuple(),
-        kwargs...
-    )
+        kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    abmobs, abmplot_object = abmplot!(ax, model; kwargs...)
+    abmobs = abmplot!(ax, model; kwargs...)
 
-    return fig, abmobs
+    return fig, ax, abmobs
 end
 
 function abmplot!(ax, model::Agents.ABM;
@@ -120,18 +119,16 @@ function abmplot!(ax, model::Agents.ABM;
         adata = nothing,
         mdata = nothing,
         when = true,
-        kwargs...
-    )
-
+        kwargs...)
     abmobs = ABMObservable(model; agent_step!, model_step!, adata, mdata, when)
-    abmplot_object = abmplot!(ax, abmobs; kwargs...)
+    abmplot!(ax, abmobs; kwargs...)
 
-    return abmobs, abmplot_object
+    return abmobs
 end
 
 """
-    abmplot(abmobs::ABMObservable; kwargs...) → fig
-    abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmplot_object
+    abmplot(abmobs::ABMObservable; kwargs...) → fig, ax, abmobs
+    abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmobs
 
 Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
 but allows to link an already existing `ABMObservable` to the created plots.
@@ -139,28 +136,26 @@ but allows to link an already existing `ABMObservable` to the created plots.
 function abmplot(abmobs::ABMObservable; 
         figure = NamedTuple(), 
         axis = NamedTuple(), 
-        kwargs...
-    )
+        kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(abmobs.model[]) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
-    abmplot_object = abmplot!(ax, abmobs; kwargs...)
+    abmplot!(ax, abmobs; kwargs...)
 
-    return fig
+    return fig, ax, abmobs
 end
 
 function abmplot!(ax, abmobs::ABMObservable;
         # These keywords are propagated to the _ABMPlot recipe
         add_controls = _default_add_controls(abmobs.agent_step!, abmobs.model_step!),
         enable_inspection = add_controls,
-        kwargs...
-    )
-    abmplot_object = _abmplot!(ax, abmobs; ax, add_controls, kwargs...)
+        kwargs...)
+    _abmplot!(ax, abmobs; ax, add_controls, kwargs...)
 
     # Model inspection on mouse hover
     enable_inspection && DataInspector(ax.parent)
 
-    return abmplot_object
+    return abmobs
 end
 
 """
