@@ -47,7 +47,6 @@ function ABMObservable(model;
     )
 end
 
-
 function Agents.step!(abmobs::ABMObservable, n; kwargs...)
     model, adf, mdf = abmobs.model, abmobs.adf, abmobs.mdf
     Agents.step!(model[], abmobs.agent_step!, abmobs.model_step!, n; kwargs...)
