@@ -1,7 +1,7 @@
 export ABMObservable
 
 """
-    ABMObservable(model; agent_step!, model_step!, adata, mdata, when) → abombs
+    ABMObservable(model; agent_step!, model_step!, adata, mdata, when) → abmobs
 `abmobs` contains all information necessary to step an agent based model interactively.
 It is also returned by [`abmplot`](@ref).
 
