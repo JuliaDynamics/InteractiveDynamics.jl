@@ -60,6 +60,50 @@ fig
 # abmplot
 # ```
 
+# ## GraphSpace models
+# While the `ac, as, am` keyword arguments generally relate to *agent* colors, markersizes,
+# and markers, they are handled a bit differently in the case of [`GraphSpace models`](https://juliadynamics.github.io/Agents.jl/stable/api/#Agents.GraphSpace).
+# Here, we collect those plot attributes for each node of the underlying graph which can 
+# contain multiple agents.
+# Keeping this in mind, we can create an [exemplary GraphSpace model](https://juliadynamics.github.io/Agents.jl/stable/examples/sir/) 
+# and plot it with [`abmplot`](@ref).
+sir_model, sir_agent_step!, sir_model_step! = Models.sir()
+city_size(model, pos) = 0.005 * length(model.space.stored_ids[pos])
+function city_color(model, pos)
+    agents_here = count(a.pos == pos for a in allagents(model))
+    infected = count((a.pos == pos && a.status == :I) for a in allagents(model))
+    recovered = count((a.pos == pos && a.status == :R) for a in allagents(model))
+    return RGBf(infected / agents_here, recovered / agents_here, 0)
+end
+
+# To further style the edges and nodes of the resulting graph plot, we can leverage
+# the functionality of [GraphMakie.graphplot](https://graph.makie.org/stable/#GraphMakie.graphplot)
+# and pass all the desired keyword arguments to it via a named tuple called 
+# `graphplotkwargs`.
+# When using functions for edge color and width, they have to return a vector with the 
+# same length as current number of edges in the underlying graph.
+using GraphMakie.Graphs
+edge_color(model) = fill((:black, 0.25), ne(model.space.graph))
+function edge_width(model)
+    w = zeros(ne(model.space.graph))
+    for e in edges(model.space.graph)
+        push!(w, city_size(model, e.src) - 10)
+        push!(w, city_size(model, e.dst) - 10)
+    end
+    return w
+end
+graphplotkwargs = (
+    layout = Shell(), # node positions
+    arrow_show = false, # hide directions of graph edges
+    edge_color = edge_color, # change edge colors and widths with own functions
+    edge_width = edge_width,
+    edge_plottype = :linesegments # needed for tapered edge widths and bi-colored edges
+)
+fig, ax, abmobs = abmplot(sir_model;
+    agent_step! = sir_agent_step!, model_step! = sir_model_step!,
+    as = city_size, ac = city_color, graphplotkwargs)
+fig
+
 # ## Interactive ABM Applications
 # Continuing from the Daisyworld plots above, we can turn them into interactive
 # applications straightforwardly, simply by providing the stepping functions
