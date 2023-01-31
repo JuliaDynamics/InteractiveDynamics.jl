@@ -265,8 +265,7 @@ function Makie.plot!(abmplot::_ABMPlot)
     # Dispatch on type of agent positions
     T = typeof(pos[])
     if T<:Nothing # GraphSpace
-        ax.xticksvisible = ax.yticksvisible = false
-        ax.xticklabelsvisible = ax.yticklabelsvisible = false
+        hidedecorations!(ax)
         ec = get(abmplot.graphplotkwargs, :edge_color, Observable(:black))
         edge_color = @lift(abmplot_edge_color($(abmplot.abmobs[].model), $ec))
         ew = get(abmplot.graphplotkwargs, :edge_width, Observable(1))
