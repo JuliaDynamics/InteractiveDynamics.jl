@@ -80,15 +80,19 @@ end
 # the functionality of [GraphMakie.graphplot](https://graph.makie.org/stable/#GraphMakie.graphplot)
 # and pass all the desired keyword arguments to it via a named tuple called 
 # `graphplotkwargs`.
-# When using functions for edge color and width, they have to return a vector with the 
-# same length as current number of edges in the underlying graph.
+# When using functions for edge color and width, they should return either one color or 
+# a vector with the same length (or twice) as current number of edges in the underlying
+# graph.
+# In the example below, the `edge_color` function colors all edges to a semi-transparent 
+# shade of grey and the `edge_width` function makes use of the special ability of 
+# `linesegments` to be tapered (i.e. one end is wider than the other).
 using GraphMakie.Graphs
-edge_color(model) = fill((:black, 0.25), ne(model.space.graph))
+edge_color(model) = fill((:grey, 0.25), ne(model.space.graph))
 function edge_width(model)
     w = zeros(ne(model.space.graph))
     for e in edges(model.space.graph)
-        push!(w, city_size(model, e.src) - 10)
-        push!(w, city_size(model, e.dst) - 10)
+        push!(w, city_size(model, e.src) - 20)
+        push!(w, city_size(model, e.dst) - 20)
     end
     return w
 end

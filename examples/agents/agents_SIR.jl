@@ -39,13 +39,13 @@ function city_color(model, pos)
     return RGBf(infected / agents_here, recovered / agents_here, 0)
 end
 
-edge_color(model) = fill((:black, 0.25), ne(model.space.graph))
+edge_color(model) = fill((:grey, 0.25), ne(model.space.graph))
 
 function edge_width(model)
     w = []
     for e in edges(model.space.graph)
-        push!(w, city_size(model, e.src) - 10)
-        push!(w, city_size(model, e.dst) - 10)
+        push!(w, city_size(model, e.src) - 20)
+        push!(w, city_size(model, e.dst) - 20)
     end
     return w
 end
