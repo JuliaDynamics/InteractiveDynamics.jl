@@ -65,7 +65,7 @@ fig
 # and markers, they are handled a bit differently in the case of [`GraphSpace models`](https://juliadynamics.github.io/Agents.jl/stable/api/#Agents.GraphSpace).
 # Here, we collect those plot attributes for each node of the underlying graph which can 
 # contain multiple agents.
-# If we want to use a function for this, we therefore need to handle a vector of agent ids.
+# If we want to use a function for this, we therefore need to handle an iterator of agents.
 # Keeping this in mind, we can create an [exemplary GraphSpace model](https://juliadynamics.github.io/Agents.jl/stable/examples/sir/) 
 # and plot it with [`abmplot`](@ref).
 sir_model, sir_agent_step!, sir_model_step! = Models.sir()
