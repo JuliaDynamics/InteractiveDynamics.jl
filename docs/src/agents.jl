@@ -92,8 +92,8 @@ edge_color(model) = fill((:grey, 0.25), ne(model.space.graph))
 function edge_width(model)
     w = zeros(ne(model.space.graph))
     for e in edges(model.space.graph)
-        push!(w, city_size(model, e.src) - 20)
-        push!(w, city_size(model, e.dst) - 20)
+        push!(w, 0.004 * length(model.space.stored_ids[e.src]))
+        push!(w, 0.004 * length(model.space.stored_ids[e.dst]))
     end
     return w
 end
