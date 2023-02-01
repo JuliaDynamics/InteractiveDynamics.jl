@@ -272,7 +272,7 @@ function Makie.plot!(abmplot::_ABMPlot)
         edge_width = @lift(abmplot_edge_width($(abmplot.abmobs[].model), $ew))
         graphplot!(abmplot, model.space.graph;
             node_color = color, node_marker = marker, node_size = markersize,
-            abmplot.graphplotkwargs..., # must come first to not overwrite the lifting below
+            abmplot.graphplotkwargs..., # must come first to not overwrite lifted kwargs
             edge_color, edge_width)
     elseif T<:Vector{Point2f} # 2d space
         if typeof(marker[])<:Vector{<:Polygon{2}}

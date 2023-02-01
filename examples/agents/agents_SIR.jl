@@ -55,7 +55,7 @@ graphplotkwargs = (
     arrow_show = false,
     edge_color = edge_color,
     edge_width = edge_width,
-    edge_plottype = :linesegments # needed for tapered edge widths and bi-colored edges
+    edge_plottype = :linesegments
 )
 
 fig, ax, abmobs = abmplot(model;

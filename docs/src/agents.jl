@@ -65,14 +65,15 @@ fig
 # and markers, they are handled a bit differently in the case of [`GraphSpace models`](https://juliadynamics.github.io/Agents.jl/stable/api/#Agents.GraphSpace).
 # Here, we collect those plot attributes for each node of the underlying graph which can 
 # contain multiple agents.
+# If we want to use a function for this, we therefore need to handle a vector of agent ids.
 # Keeping this in mind, we can create an [exemplary GraphSpace model](https://juliadynamics.github.io/Agents.jl/stable/examples/sir/) 
 # and plot it with [`abmplot`](@ref).
 sir_model, sir_agent_step!, sir_model_step! = Models.sir()
-city_size(model, pos) = 0.005 * length(model.space.stored_ids[pos])
-function city_color(model, pos)
-    agents_here = count(a.pos == pos for a in allagents(model))
-    infected = count((a.pos == pos && a.status == :I) for a in allagents(model))
-    recovered = count((a.pos == pos && a.status == :R) for a in allagents(model))
+city_size(agents_here) = 0.005 * length(agents_here)
+function city_color(agents_here)
+    agents_here = length(agents_here)
+    infected = count(a.status == :I for a in agents_here)
+    recovered = count(a.status == :R for a in agents_here)
     return RGBf(infected / agents_here, recovered / agents_here, 0)
 end
 
@@ -101,7 +102,7 @@ graphplotkwargs = (
     arrow_show = false, # hide directions of graph edges
     edge_color = edge_color, # change edge colors and widths with own functions
     edge_width = edge_width,
-    edge_plottype = :linesegments # needed for tapered edge widths and bi-colored edges
+    edge_plottype = :linesegments # needed for tapered edge widths
 )
 fig, ax, abmobs = abmplot(sir_model;
     agent_step! = sir_agent_step!, model_step! = sir_model_step!,
