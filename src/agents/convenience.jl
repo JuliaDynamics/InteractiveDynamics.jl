@@ -15,9 +15,9 @@ The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the `model` argument as well as splatted `kwargs` are propagated there as-is.
 This convencience function *only works for aggregated agent data*.
 
-Calling `abmexploration` returns: `fig::Figure, p::_ABMPlot`. So you can save and/or
-further modify the figure. But it is also possible to access the collected data (if any)
-via the plot object, just like in the case of using [`abmplot`](@ref) directly.
+Calling `abmexploration` returns: `fig::Figure, abmobs::ABMObservable`. So you can save 
+and/or further modify the figure and it is also possible to access the collected data 
+(if any) via the `ABMObservable`.
 
 Clicking the "reset" button will add a red vertical line to the data plots for visual
 guidance.
@@ -33,25 +33,27 @@ guidance.
   [`scatterlines`](https://makie.juliaplots.org/dev/examples/plotting_functions/scatterlines/index.html) plots.
 """
 function abmexploration(model;
-        alabels = nothing, mlabels = nothing, plotkwargs = NamedTuple(),
+        figure = NamedTuple(),
+        axis = NamedTuple(),
+        alabels = nothing,
+        mlabels = nothing,
+        plotkwargs = NamedTuple(),
         kwargs...
     )
-    fig, ax, (p, abmplot_object) = abmplot(model;
-        _add_interaction = false, figure = (resolution = (1600, 800),), kwargs...)
+    fig, ax, abmobs = abmplot(model; figure, axis, kwargs...)
+    abmplot_object = ax.scene.plots[1]
 
-    stepclick, resetclick = add_interaction!(fig, ax, abmplot_object)
-
-    adata, mdata = p.adata, p.mdata
+    adata, mdata = abmobs.adata, abmobs.mdata
     !isnothing(adata) && @assert eltype(adata)<:Tuple "Only aggregated agent data are allowed."
     !isnothing(alabels) && @assert length(alabels) == length(adata)
     !isnothing(mlabels) && @assert length(mlabels) == length(mdata)
-    init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
-    return fig, p
+    init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotkwargs, abmplot_object.stepclick, abmplot_object.resetclick)
+    return fig, abmobs
 end
 
-function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
-    La = isnothing(adata) ? 0 : size(p.adf[])[2]-1
-    Lm = isnothing(mdata) ? 0 : size(p.mdf[])[2]-1
+function init_abm_data_plots!(fig, abmobs, adata, mdata, alabels, mlabels, plotkwargs, stepclick, resetclick)
+    La = isnothing(adata) ? 0 : size(abmobs.adf[])[2]-1
+    Lm = isnothing(mdata) ? 0 : size(abmobs.mdf[])[2]-1
     La + Lm == 0 && return nothing # failsafe; don't add plots if dataframes are empty
 
     plotlayout = fig[:, end+1] = GridLayout(tellheight = false)
@@ -59,28 +61,26 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
 
     for i in 1:La # add adata plots
         y_label = string(adata[i][2]) * "_" * string(adata[i][1])
-        points = @lift(Point2f.($(p.adf).step, $(p.adf)[:,y_label]))
+        points = @lift(Point2f.($(abmobs.adf).step, $(abmobs.adf)[:,y_label]))
         ax = plotlayout[i, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(alabels) ? y_label : alabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i, 3)]
         scatterlines!(ax, points;
-            marker = MARKER, markersize = 5Makie.px, color = c,
-            strokecolor = c, strokewidth = 0.5,
+            color = c, strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
 
     for i in 1:Lm # add mdata plots
         y_label = string(mdata[i])
-        points = @lift(Point2f.($(p.mdf).step, $(p.mdf)[:,y_label]))
+        points = @lift(Point2f.($(abmobs.mdf).step, $(abmobs.mdf)[:,y_label]))
         ax = plotlayout[i+La, :] = Axis(fig)
         push!(axs, ax)
         ax.ylabel = isnothing(mlabels) ? y_label : mlabels[i]
         c = JULIADYNAMICS_COLORS[mod1(i+La, 3)]
         scatterlines!(ax, points;
-            marker = MARKER, markersize = 5Makie.px, color = c,
-            strokecolor = c, strokewidth = 0.5,
+            color = c, strokecolor = c, strokewidth = 0.5,
             label = ax.ylabel, plotkwargs...
         )
     end
@@ -100,7 +100,7 @@ function init_abm_data_plots!(fig, p, adata, mdata, alabels, mlabels, plotkwargs
     end
     on(resetclick) do clicks
         for ax in axs
-            vlines!(ax, [p.s.val], color = "#c41818")
+            vlines!(ax, [abmobs.s.val], color = "#c41818")
         end
     end
     return nothing

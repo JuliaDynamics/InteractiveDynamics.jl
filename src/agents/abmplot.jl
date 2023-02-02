@@ -18,7 +18,9 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 ### Agent related
 * `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single agent and outputs the corresponding value.
+  which takes as an input a single agent and outputs the corresponding value. If the model 
+  uses a `GraphSpace`, `ac, as, am` functions instead take an *iterable of agents* in each
+  position (i.e. node of the graph).
 
   Using constants: `ac = "#338c54", as = 15, am = :diamond`
 
@@ -58,8 +60,11 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
   heatmap if `heatarray` is not nothing.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
-* `osmkwargs = NamedTuple()` : keywords directly passed to
-  `osmplot!` from OSMMakie.jl if model space is `OpenStreetMapSpace`.
+* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!` 
+  if model space is `OpenStreetMapSpace`.
+* `graphplotkwargs = NamedTuple()` : keywords directly passed to 
+  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot) 
+  if model space is `GraphSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
 `axis` which can be used to change the automatically created `Figure` and `Axis` objects.
@@ -77,8 +82,8 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
   1. "run": starts/stops the continuous evolution of the model.
   1. "reset model": resets the model to its initial state from right after starting the
      interactive application.
-  1. Two sliders control the animation speed: "spu" decides how many model steps should be done
-     before the plot is updated, and "sleep" the `sleep()` time between updates.
+  1. Two sliders control the animation speed: "spu" decides how many model steps should be 
+     done before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `enable_inspection = add_controls`: If `true`, enables agent inspection on mouse hover.
 * `spu = 1:50`: The values of the "spu" slider.
 * `params = Dict()` : This is a dictionary which decides which parameters of the model will
@@ -97,7 +102,10 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
 
 See the documentation string of [`ABMObservable`](@ref) for custom interactive plots.
 """
-function abmplot(model::Agents.ABM; figure = NamedTuple(), axis = NamedTuple(), kwargs...)
+function abmplot(model::Agents.ABM;
+        figure = NamedTuple(),
+        axis = NamedTuple(),
+        kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(model) == 3 ?
         Axis3(fig; axis...) : Axis(fig; axis...)
@@ -113,26 +121,43 @@ function abmplot!(ax, model::Agents.ABM;
         adata = nothing,
         mdata = nothing,
         when = true,
-        # These keywords are propagated to the _ABMPlot recipe
-        _add_interaction = true, # hack for faster plot update
-        add_controls = _default_add_controls(agent_step!, model_step!),
-        enable_inspection = add_controls,
-        kwargs...
-    )
+        kwargs...)
+    abmobs = ABMObservable(model; agent_step!, model_step!, adata, mdata, when)
+    abmplot!(ax, abmobs; kwargs...)
 
-    abmobs = ABMObservable(
-        model; agent_step!, model_step!, adata, mdata, when
-    )
-    abmplot_object = _abmplot!(ax, model; ax, abmobs, add_controls, _add_interaction, kwargs...)
+    return abmobs
+end
+
+"""
+    abmplot(abmobs::ABMObservable; kwargs...) → fig, ax, abmobs
+    abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmobs
+
+Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
+but allows to link an already existing `ABMObservable` to the created plots.
+"""
+function abmplot(abmobs::ABMObservable; 
+        figure = NamedTuple(), 
+        axis = NamedTuple(), 
+        kwargs...)
+    fig = Figure(; figure...)
+    ax = fig[1,1][1,1] = agents_space_dimensionality(abmobs.model[]) == 3 ?
+        Axis3(fig; axis...) : Axis(fig; axis...)
+    abmplot!(ax, abmobs; kwargs...)
+
+    return fig, ax, abmobs
+end
+
+function abmplot!(ax, abmobs::ABMObservable;
+        # These keywords are propagated to the _ABMPlot recipe
+        add_controls = _default_add_controls(abmobs.agent_step!, abmobs.model_step!),
+        enable_inspection = add_controls,
+        kwargs...)
+    _abmplot!(ax, abmobs; ax, add_controls, kwargs...)
 
     # Model inspection on mouse hover
     enable_inspection && DataInspector(ax.parent)
 
-    if _add_interaction
-        return abmobs
-    else
-        return abmobs, abmplot_object
-    end
+    return abmobs
 end
 
 """
@@ -141,7 +166,7 @@ end
 
 This is the internal recipe for creating an `_ABMPlot`.
 """
-@recipe(_ABMPlot, model) do scene
+@recipe(_ABMPlot, abmobs) do scene
     Theme(
         # insert InteractiveDynamics theme here?
     )
@@ -161,6 +186,7 @@ This is the internal recipe for creating an `_ABMPlot`.
         offset = nothing,
         scatterkwargs = NamedTuple(),
         osmkwargs = NamedTuple(),
+        graphplotkwargs = NamedTuple(),
 
         # Preplot
         heatarray = nothing,
@@ -169,7 +195,6 @@ This is the internal recipe for creating an `_ABMPlot`.
         static_preplot! = nothing,
 
         # Interactive application
-        abmobs = nothing, # initialized from the main `abmplot` method.
         add_controls = false,
         # Add parameter sliders if params are provided
         params = Dict(),
@@ -178,7 +203,6 @@ This is the internal recipe for creating an `_ABMPlot`.
 
         # Internal Attributes necessary for inspection, controls, etc. to work
         _used_poly = false,
-        _add_interaction = true, # for `abmexploration`
     )
 end
 
@@ -191,23 +215,26 @@ const SUPPORTED_SPACES = Union{
     Agents.GridSpaceSingle,
     Agents.ContinuousSpace,
     Agents.OpenStreetMapSpace,
+    Agents.GraphSpace,
 }
 
 function Makie.plot!(abmplot::_ABMPlot)
-    if !(abmplot.model[].space isa SUPPORTED_SPACES)
+    model = abmplot.abmobs[].model[]
+    if !(model.space isa SUPPORTED_SPACES)
         error("Space type $(typeof(model.space)) is not supported for plotting.")
     end
+    ax = abmplot.ax[]
+    isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
+    if !(model.space isa Agents.GraphSpace)
+        set_axis_limits!(ax, model)
+    end
+    fig = ax.parent
 
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = lift_attributes(abmplot.abmobs[].model,
-        abmplot.ac, abmplot.as, abmplot.am, abmplot.offset, abmplot.heatarray, abmplot._used_poly)
-
-    model = abmplot.abmobs[].model[]
-    ax = abmplot.ax[]
-    isnothing(ax.aspect[]) && (ax.aspect = DataAspect())
-    set_axis_limits!(ax, model)
-    fig = ax.parent
+    pos, color, marker, markersize, heatobs = 
+        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
+            abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     # OpenStreetMapSpace preplot
     if model.space isa Agents.OpenStreetMapSpace
@@ -239,7 +266,17 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Dispatch on type of agent positions
     T = typeof(pos[])
-    if T<:Vector{Point2f} # 2d space
+    if T<:Nothing # GraphSpace
+        hidedecorations!(ax)
+        ec = get(abmplot.graphplotkwargs, :edge_color, Observable(:black))
+        edge_color = @lift(abmplot_edge_color($(abmplot.abmobs[].model), $ec))
+        ew = get(abmplot.graphplotkwargs, :edge_width, Observable(1))
+        edge_width = @lift(abmplot_edge_width($(abmplot.abmobs[].model), $ew))
+        graphplot!(abmplot, model.space.graph;
+            node_color = color, node_marker = marker, node_size = markersize,
+            abmplot.graphplotkwargs..., # must come first to not overwrite lifted kwargs
+            edge_color, edge_width)
+    elseif T<:Vector{Point2f} # 2d space
         if typeof(marker[])<:Vector{<:Polygon{2}}
             poly_plot = poly!(abmplot, marker; color, abmplot.scatterkwargs...)
             poly_plot.inspectable[] = false # disable inspection for poly until fixed
@@ -254,7 +291,7 @@ function Makie.plot!(abmplot::_ABMPlot)
     end
 
     # Model controls, parameter sliders
-    abmplot._add_interaction[] && add_interaction!(fig, ax, abmplot)
+    abmplot.stepclick, abmplot.resetclick = add_interaction!(fig, ax, abmplot)
 
     return abmplot
 end

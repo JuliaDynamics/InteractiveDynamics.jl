@@ -1,91 +1,119 @@
 #=
-In this file we define how agents are plotted and how the plots are updated while stepping
+In this file we define how agents are plotted and how the plots are updated while stepping.
 =#
 
 function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
-    ids = @lift(Agents.allids($model))
+    ids = @lift(abmplot_ids($model))
     pos = @lift(abmplot_pos($model, $offset, $ids))
     color = @lift(abmplot_colors($model, $ac, $ids))
-    marker = @lift(abmplot_markers($model, $used_poly, $am, $pos, $ids))
+    marker = @lift(abmplot_marker($model, used_poly, $am, $pos, $ids))
     markersize = @lift(abmplot_markersizes($model, $as, $ids))
     heatobs = @lift(abmplot_heatobs($model, $heatarray))
 
     return pos, color, marker, markersize, heatobs
 end
 
-# Do we have to exclude OpenStreetMapSpace here for this dispatch to work?
+
+#####
+## ids
+#####
+
+abmplot_ids(model::Agents.ABM{<:SUPPORTED_SPACES}) = Agents.allids(model)
+# for GraphSpace the collected ids are the indices of the graph nodes (= agent positions)
+abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = eachindex(model.space.stored_ids)
+
+
+#####
+## positions
+#####
+
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
-    pos = begin
-        if isnothing(offset)
-            [postype(model[i].pos) for i in ids]
-        else
-            [postype(model[i].pos .+ offset(model[i])) for i in ids]
-        end
+    if isnothing(offset)
+        return [postype(model[i].pos) for i in ids]
+    else
+        return [postype(model[i].pos .+ offset(model[i])) for i in ids]
     end
-    return pos
 end
 
 function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids)
-    pos = begin
-        if isnothing(offset)
-            [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
-        else
-            [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
-        end
+    if isnothing(offset)
+        return [Point2f(Agents.OSM.lonlat(model[i].pos, model)) for i in ids]
+    else
+        return [Point2f(Agents.OSM.lonlat(model[i].pos, model) .+ offset(model[i])) for i in ids]
     end
-    return pos
 end
+
+abmplot_pos(model::Agents.ABM{<:Agents.GraphSpace}, offset, ids) = nothing
 
 agents_space_dimensionality(abm::Agents.ABM) = agents_space_dimensionality(abm.space)
 agents_space_dimensionality(::Agents.AbstractGridSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.ContinuousSpace{D}) where {D} = D
 agents_space_dimensionality(::Agents.OpenStreetMapSpace) = 2
+agents_space_dimensionality(::Agents.GraphSpace) = 2
 
-function abmplot_colors(model, ac, ids)
-    colors = begin
-        if ac isa Function
-            to_color.([ac(model[i]) for i in ids])
-        else
-            to_color(ac)
-        end
+
+#####
+## colors
+#####
+
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac, ids) = to_color(ac)
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) = 
+    to_color.([ac(model[i]) for i in ids])
+# in GraphSpace we iterate over a list of agents (not agent ids) at a graph node position
+abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) = 
+    to_color.(ac(model[id] for id in model.space.stored_ids[idx]) for idx in ids)
+
+#####
+## markers
+#####
+
+function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am, pos, ids)
+    marker = am
+    # need to update used_poly Observable here for inspection
+    used_poly[] = user_used_polygons(am, marker)
+    if used_poly[] # for polygons we always need vector, even if all agents are same polygon
+        marker = [translate(am, p) for p in pos]
     end
-    return colors
+    return marker
 end
 
-function abmplot_markers(model, used_poly, am, pos, ids)
-    markers = am isa Function ? [am(model[i]) for i in ids] : am
-    used_poly = user_used_polygons(am, markers)
-    if used_poly
-        if am isa Function
-            markers = [translate(m, p) for (m, p) in zip(markers, pos)]
-        else # for polygons we always need vector, even if all agents are same polygon
-            markers = [translate(am, p) for p in pos]
-        end
+function abmplot_marker(model::Agents.ABM{<:SUPPORTED_SPACES}, used_poly, am::Function, pos, ids)
+    marker = [am(model[i]) for i in ids]
+    # need to update used_poly Observable here for use with inspection
+    used_poly[] = user_used_polygons(am, marker)
+    if used_poly[]
+        marker = [translate(m, p) for (m, p) in zip(marker, pos)]
     end
-    return markers
+    return marker
 end
 
-function user_used_polygons(am, markers)
-    if (am isa Polygon)
-        return true
-    elseif (am isa Function) && (markers isa Vector{<:Polygon})
-        return true
-    else
-        return false
-    end
-end
+# TODO: Add support for polygon markers for GraphSpace if possible with GraphMakie
+abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am, pos, ids) = am
+abmplot_marker(model::Agents.ABM{<:Agents.GraphSpace}, used_poly, am::Function, pos, ids) =
+    [am(model[id] for id in model.space.stored_ids[idx]) for idx in ids]
 
-function abmplot_markersizes(model, as, ids)
-    markersizes = begin
-        if as isa Function
-            [as(model[i]) for i in ids]
-        else
-            as
-        end
-    end
-    return markersizes
-end
+user_used_polygons(am, marker) = false
+user_used_polygons(am::Polygon, marker) = true
+user_used_polygons(am::Function, marker::Vector{<:Polygon}) = true
+
+
+#####
+## markersizes
+#####
+
+abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as, ids) = as
+abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as::Function, ids) =
+    [as(model[i]) for i in ids]
+
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids) = as
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) = 
+    [as(model[id] for id in model.space.stored_ids[idx]) for idx in ids]
+
+
+#####
+## heatmap specific
+#####
 
 function abmplot_heatobs(model, heatarray)
     heatobs = begin
@@ -106,3 +134,13 @@ function abmplot_heatobs(model, heatarray)
     end
     return heatobs
 end
+
+
+#####
+##  GraphSpace specific functions for the edges
+#####
+abmplot_edge_color(model, ec) = to_color(ec)
+abmplot_edge_color(model, ec::Function) = to_color.(ec(model))
+
+abmplot_edge_width(model, ew) = ew
+abmplot_edge_width(model, ew::Function) = ew(model)
