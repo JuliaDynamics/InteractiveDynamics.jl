@@ -18,7 +18,9 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 ### Agent related
 * `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single agent and outputs the corresponding value.
+  which takes as an input a single agent and outputs the corresponding value. If the model 
+  uses a `GraphSpace`, `ac, as, am` functions instead take an *iterable of agents* in each
+  position (i.e. node of the graph).
 
   Using constants: `ac = "#338c54", as = 15, am = :diamond`
 
