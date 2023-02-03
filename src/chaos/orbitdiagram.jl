@@ -287,13 +287,13 @@ function add_controls!(controllayout, figure, D, parname, i0)
     ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊ = Observable.((0.0, 1.0, 0.0, 1.0))
     tsize = 16
     text_p₋ = Label(figure, lift(o -> "$(parname)₋ = $(o)", ⬜p₋),
-        halign = :left, width = Auto(false), textsize = tsize)
+        halign = :left, width = Auto(false), fontsize = tsize)
     text_p₊ = Label(figure, lift(o -> "$(parname)₊ = $(o)", ⬜p₊),
-        halign = :left, width = Auto(false), textsize = tsize)
+        halign = :left, width = Auto(false), fontsize = tsize)
     text_u₋ = Label(figure, lift(o -> "u₋ = $(o)", ⬜u₋),
-        halign = :left, width = Auto(false), textsize = tsize)
+        halign = :left, width = Auto(false), fontsize = tsize)
     text_u₊ = Label(figure, lift(o -> "u₊ = $(o)", ⬜u₊),
-        halign = :left, width = Auto(false), textsize = tsize)
+        halign = :left, width = Auto(false), fontsize = tsize)
     controllayout[3, 1] = grid!([text_p₋ text_p₊ ; text_u₋ text_u₊])
     ⬜p₋[], ⬜p₊[], ⬜u₋[], ⬜u₊[] = rand(4)
     return nslider, Tslider, dslider,
