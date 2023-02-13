@@ -221,6 +221,15 @@ function Makie.plot!(abmplot::_ABMPlot)
     # Heatmap
     if !isnothing(heatobs[])
         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        
+        if model.space isa Agents.ContinuousSpace
+            nbinx, nbiny = size(property) 
+            coordx = range(0, 1; length = nbinx)
+            coordy = range(0, 1; length = nbiny)
+            hmap = heatmap!(abmplot, coordx, coordy, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        end
+
+        
         if abmplot.add_colorbar[]
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
             # TODO: Set colorbar to be "glued" to axis
