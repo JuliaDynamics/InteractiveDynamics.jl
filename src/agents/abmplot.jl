@@ -135,6 +135,7 @@ end
 Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
 but allows to link an already existing `ABMObservable` to the created plots.
 """
+
 function abmplot(abmobs::ABMObservable; 
         figure = NamedTuple(), 
         axis = NamedTuple(), 
@@ -218,6 +219,8 @@ const SUPPORTED_SPACES = Union{
     Agents.GraphSpace,
 }
 
+
+
 function Makie.plot!(abmplot::_ABMPlot)
     model = abmplot.abmobs[].model[]
     if !(model.space isa SUPPORTED_SPACES)
@@ -245,9 +248,24 @@ function Makie.plot!(abmplot::_ABMPlot)
         osm_plot.plots[1].plots[3].inspectable[] = false
     end
 
+
+
     # Heatmap
     if !isnothing(heatobs[])
+
+
         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+
+
+        if model.space isa Agents.ContinuousSpace
+            nbinx, nbiny = size(property) 
+            coordx = range(0, 1; length = nbinx)
+            coordy = range(0, 1; length = nbiny)
+            hmap = heatmap!(abmplot, coordx, coordy, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        end
+
+
+
         if abmplot.add_colorbar[]
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
             # TODO: Set colorbar to be "glued" to axis
