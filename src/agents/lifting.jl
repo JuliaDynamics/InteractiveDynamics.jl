@@ -5,6 +5,7 @@ In this file we define how agents are plotted and how the plots are updated whil
 function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
     ids = @lift(abmplot_ids($model))
     pos = @lift(abmplot_pos($model, $offset, $ids))
+    @show pos
     color = @lift(abmplot_colors($model, $ac, $ids))
     marker = @lift(abmplot_marker($model, used_poly, $am, $pos, $ids))
     markersize = @lift(abmplot_markersizes($model, $as, $ids))
@@ -29,11 +30,13 @@ abmplot_ids(model::Agents.ABM{<:Agents.GraphSpace}) = eachindex(model.space.stor
 
 function abmplot_pos(model::Agents.ABM{<:SUPPORTED_SPACES}, offset, ids)
     postype = agents_space_dimensionality(model.space) == 3 ? Point3f : Point2f
-    if isnothing(offset)
+    c = if isnothing(offset)
         return [postype(model[i].pos) for i in ids]
     else
         return [postype(model[i].pos .+ offset(model[i])) for i in ids]
     end
+    r = Vector(c)
+    return r
 end
 
 function abmplot_pos(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, offset, ids)
@@ -58,10 +61,10 @@ agents_space_dimensionality(::Agents.GraphSpace) = 2
 #####
 
 abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac, ids) = to_color(ac)
-abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) = 
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) =
     to_color.([ac(model[i]) for i in ids])
 # in GraphSpace we iterate over a list of agents (not agent ids) at a graph node position
-abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) = 
+abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) =
     to_color.(ac(model[id] for id in model.space.stored_ids[idx]) for idx in ids)
 
 #####
@@ -107,7 +110,7 @@ abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as::Function, ids) =
     [as(model[i]) for i in ids]
 
 abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids) = as
-abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) = 
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) =
     [as(model[id] for id in model.space.stored_ids[idx]) for idx in ids]
 
 
