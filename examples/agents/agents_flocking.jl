@@ -1,6 +1,7 @@
 using Agents
 using GLMakie
 using InteractiveDynamics
+using Random
 
 # Define model
 @agent Bird ContinuousAgent{2} begin
@@ -77,7 +78,7 @@ end
 fig, ax, abmobs = abmplot(model; am = bird_marker)
 fig
 
-# interactive app
+# %% interactive app
 fig, ax, abmobs = abmplot(model;
     axis = (; title = "Flocking"),
     agent_step! = flocking_agent_step!,

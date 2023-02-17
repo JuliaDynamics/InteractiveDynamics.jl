@@ -5,7 +5,6 @@ In this file we define how agents are plotted and how the plots are updated whil
 function lift_attributes(model, ac, as, am, offset, heatarray, used_poly)
     ids = @lift(abmplot_ids($model))
     pos = @lift(abmplot_pos($model, $offset, $ids))
-    @show pos
     color = @lift(abmplot_colors($model, $ac, $ids))
     marker = @lift(abmplot_marker($model, used_poly, $am, $pos, $ids))
     markersize = @lift(abmplot_markersizes($model, $as, $ids))
