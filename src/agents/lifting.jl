@@ -125,7 +125,9 @@ function abmplot_heatobs(model, heatarray)
             # TODO: use surface!(heatobs) here?
             matrix = Agents.get_data(model, heatarray, identity)
             if !(matrix isa AbstractMatrix) || size(matrix) ≠ size(model.space)
-                error("The heat array property must yield a matrix of same size as the grid!")
+                print(matrix)
+                typeof(matrix)
+                error(" yield a matrix of same size as the grid!")
             end
             matrix
         else
