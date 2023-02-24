@@ -5,6 +5,7 @@ using OrdinaryDiffEq
 F, G, a, b = 6.886, 1.347, 0.255, 4.0
 ds = Systems.lorenz84(; F, G, a, b)
 diffeq = (alg = Tsit5(), adaptive = false, dt = 0.01)
+ds = CoupledODEs(ODEProblem(ds), diffeq)
 
 u1 = [0.1, 0.1, 0.1] # periodic
 u2 = u1 .+ 1e-3     # fixed point

@@ -18,6 +18,7 @@ end
 
 """
     interactive_evolution(ds::DynamicalSystem [, u0s]; kwargs...) → fig, obs, step
+
 Launch an interactive GUI application that can evolve the initial conditions `u0s`
 (vector of vectors) of the given dynamical system.
 All initial conditions are evolved in parallel and at exactly the same time.
@@ -48,6 +49,7 @@ the figure returned from `interactive_evolution`. See the documentation online f
 more such examples.
 
 ## State Space Keywords
+
 * `transform = identity`: Transformation applied to the state of the dynamical system
   before plotting. Can even return a vector that is of higher dimension than `ds`.
 * `idxs = 1:min(length(transform(u0s[1])), 3)`: Which variables to plot
@@ -67,23 +69,24 @@ more such examples.
   the state space plot (`lines` for continuous, `scatter` for discrete systems).
   `plotkwargs` can also be a vector of named tuples, in which case each initial condition
   gets different arguments.
-* `diffeq = NamedTuple()`: Named tuple of keyword arguments propagated to
-  the solvers of DifferentialEquations.jl (for continuous systems). Because trajectories
-  are not pre-computed and interpolated, but rather calculated on the fly step by step,
-  it is **strongly recommended** to use an ODE solver thas has a constant step size
-  instead of being adaptive. For example `diffeq = (alg=Tsit5(), adaptive=false, dt=0.01)`.
+* `Δt`: Time step of time evolution. 1 for discrete time, 0.01 for continuous time systems.
+  Because trajectories are not pre-computed and interpolated,
+  but rather calculated on the fly step by step, a constant step size equal to `Δt`
+  is enforced internally for continuous time systems.
 * `add_controls = true`: Whether to add buttons and sliders for interactively
   controlling the trajectory evolution. Should be `false` only if composite
   videos are intended to be produced using the returned `step`. If `false`, the keyword
   `steps_per_update = 1` decides how many steps to take before updating plots.
 
 ## Timeseries Keywords
+
 * `tsidxs = idxs`: Indices selecting variables to be plotted as timeseries. You can
   pass `nothing` instead and no timeseries will be plotted.
 * `total_span`: How much the x-axis of the timeseries plots should span (in real time units)
 * `linekwargs = NamedTuple()`: Extra keywords propagated to the timeseries plots.
 
 ## Parameter Keywords
+
 * `ps = nothing`: If `ps` is not nothing, then it must be a dictionary, mapping keys
   of the system parameter container (`ds.p`) to possible ranges of values. The app then will
   add some additional controls on the bottom of the GUI which allow one to interactively change
@@ -104,7 +107,7 @@ function interactive_evolution(
         ds::DynamicalSystems.DynamicalSystem, u0s = [ds.u0];
         transform = identity, idxs = 1:min(length(transform(ds.u0)), 3), tsidxs = idxs,
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)], tail = 1000,
-        lims = nothing, diffeq = NamedTuple(),
+        lims = nothing, Δt = DynamicalSystems.isdiscretetime(ds) ? 1 : 0.01,
         plotkwargs = NamedTuple(), m = 1.0,
         total_span = DynamicalSystems.isdiscretetime(ds) ? 50 : 10,
         linekwargs = DynamicalSystems.isdiscretetime(ds)  ? () : (linewidth = 4,),
@@ -121,7 +124,7 @@ function interactive_evolution(
     fig = Figure(; figure...)
 
     # Setup plots and integrator stuff
-    pinteg = DynamicalSystems.parallel_integrator(ds, u0s; diffeq)
+    pinteg = DynamicalSystems.ParallelDynamicalSystem(ds, u0s)
     statespacelayout = fig[1,1] = GridLayout()
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     idxs = DynamicalSystems.SVector(idxs...)
@@ -165,7 +168,7 @@ function interactive_evolution(
         n = stepslider[]
         # Always store values, but only update observables after loop
         for _ in 1:n
-            DynamicalSystems.step!(pinteg)
+            DynamicalSystems.step!(pinteg, Δt, true)
             for i in 1:N
                 ob = obs[i]
                 last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
