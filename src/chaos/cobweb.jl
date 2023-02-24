@@ -36,6 +36,7 @@ function interactive_cobweb(
 
 @assert O ≥ 1
 @assert DynamicalSystems.dimension(ds) == 1
+@assert !DynamicalSystems.isinplace(ds)
 
 figure = Figure(resolution = (1000, 800))
 axts = figure[1, :] = Axis(figure)
@@ -44,7 +45,7 @@ axmap = figure[2, :] = Axis(figure)
 sg = SliderGrid(figure[3, :],
     (label = pname, range = prange),
     (label = "n", range = 1:Tmax, startvalue = 20),
-    (label = "x₀", range = x0s, startvalue = ds.u0),
+    (label = "x₀", range = x0s, startvalue = DynamicalSystems.initial_state(ds)[1]),
 )
 r_observable, L, x0 = [sg.sliders[i].value for i in 1:3]
 
@@ -54,7 +55,14 @@ function seriespoints(x)
     return [Point2f(n[i], x[i]) for i in 1:length(x)]
 end
 
-x = Observable(DynamicalSystems.trajectory(ds, L[], x0[]))
+function get_float_trajectory(ds, L, x0)
+    y = x0 isa Real ? DynamicalSystems.SVector(x0) : x0
+    z = DynamicalSystems.trajectory(ds, L, y)[1]
+    w = reinterpret(Float64, vec(z))
+    return Float32.(w)
+end
+
+x = Observable(get_float_trajectory(ds, L[], x0[]))
 xn = lift(a -> seriespoints(a), x)
 lines!(axts, xn; color = trajcolor, lw = 2.0)
 scatter!(axts, xn; color = trajcolor, markersize = 10)
@@ -64,9 +72,14 @@ ylims!(axts, xmin, xmax)
 # Cobweb diagram
 DynamicalSystems.set_parameter!(ds, pindex, prange[1])
 
-fobs = Any[Observable(ds.f.(xs, Ref(ds.p), 0))]
+fobs = Any[Observable(
+    map(x -> DynamicalSystems.dynamic_rule(ds)(x, DynamicalSystems.current_parameters(ds), 0)[1], xs)
+)]
 for order in 2:O
-    push!(fobs, Observable(ds.f.(fobs[end][], Ref(ds.p), 0)))
+    push!(fobs, Observable(
+        map(x -> DynamicalSystems.dynamic_rule(ds)(x, DynamicalSystems.current_parameters(ds), 0)[1], fobs[end][])
+        # DynamicalSystems.dynamic_rule(ds).(fobs[end][], Ref(DynamicalSystems.current_parameters(ds)), 0)
+    ))
 end
 
 # plot diagonal and fⁿ
@@ -87,20 +100,23 @@ ylims!(axmap, xmin, xmax)
 # On trigger r-slider update all plots:
 on(r_observable) do r
     DynamicalSystems.set_parameter!(ds, pindex, r)
-    x[] = DynamicalSystems.trajectory(ds, L[], x0[])
-    fobs[1][] = ds.f.(xs, Ref(ds.p), 0)
+    x[] = get_float_trajectory(ds, L[], x0[])
+    fobs[1][] = map(x -> DynamicalSystems.dynamic_rule(ds)(x, DynamicalSystems.current_parameters(ds), 0)[1], xs)
     for order in 2:O
-        fobs[order][] = ds.f.(fobs[order-1][], Ref(ds.p), 0)
+        fobs[order][] = map(
+            x -> DynamicalSystems.dynamic_rule(ds)(x, DynamicalSystems.current_parameters(ds), 0)[1], fobs[order-1][]
+        )
     end
 end
 
 on(L) do l
-    x[] = DynamicalSystems.trajectory(ds, l, x0[])
+    res = get_float_trajectory(ds, l, x0[])
+    x[] = res
     xlims!(axts, 0, l) # this is better than autolimits
 end
 
 on(x0) do u
-    x[] = DynamicalSystems.trajectory(ds, L[], u)
+    x[] = get_float_trajectory(ds, L[], u)
 end
 
 # Finally add buttons to hide/show elements of the plot
