@@ -3,17 +3,21 @@ export interactive_orbitdiagram, scaleod
 
 """
     interactive_orbitdiagram(
-        ds::DiscreteDynamicalSystem, p_index, pmin, pmax, i0 = 1;
-        u0 = get_state(ds), parname = "p", title = ""
+        ds::DynamicalSystem, p_index, pmin, pmax, i0 = 1;
+        u0 = current_state(ds), parname = "p", title = ""
     )
 
 Open an interactive application for exploring orbit diagrams (ODs) of discrete
 dynamical systems. Requires `DynamicalSystems`.
 
+In essense, the function presents the output of `DynamicalSystems.orbitdiagram`
+and allows interactively zooming into it.
+
 Keywords control the name of the parameter, the initial state (used for _any_ parameter)
 or whether to add a title above the orbit diagram.
 
 ## Interaction
+
 The application is separated in the "OD plot" (left) and the "control panel" (right).
 On the OD plot you can interactively click
 and drag with the left mouse button to select a region in the OD. This region is then
@@ -49,7 +53,8 @@ ps, us = scaleod(oddata)
 ```
 """
 function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
-    u0 = DynamicalSystems.get_state(ds), parname = "p", title = "")
+        u0 = DynamicalSystems.current_state(ds), parname = "p", title = ""
+    )
 
     figure = Figure(resolution = (1200, 600), backgroundcolor = DEFAULT_BG)
     display(figure)
@@ -68,9 +73,9 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
     add_controls!(controllayout, figure, DynamicalSystems.dimension(ds), parname, i0)
 
     # Initial Orbit diagram data
-    integ = DynamicalSystems.integrator(ds, u0)
+    DynamicalSystems.reinit!(ds, u0)
     p₋, p₊ = p_min, p_max
-    odinit, xmin, xmax = minimal_normalized_od(integ, i[], p_index, p₋, p₊, d[], n[], Ttr[], u0)
+    odinit, xmin, xmax = minimal_normalized_od(ds, i[], p_index, p₋, p₊, d[], n[], Ttr[], u0)
     od_obs = Observable(odinit)
 
     # History stores the variable index and true diagram limits
@@ -103,7 +108,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
         xmax = sxmax*xdif + pxmin
 
         od_obs[] = minimal_normalized_od(
-            integ, j,  p_index, p₋, p₊,
+            ds, j,  p_index, p₋, p₊,
             d[], n[], Ttr[], u0, xmin, xmax
         )
         # update history and controls
@@ -123,11 +128,11 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
 
             if newj ≠ j # a new variable is selected, so x limits must be recomputed
                 od_obs[], xmin, xmax = minimal_normalized_od(
-                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0
+                    ds, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0
                 )
             else
                 od_obs[] = minimal_normalized_od(
-                    integ, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0, xmin, xmax
+                    ds, newj, p_index, p₋, p₊, d[], n[], Ttr[], u0, xmin, xmax
                 )
             end
             # Update history and controls
@@ -151,7 +156,7 @@ function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
             pop!(history)
             j, p₋, p₊, xmin, xmax, m, T, dens = history[end]
             od_obs[] = minimal_normalized_od(
-                integ, j, p_index, p₋, p₊, dens, m, T, u0, xmin, xmax
+                ds, j, p_index, p₋, p₊, dens, m, T, u0, xmin, xmax
             )
             update_controls!(history[end], i, n, Ttr, d,  ⬜p₋, ⬜p₊, ⬜u₋, ⬜u₊)
         end
@@ -170,8 +175,8 @@ end
 
 
 """
-    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0) → od, xmin, xmax
-    minimal_normalized_od(integ, i, p_index, p₋, p₊, d, n, Ttr, u0, xmin, xmax) → od
+    minimal_normalized_od(ds, i, p_index, p₋, p₊, d, n, Ttr, u0) → od, xmin, xmax
+    minimal_normalized_od(ds, i, p_index, p₋, p₊, d, n, Ttr, u0, xmin, xmax) → od
 
 Compute and return a minimal and normalized orbit diagram (OD).
 
@@ -182,22 +187,22 @@ plotting. In addition all numbers are scaled to [0, 1]. This allows us to have
 The version with `xmin, xmax` only keeps points with limits between the
 real `xmin, xmax` (in the normal units of the dynamical system).
 """
-function minimal_normalized_od(integ, i, p_index, p₋, p₊,
+function minimal_normalized_od(ds, i, p_index, p₋, p₊,
                               d::Int, n::Int, Ttr::Int, u0)
 
     pvalues = range(p₋, stop = p₊, length = d)
     pdif = p₊ - p₋
     od = Vector{Point2f}() # make this pre-allocated
-    xmin = eltype(integ.u)(Inf); xmax = eltype(integ.u)(-Inf)
+    xmin = eltype(ds.u)(Inf); xmax = eltype(ds.u)(-Inf)
     @inbounds for (j, p) in enumerate(pvalues)
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
-        DynamicalSystems.reinit!(integ, u0)
-        integ.p[p_index] = p
-        DynamicalSystems.step!(integ, Ttr)
+        DynamicalSystems.reinit!(ds, u0)
+        ds.p[p_index] = p
+        DynamicalSystems.step!(ds, Ttr)
         for z in 1:n
-            DynamicalSystems.step!(integ)
-            x = integ.u[i]
-            push!(od, Point2f(pp, integ.u[i]))
+            DynamicalSystems.step!(ds)
+            x = ds.u[i]
+            push!(od, Point2f(pp, ds.u[i]))
             # update limits
             if x < xmin
                 xmin = x
@@ -215,7 +220,7 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     return od, xmin, xmax
 end
 
-function minimal_normalized_od(integ, i, p_index, p₋, p₊,
+function minimal_normalized_od(ds, i, p_index, p₋, p₊,
                               d::Int, n::Int, Ttr::Int, u0, xmin, xmax)
 
     pvalues = range(p₋, stop = p₊, length = d)
@@ -223,14 +228,14 @@ function minimal_normalized_od(integ, i, p_index, p₋, p₊,
     od = Vector{Point2f}()
     @inbounds for p in pvalues
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
-        DynamicalSystems.reinit!(integ, u0)
-        integ.p[p_index] = p
-        DynamicalSystems.step!(integ, Ttr)
+        DynamicalSystems.reinit!(ds, u0)
+        ds.p[p_index] = p
+        DynamicalSystems.step!(ds, Ttr)
         for z in 1:n
-            DynamicalSystems.step!(integ)
-            x = integ.u[i]
+            DynamicalSystems.step!(ds)
+            x = ds.u[i]
             if xmin ≤ x ≤ xmax
-                push!(od, Point2f(pp, (integ.u[i] - xmin)/xdif))
+                push!(od, Point2f(pp, (ds.u[i] - xmin)/xdif))
             end
         end
     end

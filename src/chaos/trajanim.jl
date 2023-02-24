@@ -4,11 +4,12 @@ export interactive_evolution
 ########################################################################################
 # Dynamical system stepping structure
 ########################################################################################
-# TODO
+# TODO:
 struct DynamicalSystemAnimator
     pds
     states::Observable{Vector} # vector of vectors
     slidervals
+    Δt::Real
 end
 
 ########################################################################################
