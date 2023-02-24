@@ -1,5 +1,5 @@
 using DataStructures
-export interactive_evolution, interactive_evolution_timeseries
+export interactive_evolution
 
 ########################################################################################
 # Dynamical system stepping structure
@@ -21,7 +21,8 @@ end
 
 Launch an interactive GUI application that can evolve the initial conditions `u0s`
 (vector of vectors) of the given dynamical system.
-All initial conditions are evolved in parallel and at exactly the same time.
+All initial conditions are evolved in parallel and at exactly the same time
+using a `ParallelDynamicalSystem` of `ds`.
 
 Added controls allow you to step/run/pause the evolution and to control after
 how many integrator steps the plots are updated.
@@ -104,8 +105,8 @@ In addition the keywords `figure, axis` can be named tuples with arbitrary keywo
 propagated to the generation of the `Figure` and state space `Axis` instances.
 """
 function interactive_evolution(
-        ds::DynamicalSystems.DynamicalSystem, u0s = [ds.u0];
-        transform = identity, idxs = 1:min(length(transform(ds.u0)), 3), tsidxs = idxs,
+        ds::DynamicalSystems.DynamicalSystem, u0s = [DynamicalSystems.current_state(ds)];
+        transform = identity, idxs = 1:min(length(transform(u0s[1])), 3), tsidxs = idxs,
         colors = [CYCLIC_COLORS[i] for i in 1:length(u0s)], tail = 1000,
         lims = nothing, Δt = DynamicalSystems.isdiscretetime(ds) ? 1 : 0.01,
         plotkwargs = NamedTuple(), m = 1.0,
@@ -171,11 +172,11 @@ function interactive_evolution(
             DynamicalSystems.step!(pds, Δt, true)
             for i in 1:N
                 ob = obs[i]
-                last_state = transform(DynamicalSystems.get_state(pds, i))[idxs]
+                last_state = transform(DynamicalSystems.current_state(pds, i))[idxs]
                 push!(ob[], last_state)
                 if update_ts
                     for k in 1:length(tsidxs)
-                        push!(allts[k][i][], Point2f(pds.t, last_state[tsidxs[k]]))
+                        push!(allts[k][i][], Point2f(DynamicalSystems.current_time(pds), last_state[tsidxs[k]]))
                     end
                 end
             end
@@ -185,13 +186,13 @@ function interactive_evolution(
         finalpoints[] = [x[][end] for x in obs]
         if update_ts
             for k in 1:length(tsidxs); notify.(allts[k]); end
-            xlims!(ts_axes[end], max(0, pds.t - total_span), max(pds.t, total_span))
+            xlims!(ts_axes[end], max(0, DynamicalSystems.current_time(pds) - total_span), max(DynamicalSystems.current_time(pds), total_span))
         end
     end
 
     # Live parameter changing
     if !isnothing(ps)
-        slidervals, paramvals = _add_ds_param_controls!(paramlayout, ps, copy(ds.p), pnames)
+        slidervals, paramvals = _add_ds_param_controls!(paramlayout, ps, DynamicalSystems.initial_parameters(ds), pnames)
         update = Button(fig, label = "update", tellwidth = false, tellheight = true)
         paramlayout[2, 1] = update
         on(update.clicks) do clicks
@@ -247,12 +248,12 @@ function _init_statespace_plot!(
     return statespaceax, obs, finalpoints
 end
 function init_trajectory_observables(pds, tail, idxs, transform)
-    N = length(DynamicalSystems.get_states(pds))
+    N = length(DynamicalSystems.current_states(pds))
     obs = Observable[]
     T = length(idxs) == 2 ? Point2f : Point3f
     for i in 1:N
         cb = CircularBuffer{T}(tail)
-        fill!(cb, T(transform(DynamicalSystems.get_state(pds, i))[idxs]))
+        fill!(cb, T(transform(DynamicalSystems.current_state(pds, i))[idxs]))
         push!(obs, Observable(cb))
     end
     finalpoints = Observable([x[][end] for x in obs])
@@ -274,7 +275,7 @@ end
 function _init_timeseries_plots!(
         layout, pds, idxs, colors, linekwargs, transform, tail, lims
     )
-    N = length(DynamicalSystems.get_states(pds))
+    N = length(DynamicalSystems.current_states(pds))
     # Initialize timeseries data:
     allts = [] # each entry is a vector of observables; the contained observables
     # correspond to the timeseries of a given axis. So `length(ts)` == amount of axis.
@@ -284,7 +285,7 @@ function _init_timeseries_plots!(
         for j in 1:N
             cb = CircularBuffer{Point2f}(tail)
             fill!(cb, Point2f(
-                pds.t, transform(DynamicalSystems.get_state(pds, j))[idxs][i])
+                DynamicalSystems.current_time(pds), transform(DynamicalSystems.current_state(pds, j))[idxs][i])
             )
             push!(individual_ts, Observable(cb))
         end
@@ -315,13 +316,13 @@ end
 
 function traj_lim_estimator(ds, u0s, idxs, transform)
     Δt = DynamicalSystems.isdiscretetime(ds) ? 1 : 0.1
-    _tr = DynamicalSystems.trajectory(ds, 1000, u0s[1]; Δt)
-    tr = DynamicalSystems.Dataset(transform.(_tr.data))
+    _tr = DynamicalSystems.trajectory(ds, 1000, u0s[1]; Δt)[1]
+    tr = DynamicalSystems.StateSpaceSet(transform.(_tr.data))
     _mi, _ma = DynamicalSystems.minmaxima(tr)
     mi, ma = _mi[idxs], _ma[idxs]
     for i in 2:length(u0s)
-        _tr = DynamicalSystems.trajectory(ds, 1000, u0s[i]; Δt)
-        tr = DynamicalSystems.Dataset(transform.(_tr.data))
+        _tr = DynamicalSystems.trajectory(ds, 1000, u0s[i]; Δt)[1]
+        tr = DynamicalSystems.StateSpaceSet(transform.(_tr.data))
         _mii, _maa = DynamicalSystems.minmaxima(tr)
         mii, maa = _mii[idxs], _maa[idxs]
         mi = min.(mii, mi)
@@ -367,22 +368,4 @@ function _update_ds_parameters!(ds, slidervals, paramvals)
         paramvals[l][] = v
         DynamicalSystems.set_parameter!(ds, l, v)
     end
-end
-
-
-
-
-
-
-
-
-###############################################
-# DEPRECATED
-###############################################
-function interactive_evolution_timeseries(ds, u0s, ps = nothing; kwargs...)
-    @warn """
-    Function `interactive_evolution_timeseries` is merged with `interactive_evolution`.
-    Use that name instead from now on. Also, `ps` has now become a keyword.
-    """
-    return interactive_evolution(ds, u0s; ps, kwargs...)
 end
