@@ -55,14 +55,14 @@ function brainscan_poincaresos(
     for i in 1:length(As)
         A = As[i]
         # plot 3D trajectories
-        lines!(ax, A.data; color = colors[i], transparency = false, linekw...)
+        lines!(ax, vec(A); color = colors[i], transparency = false, linekw...)
 
         # Poincare sos
         psos = lift(y) do y
             DynamicalSystems.poincaresos(A, (j, y); direction, warning = false)
         end
-        psos2d = lift(p -> p[:, otheridxs].data, psos)
-        psos3d = lift(p -> p.data, psos)
+        psos2d = lift(p -> vec(p[:, otheridxs]), psos)
+        psos3d = lift(p -> vec(p), psos)
         Makie.scatter!(axp, psos2d; color = colors[i], scatterkw...)
         Makie.scatter!(ax, psos3d; color = colors[i], markersize = 5, scatterkw...)
     end
