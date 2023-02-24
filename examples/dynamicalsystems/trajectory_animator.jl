@@ -1,10 +1,8 @@
-using InteractiveDynamics
 using DynamicalSystems, GLMakie
-using OrdinaryDiffEq
+using InteractiveDynamics
 
 F, G, a, b = 6.886, 1.347, 0.255, 4.0
-ds = Systems.lorenz84(; F, G, a, b)
-diffeq = (alg = Tsit5(), adaptive = false, dt = 0.01)
+ds = PredefinedDynamicalSystems.lorenz84(; F, G, a, b)
 
 u1 = [0.1, 0.1, 0.1] # periodic
 u2 = u1 .+ 1e-3     # fixed point
@@ -13,13 +11,12 @@ u4 = [-1.5, 1.2, 1.3] .+ 21e-9 # chaotic 2
 u0s = [u1, u2, u3, u4]
 
 interactive_evolution(
-    ds, u0s; tail = 1000, diffeq, fade = true,
+    ds, u0s; tail = 1000, fade = true,
     tsidxs = [1,2],
     # tsidxs = nothing, # comment/uncomment this line to remove timeseries
 )
 
 # %% Lorenz63 with parameters and additional plotted elements
-diffeq = (alg = Tsit5(), adaptive = false, dt = 0.01)
 ps = Dict(
     1 => 1:0.1:30,
     2 => 10:0.1:50,
@@ -40,10 +37,9 @@ u3 = [20,10,40.0]
 u0s = [u1, u3]
 
 idxs = [1,2,3]
-diffeq = (alg = Tsit5(), dt = 0.01, adaptive = false)
 
 figure, obs, step, slidervals = interactive_evolution(
-    ds, u0s; ps, idxs, tail = 1000, diffeq, pnames, lims
+    ds, u0s; ps, idxs, tail = 1000, pnames, lims
 )
 
 # Use the `slidervals` observable to plot fixed points
@@ -58,16 +54,14 @@ scatter!(ax, fpobs; markersize = 15, marker = :diamond, color = :black)
 
 # %% Custom animation
 using DynamicalSystems, InteractiveDynamics, GLMakie
-using OrdinaryDiffEq: Tsit5
 using LinearAlgebra: dot, norm
-
 ds = Systems.thomas_cyclical(b = 0.2)
 u0s = ([3, 1, 1.], [1, 3, 1.], [1, 1, 3.])
-diffeq = (alg = Tsit5(), adaptive = false, dt = 0.05)
+Δt = 0.05
 
 fig, obs, step, = interactive_evolution(
-    ds, u0s; tail = 1000, diffeq, add_controls = false, tsidxs = nothing,
-    idxs = [1, 2, 3],
+    ds, u0s; tail = 1000, add_controls = false, tsidxs = nothing,
+    idxs = [1, 2, 3], Δt,
     figure = (resolution = (1200, 600),),
 )
 axss = content(fig[1,1][1,1])

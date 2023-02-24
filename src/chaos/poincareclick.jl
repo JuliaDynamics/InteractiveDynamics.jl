@@ -64,6 +64,8 @@ function interactive_poincaresos(ds, plane, idxs, complete;
         diffeq = NamedTuple()
     )
 
+    error("this function has not yet been updated to DynamicalSystems.jl v3.0. PR welcomed!")
+
     @assert typeof(plane) <: Tuple
     @assert length(idxs) == 2
     @assert eltype(idxs) == Int
@@ -71,7 +73,7 @@ function interactive_poincaresos(ds, plane, idxs, complete;
     u0 = DynamicalSystems.get_state(ds)
 
     # This is the low-level call of poincaresos:
-    ChaosTools._check_plane(plane, DynamicalSystems.dimension(ds))
+    DynamicalSystems.DynamicalSystemsBase.check_hyperplane_match(plane, DynamicalSystems.dimension(ds))
     integ = DynamicalSystems.integrator(ds, u0; diffeq)
     planecrossing = ChaosTools.PlaneCrossing(plane, direction > 0)
     i = DynamicalSystems.SVector{2, Int}(idxs)
