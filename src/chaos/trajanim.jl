@@ -6,7 +6,7 @@ export interactive_evolution, interactive_evolution_timeseries
 ########################################################################################
 # TODO
 struct DynamicalSystemAnimator
-    pinteg
+    pds
     states::Observable{Vector} # vector of vectors
     slidervals
 end
@@ -124,18 +124,18 @@ function interactive_evolution(
     fig = Figure(; figure...)
 
     # Setup plots and integrator stuff
-    pinteg = DynamicalSystems.ParallelDynamicalSystem(ds, u0s)
+    pds = DynamicalSystems.ParallelDynamicalSystem(ds, u0s)
     statespacelayout = fig[1,1] = GridLayout()
     @assert length(idxs) ≤ 3 "Only up to three variables can be plotted!"
     idxs = DynamicalSystems.SVector(idxs...)
     lims = isnothing(lims) ? traj_lim_estimator(ds, u0s, idxs, transform) : lims
     statespaceax, obs, finalpoints = _init_statespace_plot!(statespacelayout, ds, idxs,
-        lims, pinteg, colors, plotkwargs, m, tail, transform, axis, fade,
+        lims, pds, colors, plotkwargs, m, tail, transform, axis, fade,
     )
     if !isnothing(tsidxs)
         timeserieslayout = fig[1,2] = GridLayout()
         allts, ts_axes = _init_timeseries_plots!(
-            timeserieslayout, pinteg, tsidxs, colors, linekwargs, transform, tail, lims,
+            timeserieslayout, pds, tsidxs, colors, linekwargs, transform, tail, lims,
         )
         update_ts = true
     else
@@ -168,14 +168,14 @@ function interactive_evolution(
         n = stepslider[]
         # Always store values, but only update observables after loop
         for _ in 1:n
-            DynamicalSystems.step!(pinteg, Δt, true)
+            DynamicalSystems.step!(pds, Δt, true)
             for i in 1:N
                 ob = obs[i]
-                last_state = transform(DynamicalSystems.get_state(pinteg, i))[idxs]
+                last_state = transform(DynamicalSystems.get_state(pds, i))[idxs]
                 push!(ob[], last_state)
                 if update_ts
                     for k in 1:length(tsidxs)
-                        push!(allts[k][i][], Point2f(pinteg.t, last_state[tsidxs[k]]))
+                        push!(allts[k][i][], Point2f(pds.t, last_state[tsidxs[k]]))
                     end
                 end
             end
@@ -185,7 +185,7 @@ function interactive_evolution(
         finalpoints[] = [x[][end] for x in obs]
         if update_ts
             for k in 1:length(tsidxs); notify.(allts[k]); end
-            xlims!(ts_axes[end], max(0, pinteg.t - total_span), max(pinteg.t, total_span))
+            xlims!(ts_axes[end], max(0, pds.t - total_span), max(pds.t, total_span))
         end
     end
 
@@ -209,9 +209,9 @@ end
 
 "Create the state space axis and evolution controls. Return the axis."
 function _init_statespace_plot!(
-        layout, ds, idxs, lims, pinteg, colors, plotkwargs, m, tail, transform, axis, fade,
+        layout, ds, idxs, lims, pds, colors, plotkwargs, m, tail, transform, axis, fade,
     )
-    obs, finalpoints = init_trajectory_observables(pinteg, tail, idxs, transform)
+    obs, finalpoints = init_trajectory_observables(pds, tail, idxs, transform)
     is3D = length(idxs) == 3
     markersize = 15
     statespaceax = !is3D ? Axis(layout[1,1]; xlabel = "x1", ylabel = "x2", axis...) :
@@ -246,13 +246,13 @@ function _init_statespace_plot!(
 
     return statespaceax, obs, finalpoints
 end
-function init_trajectory_observables(pinteg, tail, idxs, transform)
-    N = length(DynamicalSystems.get_states(pinteg))
+function init_trajectory_observables(pds, tail, idxs, transform)
+    N = length(DynamicalSystems.get_states(pds))
     obs = Observable[]
     T = length(idxs) == 2 ? Point2f : Point3f
     for i in 1:N
         cb = CircularBuffer{T}(tail)
-        fill!(cb, T(transform(DynamicalSystems.get_state(pinteg, i))[idxs]))
+        fill!(cb, T(transform(DynamicalSystems.get_state(pds, i))[idxs]))
         push!(obs, Observable(cb))
     end
     finalpoints = Observable([x[][end] for x in obs])
@@ -272,9 +272,9 @@ end
 
 
 function _init_timeseries_plots!(
-        layout, pinteg, idxs, colors, linekwargs, transform, tail, lims
+        layout, pds, idxs, colors, linekwargs, transform, tail, lims
     )
-    N = length(DynamicalSystems.get_states(pinteg))
+    N = length(DynamicalSystems.get_states(pds))
     # Initialize timeseries data:
     allts = [] # each entry is a vector of observables; the contained observables
     # correspond to the timeseries of a given axis. So `length(ts)` == amount of axis.
@@ -284,7 +284,7 @@ function _init_timeseries_plots!(
         for j in 1:N
             cb = CircularBuffer{Point2f}(tail)
             fill!(cb, Point2f(
-                pinteg.t, transform(DynamicalSystems.get_state(pinteg, j))[idxs][i])
+                pds.t, transform(DynamicalSystems.get_state(pds, j))[idxs][i])
             )
             push!(individual_ts, Observable(cb))
         end
@@ -298,7 +298,7 @@ function _init_timeseries_plots!(
         individual_ts = allts[i]
         for j in 1:N
             lines!(ax, individual_ts[j]; color = colors[j], linekwargs...)
-            if DynamicalSystems.isdiscretetime(pinteg)
+            if DynamicalSystems.isdiscretetime(pds)
                 scatter!(ax, individual_ts[j]; color = colors[j])
             end
         end
