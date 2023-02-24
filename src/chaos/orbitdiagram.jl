@@ -1,17 +1,17 @@
 export interactive_orbitdiagram, scaleod
-# TODO: Allow initial state to be a function of paramter (define function `get_u(f, p)`)
+# TODO: Allow initial state to be a function of parameter (define function `get_u(f, p)`)
 
 """
     interactive_orbitdiagram(
-        ds::DynamicalSystem, p_index, pmin, pmax, i0 = 1;
-        u0 = current_state(ds), parname = "p", title = ""
+        ds::DynamicalSystem, p_index, pmin, pmax, i::Int = 1;
+        u0 = nothing, parname = "p", title = ""
     )
 
 Open an interactive application for exploring orbit diagrams (ODs) of discrete
 dynamical systems. Requires `DynamicalSystems`.
 
 In essense, the function presents the output of `DynamicalSystems.orbitdiagram`
-and allows interactively zooming into it.
+of the `i`th variable of the `ds`, and allows interactively zooming into it.
 
 Keywords control the name of the parameter, the initial state (used for _any_ parameter)
 or whether to add a title above the orbit diagram.
@@ -41,6 +41,7 @@ Because the y-axis limits can't be known when changing variable, they reset to t
 of the selected variable.
 
 ## Accessing the data
+
 What is plotted on the application window is a _true_ orbit diagram, not a plotting
 shorthand. This means that all data are obtainable and usable directly.
 Internally we always scale the orbit diagram to [0,1]² (to allow `Float64` precision
@@ -52,8 +53,8 @@ figure, oddata = interactive_orbitdiagram(...)
 ps, us = scaleod(oddata)
 ```
 """
-function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0 = 1;
-        u0 = DynamicalSystems.current_state(ds), parname = "p", title = ""
+function interactive_orbitdiagram(ds, p_index, p_min, p_max, i0::Int = 1;
+        u0 = nothing, parname = "p", title = ""
     )
 
     figure = Figure(resolution = (1200, 600), backgroundcolor = DEFAULT_BG)
@@ -193,16 +194,17 @@ function minimal_normalized_od(ds, i, p_index, p₋, p₊,
     pvalues = range(p₋, stop = p₊, length = d)
     pdif = p₊ - p₋
     od = Vector{Point2f}() # make this pre-allocated
-    xmin = eltype(ds.u)(Inf); xmax = eltype(ds.u)(-Inf)
-    @inbounds for (j, p) in enumerate(pvalues)
+    xmin = eltype(DynamicalSystems.current_state(ds))(Inf)
+    xmax = eltype(DynamicalSystems.current_state(ds))(-Inf)
+    @inbounds for p in pvalues
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
-        DynamicalSystems.reinit!(ds, u0)
-        ds.p[p_index] = p
-        DynamicalSystems.step!(ds, Ttr)
-        for z in 1:n
+        DynamicalSystems.set_parameter!(ds, p_index, p)
+        DynamicalSystems.reinit!(ds, u0) # by default `u0` is nothing, so this does nothing
+        Ttr > 0 && DynamicalSystems.step!(ds, Ttr)
+        for _ in 1:n
             DynamicalSystems.step!(ds)
-            x = ds.u[i]
-            push!(od, Point2f(pp, ds.u[i]))
+            x = DynamicalSystems.current_state(ds)[i]
+            push!(od, Point2f(pp, x))
             # update limits
             if x < xmin
                 xmin = x
@@ -228,14 +230,14 @@ function minimal_normalized_od(ds, i, p_index, p₋, p₊,
     od = Vector{Point2f}()
     @inbounds for p in pvalues
         pp = (p - p₋)/pdif # p to plot, in [0, 1]
+        DynamicalSystems.set_parameter!(ds, p_index, p)
         DynamicalSystems.reinit!(ds, u0)
-        ds.p[p_index] = p
-        DynamicalSystems.step!(ds, Ttr)
-        for z in 1:n
+        Ttr > 0 && DynamicalSystems.step!(ds, Ttr)
+        for _ in 1:n
             DynamicalSystems.step!(ds)
-            x = ds.u[i]
+            x = DynamicalSystems.current_state(ds)[i]
             if xmin ≤ x ≤ xmax
-                push!(od, Point2f(pp, (ds.u[i] - xmin)/xdif))
+                push!(od, Point2f(pp, (DynamicalSystems.current_state(ds)[i] - xmin)/xdif))
             end
         end
     end
