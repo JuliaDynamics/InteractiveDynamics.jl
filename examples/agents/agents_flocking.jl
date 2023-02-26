@@ -95,3 +95,11 @@ fig, ax, abmobs = abmplot(model;
 fig
 
 # %% Test plot with a heatmap in continuous space
+fig, ax, abmobs = abmplot(model;
+    axis = (; title = "Flocking"),
+    agent_step! = flocking_agent_step!,
+    model_step! = flocking_model_step!,
+    am = bird_marker,
+    heatarray = :spatial_field,
+)
+fig
