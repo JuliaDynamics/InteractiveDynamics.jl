@@ -18,7 +18,7 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 ### Agent related
 * `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single agent and outputs the corresponding value. If the model 
+  which takes as an input a single agent and outputs the corresponding value. If the model
   uses a `GraphSpace`, `ac, as, am` functions instead take an *iterable of agents* in each
   position (i.e. node of the graph).
 
@@ -60,10 +60,10 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
   heatmap if `heatarray` is not nothing.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
-* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!` 
+* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!`
   if model space is `OpenStreetMapSpace`.
-* `graphplotkwargs = NamedTuple()` : keywords directly passed to 
-  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot) 
+* `graphplotkwargs = NamedTuple()` : keywords directly passed to
+  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot)
   if model space is `GraphSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
@@ -82,7 +82,7 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
   1. "run": starts/stops the continuous evolution of the model.
   1. "reset model": resets the model to its initial state from right after starting the
      interactive application.
-  1. Two sliders control the animation speed: "spu" decides how many model steps should be 
+  1. Two sliders control the animation speed: "spu" decides how many model steps should be
      done before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `enable_inspection = add_controls`: If `true`, enables agent inspection on mouse hover.
 * `spu = 1:50`: The values of the "spu" slider.
@@ -132,13 +132,13 @@ end
     abmplot(abmobs::ABMObservable; kwargs...) → fig, ax, abmobs
     abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmobs
 
-Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
+Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)`
 but allows to link an already existing `ABMObservable` to the created plots.
 """
 
-function abmplot(abmobs::ABMObservable; 
-        figure = NamedTuple(), 
-        axis = NamedTuple(), 
+function abmplot(abmobs::ABMObservable;
+        figure = NamedTuple(),
+        axis = NamedTuple(),
         kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(abmobs.model[]) == 3 ?
@@ -235,8 +235,8 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = 
-        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
+    pos, color, marker, markersize, heatobs =
+        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am,
             abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     # OpenStreetMapSpace preplot
@@ -248,23 +248,17 @@ function Makie.plot!(abmplot::_ABMPlot)
         osm_plot.plots[1].plots[3].inspectable[] = false
     end
 
-
-
     # Heatmap
     if !isnothing(heatobs[])
-
-
-        hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
-
-
-        if model.space isa Agents.ContinuousSpace
-            nbinx, nbiny = size(property) 
-            coordx = range(0, 1; length = nbinx)
-            coordy = range(0, 1; length = nbiny)
+        if !(model.space isa Agents.ContinuousSpace)
+         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        else # need special version for continuous space
+            nbinx, nbiny = size(property)
+            extx, exty = Agents.abmspace(model).extent
+            coordx = range(0, extx; length = nbinx)
+            coordy = range(0, exty; length = nbiny)
             hmap = heatmap!(abmplot, coordx, coordy, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         end
-
-
 
         if abmplot.add_colorbar[]
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
