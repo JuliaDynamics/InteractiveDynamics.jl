@@ -253,7 +253,7 @@ function Makie.plot!(abmplot::_ABMPlot)
         if !(model.space isa Agents.ContinuousSpace)
          hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
         else # need special version for continuous space
-            nbinx, nbiny = size(property)
+            nbinx, nbiny = size(heatobs[])
             extx, exty = Agents.abmspace(model).extent
             coordx = range(0, extx; length = nbinx)
             coordy = range(0, exty; length = nbiny)
