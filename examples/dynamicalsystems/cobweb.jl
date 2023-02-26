@@ -1,4 +1,5 @@
-using InteractiveDynamics, GLMakie, DynamicalSystems
+using DynamicalSystems
+using InteractiveDynamics, GLMakie
 
 # the second range is a convenience for intermittency example of logistic
 rrange = 1:0.001:4.0
@@ -6,4 +7,4 @@ rrange = 1:0.001:4.0
 
 lo = Systems.logistic(0.4; r=rrange[1])
 
-interactive_cobweb(lo, rrange, 5)
+interactive_cobweb(lo, rrange, 5);
