@@ -101,5 +101,6 @@ fig, ax, abmobs = abmplot(model;
     model_step! = flocking_model_step!,
     am = bird_marker,
     heatarray = :spatial_field,
+    heatkwargs = (colormap = :grays,),
 )
 fig
