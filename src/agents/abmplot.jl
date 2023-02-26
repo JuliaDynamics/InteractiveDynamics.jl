@@ -18,7 +18,7 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 ### Agent related
 * `ac, as, am` : These three keywords decide the color, size, and marker, that
   each agent will be plotted as. They can each be either a constant or a *function*,
-  which takes as an input a single agent and outputs the corresponding value. If the model 
+  which takes as an input a single agent and outputs the corresponding value. If the model
   uses a `GraphSpace`, `ac, as, am` functions instead take an *iterable of agents* in each
   position (i.e. node of the graph).
 
@@ -43,27 +43,28 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 * `scatterkwargs = ()` : Additional keyword arguments propagated to the `scatter!` call.
 
 ### Preplot related
-* `heatarray = nothing` : A keyword that plots a heatmap over the space.
+* `heatarray = nothing` : A keyword that plots a model property (that is a matrix)
+  as a heatmap over the space.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
-  The returned data must be a matrix of the same size as the underlying space.
+  If the space is `AbstractGridSpace` then matrix must be the same size as the underlying
+  space. For `ContinuousSpace` any size works and will be plotted over the space extent.
   For example `heatarray = :temperature` is used in the Daisyworld example.
   But you could also define `f(model) = create_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
-
-  It is strongly recommended to use `abmplot` instead of the `abmplot!` method if
-  you use `heatarray`, so that a colorbar can be placed naturally.
 * `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
 * `add_colorbar = true` : Whether or not a Colorbar should be added to the right side of the
-  heatmap if `heatarray` is not nothing.
+  heatmap if `heatarray` is not nothing. It is strongly recommended to use `abmplot`
+  instead of the `abmplot!` method if you use `heatarray`, so that a colorbar can be
+  placed naturally.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
-* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!` 
+* `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!`
   if model space is `OpenStreetMapSpace`.
-* `graphplotkwargs = NamedTuple()` : keywords directly passed to 
-  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot) 
+* `graphplotkwargs = NamedTuple()` : keywords directly passed to
+  [`GraphMakie.graphplot!`](https://graph.makie.org/stable/#GraphMakie.graphplot)
   if model space is `GraphSpace`.
 
 The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `figure` and
@@ -82,7 +83,7 @@ The stand-alone function `abmplot` also takes two optional `NamedTuple`s named `
   1. "run": starts/stops the continuous evolution of the model.
   1. "reset model": resets the model to its initial state from right after starting the
      interactive application.
-  1. Two sliders control the animation speed: "spu" decides how many model steps should be 
+  1. Two sliders control the animation speed: "spu" decides how many model steps should be
      done before the plot is updated, and "sleep" the `sleep()` time between updates.
 * `enable_inspection = add_controls`: If `true`, enables agent inspection on mouse hover.
 * `spu = 1:50`: The values of the "spu" slider.
@@ -132,12 +133,13 @@ end
     abmplot(abmobs::ABMObservable; kwargs...) → fig, ax, abmobs
     abmplot!(ax::Axis/Axis3, abmobs::ABMObservable; kwargs...) → abmobs
 
-Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)` 
+Same functionality as `abmplot(model; kwargs...)`/`abmplot!(ax, model; kwargs...)`
 but allows to link an already existing `ABMObservable` to the created plots.
 """
-function abmplot(abmobs::ABMObservable; 
-        figure = NamedTuple(), 
-        axis = NamedTuple(), 
+
+function abmplot(abmobs::ABMObservable;
+        figure = NamedTuple(),
+        axis = NamedTuple(),
         kwargs...)
     fig = Figure(; figure...)
     ax = fig[1,1][1,1] = agents_space_dimensionality(abmobs.model[]) == 3 ?
@@ -218,6 +220,8 @@ const SUPPORTED_SPACES = Union{
     Agents.GraphSpace,
 }
 
+
+
 function Makie.plot!(abmplot::_ABMPlot)
     model = abmplot.abmobs[].model[]
     if !(model.space isa SUPPORTED_SPACES)
@@ -232,8 +236,8 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Following attributes are all lifted from the recipe observables (specifically,
     # the model), see lifting.jl for source code.
-    pos, color, marker, markersize, heatobs = 
-        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am, 
+    pos, color, marker, markersize, heatobs =
+        lift_attributes(abmplot.abmobs[].model, abmplot.ac, abmplot.as, abmplot.am,
             abmplot.offset, abmplot.heatarray, abmplot._used_poly)
 
     # OpenStreetMapSpace preplot
@@ -247,7 +251,16 @@ function Makie.plot!(abmplot::_ABMPlot)
 
     # Heatmap
     if !isnothing(heatobs[])
-        hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        if !(model.space isa Agents.ContinuousSpace)
+         hmap = heatmap!(abmplot, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        else # need special version for continuous space
+            nbinx, nbiny = size(heatobs[])
+            extx, exty = Agents.abmspace(model).extent
+            coordx = range(0, extx; length = nbinx)
+            coordy = range(0, exty; length = nbiny)
+            hmap = heatmap!(abmplot, coordx, coordy, heatobs; colormap = JULIADYNAMICS_CMAP, abmplot.heatkwargs...)
+        end
+
         if abmplot.add_colorbar[]
             Colorbar(fig[1, 1][1, 2], hmap, width = 20)
             # TODO: Set colorbar to be "glued" to axis
