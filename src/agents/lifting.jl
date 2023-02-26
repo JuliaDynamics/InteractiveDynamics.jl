@@ -58,10 +58,10 @@ agents_space_dimensionality(::Agents.GraphSpace) = 2
 #####
 
 abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac, ids) = to_color(ac)
-abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) = 
+abmplot_colors(model::Agents.ABM{<:SUPPORTED_SPACES}, ac::Function, ids) =
     to_color.([ac(model[i]) for i in ids])
 # in GraphSpace we iterate over a list of agents (not agent ids) at a graph node position
-abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) = 
+abmplot_colors(model::Agents.ABM{<:Agents.GraphSpace}, ac::Function, ids) =
     to_color.(ac(model[id] for id in model.space.stored_ids[idx]) for idx in ids)
 
 #####
@@ -107,7 +107,7 @@ abmplot_markersizes(model::Agents.ABM{<:SUPPORTED_SPACES}, as::Function, ids) =
     [as(model[i]) for i in ids]
 
 abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as, ids) = as
-abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) = 
+abmplot_markersizes(model::Agents.ABM{<:Agents.GraphSpace}, as::Function, ids) =
     [as(model[id] for id in model.space.stored_ids[idx]) for idx in ids]
 
 
@@ -124,8 +124,11 @@ function abmplot_heatobs(model, heatarray)
             #
             # TODO: use surface!(heatobs) here?
             matrix = Agents.get_data(model, heatarray, identity)
-            if !(matrix isa AbstractMatrix) || size(matrix) ≠ size(model.space)
-                error("The heat array property must yield a matrix of same size as the grid!")
+            # Check for correct size for discrete space
+            if Agents.abmspace(model) isa Agents.AbstractGridSpace
+                if !(matrix isa AbstractMatrix) || size(matrix) ≠ size(Agents.abmspace(model))
+                    error("The heat array property must yield a matrix of same size as the grid!")
+                end
             end
             matrix
         else
