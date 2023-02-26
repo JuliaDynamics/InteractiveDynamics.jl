@@ -43,21 +43,22 @@ Requires `Agents`. See also [`abmvideo`](@ref) and [`abmexploration`](@ref).
 * `scatterkwargs = ()` : Additional keyword arguments propagated to the `scatter!` call.
 
 ### Preplot related
-* `heatarray = nothing` : A keyword that plots a heatmap over the space.
+* `heatarray = nothing` : A keyword that plots a model property (that is a matrix)
+  as a heatmap over the space.
   Its values can be standard data accessors given to functions like `run!`, i.e.
   either a symbol (directly obtain model property) or a function of the model.
-  The returned data must be a matrix of the same size as the underlying space.
+  If the space is `AbstractGridSpace` then matrix must be the same size as the underlying
+  space. For `ContinuousSpace` any size works and will be plotted over the space extent.
   For example `heatarray = :temperature` is used in the Daisyworld example.
   But you could also define `f(model) = create_matrix_from_model...` and set
   `heatarray = f`. The heatmap will be updated automatically during model evolution
   in videos and interactive applications.
-
-  It is strongly recommended to use `abmplot` instead of the `abmplot!` method if
-  you use `heatarray`, so that a colorbar can be placed naturally.
 * `heatkwargs = NamedTuple()` : Keywords given to `Makie.heatmap` function
   if `heatarray` is not nothing.
 * `add_colorbar = true` : Whether or not a Colorbar should be added to the right side of the
-  heatmap if `heatarray` is not nothing.
+  heatmap if `heatarray` is not nothing. It is strongly recommended to use `abmplot`
+  instead of the `abmplot!` method if you use `heatarray`, so that a colorbar can be
+  placed naturally.
 * `static_preplot!` : A function `f(ax, model)` that plots something after the heatmap
   but before the agents.
 * `osmkwargs = NamedTuple()` : keywords directly passed to `OSMMakie.osmplot!`
