@@ -98,13 +98,22 @@ function agent2string(model::Agents.ABM{<:S}, agent_pos) where {S<:SUPPORTED_SPA
     return s
 end
 
-ids_to_inspect(model::Agents.ABM{<:Agents.AbstractGridSpace}, agent_pos) = 
+ids_to_inspect(model::Agents.ABM{<:Agents.AbstractGridSpace}, agent_pos) =
     Agents.ids_in_position(agent_pos, model)
-ids_to_inspect(model::Agents.ABM{<:Agents.ContinuousSpace}, agent_pos) = 
+function ids_to_inspect(model::Agents.ABM{<:Agents.GridSpaceSingle}, agent_pos)
+    id = Agents.id_in_position(agent_pos, model)
+    if id == 0
+        return ()
+    else
+        return (id,)
+    end
+end
+
+ids_to_inspect(model::Agents.ABM{<:Agents.ContinuousSpace}, agent_pos) =
     Agents.nearby_ids(agent_pos, model, 0.0)
-ids_to_inspect(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, agent_pos) = 
+ids_to_inspect(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, agent_pos) =
     Agents.nearby_ids(agent_pos, model, 0.0)
-ids_to_inspect(model::Agents.ABM{<:Agents.GraphSpace}, agent_pos) = 
+ids_to_inspect(model::Agents.ABM{<:Agents.GraphSpace}, agent_pos) =
     model.space.stored_ids[agent_pos]
 ids_to_inspect(model::Agents.ABM, agent_pos) = []
 
