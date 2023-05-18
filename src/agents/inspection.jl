@@ -115,7 +115,7 @@ ids_to_inspect(model::Agents.ABM{<:Agents.OpenStreetMapSpace}, agent_pos) =
     Agents.nearby_ids(agent_pos, model, 0.0)
 ids_to_inspect(model::Agents.ABM{<:Agents.GraphSpace}, agent_pos) =
     model.space.stored_ids[agent_pos]
-ids_to_inspect(model::Agents.ABM, agent_pos) = []
+ids_to_inspect(model::Agents.ABM, agent_pos) = ()
 
 """
     agent2string(agent::A)

@@ -10,11 +10,12 @@ u3 = [-1.5, 1.2, 1.3] .+ 1e-9 # chaotic
 u4 = [-1.5, 1.2, 1.3] .+ 21e-9 # chaotic 2
 u0s = [u1, u2, u3, u4]
 
-interactive_evolution(
+fig, dso = interactive_trajectory_panel(
     ds, u0s; tail = 1000, fade = true,
-    tsidxs = [1,2],
-    # tsidxs = nothing, # comment/uncomment this line to remove timeseries
+    idxs = [1,3],
 )
+
+fig
 
 # %% Lorenz63 with parameters and additional plotted elements
 ps = Dict(

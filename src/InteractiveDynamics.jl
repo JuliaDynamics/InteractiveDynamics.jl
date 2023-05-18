@@ -9,15 +9,14 @@ include("colors.jl")
 include("utils.jl")
 using Requires
 
+warnstring(pkg) = @warn """
+$(pkg) moved to Julia 1.9 and now uses package extrensions to provide visualizations.
+"InteractiveDynamics.jl is obsolete. Remove it from your project if you use Juila 1.9+
+"""
+
 function __init__()
     @require DynamicalSystems = "61744808-ddfa-5f27-97ff-6e42cc95d634" begin
-        # include("numericdata/plot_dataset.jl")
-        # include("numericdata/trajectory_highlighter.jl")
-        include("chaos/orbitdiagram.jl")
-        include("chaos/poincareclick.jl")
-        include("chaos/trajanim.jl")
-        include("chaos/cobweb.jl")
-        include("chaos/brainscan.jl")
+        warnstring("DynamicalSystems.jl")
     end
     @require DynamicalBilliards = "4986ee89-4ee5-5cef-b6b8-e49ba721d7a5" begin
         include("billiards/defs_plotting.jl")

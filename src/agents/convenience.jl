@@ -15,8 +15,8 @@ The agent based model is plotted and animated exactly as in [`abmplot`](@ref),
 and the `model` argument as well as splatted `kwargs` are propagated there as-is.
 This convencience function *only works for aggregated agent data*.
 
-Calling `abmexploration` returns: `fig::Figure, abmobs::ABMObservable`. So you can save 
-and/or further modify the figure and it is also possible to access the collected data 
+Calling `abmexploration` returns: `fig::Figure, abmobs::ABMObservable`. So you can save
+and/or further modify the figure and it is also possible to access the collected data
 (if any) via the `ABMObservable`.
 
 Clicking the "reset" button will add a red vertical line to the data plots for visual
@@ -108,6 +108,8 @@ end
 
 
 ##########################################################################################
+using ProgressMeter
+
 """
     abmvideo(file, model, agent_step! [, model_step!]; kwargs...)
 This function exports the animated time evolution of an agent based model into a video
@@ -128,12 +130,14 @@ The plotting is identical as in [`abmplot`](@ref) and applicable keywords are pr
   You can use `(compression = 1, profile = "high")` for a higher quality output,
   and prefer the `CairoMakie` backend.
   (compression 0 results in videos that are not playable by some software)
+* `show_progress = true`: Display a progress bar in the console.
 * `kwargs...`: All other keywords are propagated to [`abmplot`](@ref).
 """
 function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
         spf = 1, framerate = 30, frames = 300,  title = "", showstep = true,
         figure = (resolution = (600, 600),), axis = NamedTuple(),
-        recordkwargs = (compression = 20,), kwargs...
+        recordkwargs = (compression = 20,),
+        show_progress = true, kwargs...
     )
     # add some title stuff
     s = Observable(0) # counter of current step
@@ -150,14 +154,16 @@ function abmvideo(file, model, agent_step!, model_step! = Agents.dummystep;
     add_controls = false, agent_step!, model_step!, figure, axis, kwargs...)
 
     resize_to_layout!(fig)
+    ProgressMeter.Progress(frames-1; enabled=show_progress, desc="abmvideo: ")
 
     record(fig, file; framerate, recordkwargs...) do io
-        for j in 1:frames-1
+        for _ in 1:frames-1
             recordframe!(io)
             Agents.step!(abmobs, spf)
-            s[] += spf; s[] = s[]
+            s[] = s[] + spf
         end
         recordframe!(io)
+        ProgressMeter.next!(p)
     end
     return nothing
 end
