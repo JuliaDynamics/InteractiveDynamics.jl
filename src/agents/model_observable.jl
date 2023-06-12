@@ -1,7 +1,7 @@
 export ABMObservable
 
 """
-    ABMObservable(model; agent_step!, model_step!, adata, mdata, when) → abombs
+    ABMObservable(model; agent_step!, model_step!, adata, mdata, when) → abmobs
 `abmobs` contains all information necessary to step an agent based model interactively.
 It is also returned by [`abmplot`](@ref).
 
@@ -47,7 +47,6 @@ function ABMObservable(model;
     )
 end
 
-
 function Agents.step!(abmobs::ABMObservable, n; kwargs...)
     model, adf, mdf = abmobs.model, abmobs.adf, abmobs.mdf
     Agents.step!(model[], abmobs.agent_step!, abmobs.model_step!, n; kwargs...)
@@ -66,10 +65,10 @@ function Agents.step!(abmobs::ABMObservable, n; kwargs...)
     return nothing
 end
 
-function Base.show(io::IO, p::ABMObservable)
+function Base.show(io::IO, abmobs::ABMObservable)
     print(io, "ABMObservable with model:\n")
-    print(io, p.model[])
+    print(io, abmobs.model[])
     print(io, "\nand with data collection:\n")
-    print(io, " adata: $(p.adata)\n")
-    print(io, " mdata: $(p.mdata)")
+    print(io, " adata: $(abmobs.adata)\n")
+    print(io, " mdata: $(abmobs.mdata)")
 end

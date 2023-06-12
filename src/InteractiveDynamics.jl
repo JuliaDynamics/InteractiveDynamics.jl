@@ -1,6 +1,9 @@
 module InteractiveDynamics
 
-using Makie, Observables, OSMMakie
+using Makie
+using Observables
+using OSMMakie
+using GraphMakie
 
 include("colors.jl")
 include("utils.jl")

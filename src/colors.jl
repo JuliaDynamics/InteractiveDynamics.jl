@@ -1,7 +1,8 @@
 export JULIADYNAMICS_COLORS, JULIADYNAMICS_CMAP, JULIADYNAMICS_CMAP_DIVERGING
 export lighten_color, darken_color, randomcolor
 
-const MARKER = Circle(Point2f(0, 0), Float32(1)) # allows pixel size (zoom independent)
+# const MARKER = Circle(Point2f(0, 0), Float32(1)) # allows pixel size (zoom independent)
+const MARKER = :circle
 const DEFAULT_BG = RGBf(0.99, 0.99, 0.99)
 using Makie: px
 

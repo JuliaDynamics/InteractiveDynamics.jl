@@ -23,7 +23,8 @@ Pkg.status(["Agents", "InteractiveDynamics", "CairoMakie"];
 # straight-forward, and in principle one simply defines functions for how the
 # agents should be plotted. Here we will use a pre-defined model, the Daisyworld
 # as an example throughout this docpage.
-# To learn about this model you can visit the [full example](https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/daisyworld/),
+# To learn about this model you can visit the [example hosted at AgentsExampleZoo
+# ](https://juliadynamics.github.io/AgentsExampleZoo.jl/dev/examples/daisyworld/),
 using InteractiveDynamics, Agents
 using CairoMakie
 daisypath = joinpath(dirname(pathof(InteractiveDynamics)), "agents", "daisyworld_def.jl")
@@ -58,6 +59,55 @@ fig
 # ```@docs
 # abmplot
 # ```
+
+# ## GraphSpace models
+# While the `ac, as, am` keyword arguments generally relate to *agent* colors, markersizes,
+# and markers, they are handled a bit differently in the case of [`GraphSpace models`](https://juliadynamics.github.io/Agents.jl/stable/api/#Agents.GraphSpace).
+# Here, we collect those plot attributes for each node of the underlying graph which can 
+# contain multiple agents.
+# If we want to use a function for this, we therefore need to handle an iterator of agents.
+# Keeping this in mind, we can create an [exemplary GraphSpace model](https://juliadynamics.github.io/Agents.jl/stable/examples/sir/) 
+# and plot it with [`abmplot`](@ref).
+sir_model, sir_agent_step!, sir_model_step! = Models.sir()
+city_size(agents_here) = 0.005 * length(agents_here)
+function city_color(agents_here)
+    agents_here = length(agents_here)
+    infected = count(a.status == :I for a in agents_here)
+    recovered = count(a.status == :R for a in agents_here)
+    return RGBf(infected / agents_here, recovered / agents_here, 0)
+end
+
+# To further style the edges and nodes of the resulting graph plot, we can leverage
+# the functionality of [GraphMakie.graphplot](https://graph.makie.org/stable/#GraphMakie.graphplot)
+# and pass all the desired keyword arguments to it via a named tuple called 
+# `graphplotkwargs`.
+# When using functions for edge color and width, they should return either one color or 
+# a vector with the same length (or twice) as current number of edges in the underlying
+# graph.
+# In the example below, the `edge_color` function colors all edges to a semi-transparent 
+# shade of grey and the `edge_width` function makes use of the special ability of 
+# `linesegments` to be tapered (i.e. one end is wider than the other).
+using GraphMakie.Graphs
+edge_color(model) = fill((:grey, 0.25), ne(model.space.graph))
+function edge_width(model)
+    w = zeros(ne(model.space.graph))
+    for e in edges(model.space.graph)
+        push!(w, 0.004 * length(model.space.stored_ids[e.src]))
+        push!(w, 0.004 * length(model.space.stored_ids[e.dst]))
+    end
+    return w
+end
+graphplotkwargs = (
+    layout = Shell(), # node positions
+    arrow_show = false, # hide directions of graph edges
+    edge_color = edge_color, # change edge colors and widths with own functions
+    edge_width = edge_width,
+    edge_plottype = :linesegments # needed for tapered edge widths
+)
+fig, ax, abmobs = abmplot(sir_model;
+    agent_step! = sir_agent_step!, model_step! = sir_model_step!,
+    as = city_size, ac = city_color, graphplotkwargs)
+fig
 
 # ## Interactive ABM Applications
 # Continuing from the Daisyworld plots above, we can turn them into interactive
@@ -149,6 +199,8 @@ abmvideo(
 # always display aggregated collected data as scatterpoints connected with lines.
 # In cases where more granular control over the displayed plots is needed, we need to take
 # a few extra steps and utilize the [`ABMObservable`](@ref) returned by [`abmplot`](@ref).
+# The same steps are necessary when we want to create custom plots that compose
+# animations of the model space and other aspects.
 
 # ```@docs
 # ABMObservable
@@ -171,40 +223,40 @@ abmobs
 
 #
 
-## create a new layout to add new plots to to the right of the abmplot
+# create a new layout to add new plots to to the right of the abmplot
 plot_layout = fig[:,end+1] = GridLayout()
 
-## create a sublayout on its first row and column
+# create a sublayout on its first row and column
 count_layout = plot_layout[1,1] = GridLayout()
 
-## collect tuples with x and y values for black and white daisys
-blacks = @lift(Point2f.($(p.adf).step, $(p.adf).count_black))
-whites = @lift(Point2f.($(p.adf).step, $(p.adf).count_white))
+# collect tuples with x and y values for black and white daisys
+blacks = @lift(Point2f.($(abmobs.adf).step, $(abmobs.adf).count_black))
+whites = @lift(Point2f.($(abmobs.adf).step, $(abmobs.adf).count_white))
 
-## create an axis to plot into and style it to our liking
+# create an axis to plot into and style it to our liking
 ax_counts = Axis(count_layout[1,1];
     backgroundcolor = :lightgrey, ylabel = "Number of daisies by color")
 
-## plot the data as scatterlines and color them accordingly
+# plot the data as scatterlines and color them accordingly
 scatterlines!(ax_counts, blacks; color = :black, label = "black")
 scatterlines!(ax_counts, whites; color = :white, label = "white")
 
-## add a legend to the right side of the plot
+# add a legend to the right side of the plot
 Legend(count_layout[1,2], ax_counts; bgcolor = :lightgrey)
 
-## and another plot, written in a more condensed format
+# and another plot, written in a more condensed format
 ax_hist = Axis(plot_layout[2,1];
     ylabel = "Distribution of mean temperatures\nacross all time steps")
-hist!(ax_hist, @lift($(p.mdf).temperature);
+hist!(ax_hist, @lift($(abmobs.mdf).temperature);
     bins = 50, color = :red,
     strokewidth = 2, strokecolor = (:black, 0.5),
 )
 
 fig
 
-# Now, once we step the `p::ABMObservable`, the whole plot will be updated
-Agents.step!(p, 1)
-Agents.step!(p, 1)
+# Now, once we step the `abmobs::ABMObservable`, the whole plot will be updated
+Agents.step!(abmobs, 1)
+Agents.step!(abmobs, 1)
 fig
 
 # Of course, you need to actually adjust axis limits given that the plot is interactive
@@ -212,10 +264,12 @@ autolimits!(ax_counts)
 autolimits!(ax_hist)
 
 # Or, simply trigger them on any update to the model observable:
-on(p.model) do m
+on(abmobs.model) do m
     autolimits!(ax_counts)
     autolimits!(ax_hist)
 end
 
-for i in 1:100; step!(p, 1); end
+# and then marvel at everything being auto-updated by calling `step!` :)
+
+for i in 1:100; step!(abmobs, 1); end
 fig
