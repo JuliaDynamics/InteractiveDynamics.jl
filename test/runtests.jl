@@ -1,4 +1,2 @@
-using Test, InteractiveDynamics, Observables
+using Test, InteractiveDynamics
 
-# include("od_test.jl")
-# include("psos_test.jl")
